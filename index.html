@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>יהלי לוין: בריחה מהסטיקרים</title>
 <link rel="stylesheet" href="css/style.css">
+
+<!-- התקנה כאפליקציה (PWA) — מסך מלא בלי סרגל כתובת אחרי "הוסף למסך הבית" -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0912">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="יהלי">
 </head>
 <body>
 
@@ -132,5 +141,14 @@
 <script src="js/particles.js"></script>
 <script src="js/entities.js"></script>
 <script src="js/game.js"></script>
+
+<script>
+  /* מאפשר "הוסף למסך הבית" ומשחק אופליין. נכשל בשקט אם לא נתמך. */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
 </body>
 </html>
