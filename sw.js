@@ -4,7 +4,7 @@
    ============================================================ */
 'use strict';
 
-const CACHE = 'yehali-stickers-v5';
+const CACHE = 'yehali-stickers-v6';
 
 const FILES = [
   './',
@@ -22,8 +22,8 @@ const FILES = [
   './js/game.js',
   './icon-192-v4.png',
   './icon-512-v4.png',
-  './icon-192-maskable-v4.png',
-  './icon-512-maskable-v4.png',
+  './icon-192-maskable-v5.png',
+  './icon-512-maskable-v5.png',
   './apple-touch-icon-v4.png',
   './favicon-v4.png',
   './assets/stickers/st_duolingo.jpg',
