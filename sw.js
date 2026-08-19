@@ -4,7 +4,7 @@
    ============================================================ */
 'use strict';
 
-const CACHE = 'yehali-stickers-v3';
+const CACHE = 'yehali-stickers-v4';
 
 const FILES = [
   './',
@@ -20,10 +20,10 @@ const FILES = [
   './js/particles.js',
   './js/entities.js',
   './js/game.js',
-  './icon-192.png',
-  './icon-512.png',
-  './apple-touch-icon.png',
-  './favicon.png',
+  './icon-192-v3.png',
+  './icon-512-v3.png',
+  './apple-touch-icon-v3.png',
+  './favicon-v3.png',
   './assets/stickers/st_duolingo.jpg',
   './assets/stickers/st_flag.jpg',
   './assets/stickers/st_punisher.jpg',
