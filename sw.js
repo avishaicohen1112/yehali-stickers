@@ -4,7 +4,7 @@
    ============================================================ */
 'use strict';
 
-const CACHE = 'yehali-stickers-v2';
+const CACHE = 'yehali-stickers-v3';
 
 const FILES = [
   './',
