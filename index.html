@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>יהלי לוין: בריחה מהסטיקרים</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="game"></canvas>
+
+  <!-- ===== מסך טעינה ===== -->
+  <div id="loading" class="screen show">
+    <div class="loader-ring"></div>
+    <div class="loader-text">טוען את הסטיקרים…</div>
+    <div class="loader-bar"><i id="loadFill"></i></div>
+  </div>
+
+  <!-- ===== תפריט ראשי ===== -->
+  <div id="menu" class="screen">
+    <div class="menu-inner">
+      <div class="logo">
+        <div class="logo-sub">יהלי לוין</div>
+        <div class="logo-main">בריחה מהסטיקרים</div>
+        <div class="logo-tag">אל תיתן להם לתפוס אותך</div>
+      </div>
+
+      <button id="btnPlay" class="btn btn-primary">שחק</button>
+
+      <div class="menu-row">
+        <button id="btnHow" class="btn btn-ghost">איך משחקים</button>
+        <button id="btnGallery" class="btn btn-ghost">אוסף הסטיקרים</button>
+      </div>
+
+      <div class="best-line">שיא: <b id="bestScore">0</b></div>
+      <div class="hint-line">חצים / WASD לתזוזה · רווח לדאש</div>
+    </div>
+  </div>
+
+  <!-- ===== הוראות ===== -->
+  <div id="how" class="screen panel-screen">
+    <div class="panel">
+      <h2>איך משחקים</h2>
+      <div class="how-grid">
+        <div class="how-item"><span class="how-key">WASD / חצים</span><span>תזוזה</span></div>
+        <div class="how-item"><span class="how-key">רווח</span><span>דאש — קפיצה מהירה עם חסינות קצרה</span></div>
+        <div class="how-item"><span class="how-key">P / Esc</span><span>השהיה</span></div>
+        <div class="how-item"><span class="how-key">M</span><span>סאונד</span></div>
+      </div>
+
+      <h3>החברה</h3>
+      <ul class="bullets">
+        <li><b class="c-chase">רודף</b> — הולך אליך ישר. לא מהיר, אבל לא מוותר.</li>
+        <li><b class="c-sprint">ספרינטר</b> — נעצר, מסמן קו, ואז מסתער. תזוז מהקו.</li>
+        <li><b class="c-photo">צלם</b> — שומר מרחק וזורק עליך סטיקרים מעופפים.</li>
+        <li><b class="c-tank">טנק</b> — גדול ואיטי, אי אפשר להדוף אותו.</li>
+      </ul>
+
+      <h3>שדרוגים</h3>
+      <ul class="bullets">
+        <li><b class="c-duo">דואלינגו</b> — כולם קופאים במקום.</li>
+        <li><b class="c-boeing">בואינג 737</b> — מהירות מטורפת ודאש חופשי.</li>
+        <li><b class="c-wagyu">וואגיו A5</b> — מקלף סטיקר אחד מהמסך.</li>
+        <li><b class="c-pun">פאנישר</b> — חסינות, ואתה מפיל כל מי שנוגע בך.</li>
+        <li><b class="c-sey">סיישל</b> — נדיר. הרבה נקודות והרבה נצנצים.</li>
+      </ul>
+
+      <p class="note">כל פגיעה מדביקה לך סטיקר אמיתי על המסך ומסתירה חלק מהשדה. חמישה סטיקרים — נפסלת.</p>
+      <button class="btn btn-primary close-panel">חזרה</button>
+    </div>
+  </div>
+
+  <!-- ===== גלריית סטיקרים ===== -->
+  <div id="gallery" class="screen panel-screen">
+    <div class="panel">
+      <h2>אוסף הסטיקרים</h2>
+      <p class="note">כל סטיקר שחטפת פעם אחת נפתח כאן לתמיד.</p>
+      <div id="galleryGrid" class="gallery-grid"></div>
+      <button class="btn btn-primary close-panel">חזרה</button>
+    </div>
+  </div>
+
+  <!-- ===== השהיה ===== -->
+  <div id="pause" class="screen">
+    <div class="menu-inner">
+      <div class="pause-title">הפסקה</div>
+      <button id="btnResume" class="btn btn-primary">המשך</button>
+      <button id="btnQuit" class="btn btn-ghost">לתפריט</button>
+    </div>
+  </div>
+
+  <!-- ===== סוף משחק ===== -->
+  <div id="over" class="screen">
+    <div class="menu-inner">
+      <div class="over-stamp">נפסלת!</div>
+      <div class="over-nick" id="overNick">גולד</div>
+      <div class="over-stats">
+        <div><span id="ovScore">0</span><i>ניקוד</i></div>
+        <div><span id="ovWave">0</span><i>גל</i></div>
+        <div><span id="ovTime">0:00</span><i>זמן</i></div>
+      </div>
+      <div class="over-best" id="ovBest"></div>
+      <button id="btnAgain" class="btn btn-primary">עוד פעם</button>
+      <button id="btnMenu" class="btn btn-ghost">לתפריט</button>
+    </div>
+  </div>
+
+  <!-- ===== פקדי מגע ===== -->
+  <div id="touch" class="touch-layer">
+    <div id="stick" class="stick"><i id="knob"></i></div>
+    <div id="dashBtn" class="dash-btn">דאש</div>
+  </div>
+
+  <button id="soundBtn" class="corner-btn" title="סאונד">♪</button>
+
+  <!-- ===== בקשת סיבוב מסך בנייד ===== -->
+  <div id="rotate">
+    <div class="rot-icon">▭</div>
+    <div class="rot-text">סובב את הטלפון לרוחב</div>
+    <div class="rot-sub">הזירה של יהלי רחבה</div>
+  </div>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/config.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/input.js"></script>
+<script src="js/assets.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

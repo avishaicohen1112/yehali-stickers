@@ -1,0 +1,1232 @@
+/* ============================================================
+   game.js — לולאה ראשית, גלים, התנגשויות, סטיקרים וממשק
+   ============================================================ */
+'use strict';
+
+/* מיקומי הנחיתה של הסטיקרים על המסך.
+   מסודרים מסביב לשדה ומתחת לרצועת ה-HUD העליונה (y > 110),
+   כדי שהניקוד, הגל ומוני הסטיקרים יישארו קריאים. */
+const SLOTS = [
+  { x: 146, y: 250, rot: -0.16, w: 188 },
+  { x: 1134, y: 256, rot:  0.14, w: 188 },
+  { x: 142, y: 556, rot:  0.13, w: 180 },
+  { x: 1138, y: 550, rot: -0.12, w: 180 },
+  { x: 640, y: 566, rot:  0.06, w: 176 }
+];
+
+const Game = {
+
+  /* ---------------- מצב ---------------- */
+  canvas: null,
+  ctx: null,
+  renderScale: 1,
+
+  state: 'loading',      // loading | menu | playing | paused | over
+  time: 0,               // שעון תצוגה (רץ תמיד)
+  raf: 0,
+  last: 0,
+
+  player: null,
+  foes: [],
+  shots: [],
+  pickups: [],
+  spawnMarks: [],
+  obstacles: [],
+
+  stickers: [],          // סטיקרים שכבר נדבקו
+  slap: null,            // אנימציית ההדבקה הנוכחית
+  timeScale: 1,
+
+  score: 0,
+  best: 0,
+  wave: 1,
+  waveTimer: 0,
+  runTime: 0,
+  combo: 1,
+  comboTimer: 0,
+  pickupTimer: 0,
+
+  powers: {},            // kind -> שניות שנותרו
+  sey: null,             // אירוע "סיישל"
+  seyDelay: 0,           // המתנה לפני "סיישל" של תחילת גל
+  banner: null,          // הודעת גל
+  unlocked: {},          // סטיקרים שנפתחו בגלריה
+  usedStickers: [],      // אילו סטיקרים כבר נדבקו בריצה הנוכחית
+
+  /* ============================================================
+     אתחול
+     ============================================================ */
+  init() {
+    this.canvas = document.getElementById('game');
+    this.ctx = this.canvas.getContext('2d', { alpha: false });
+
+    Sound.init();
+    Input.init();
+
+    this.best = U.store.get(CFG.keys.best, 0);
+    this.unlocked = U.store.get(CFG.keys.unlocked, {});
+    document.getElementById('bestScore').textContent = U.numStr(this.best);
+    this._syncSoundBtn();
+
+    this.buildObstacles();
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+
+    this.bindUI();
+
+    /* טעינת הסטיקרים ואז תפריט */
+    const fill = document.getElementById('loadFill');
+    Assets.load((p) => { fill.style.width = Math.round(p * 100) + '%'; })
+      .then(() => {
+        this.buildGallery();
+        setTimeout(() => {
+          this.show('menu');
+          this.state = 'menu';
+        }, 220);
+      });
+
+    this.last = performance.now();
+    this.raf = requestAnimationFrame((t) => this.frame(t));
+  },
+
+  buildObstacles() {
+    this.obstacles = CFG.obstacles.map(o => ({
+      x: Math.round(CFG.W * o.x - o.w / 2),
+      y: Math.round(CFG.H * o.y - o.h / 2),
+      w: o.w, h: o.h, kind: o.kind
+    }));
+  },
+
+  resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const padX = window.innerWidth < 700 ? 0 : 34;
+    const padY = window.innerWidth < 700 ? 0 : 34;
+    const availW = Math.max(320, window.innerWidth - padX);
+    const availH = Math.max(240, window.innerHeight - padY);
+
+    const scale = Math.min(availW / CFG.W, availH / CFG.H);
+    const cssW = CFG.W * scale, cssH = CFG.H * scale;
+
+    this.canvas.style.width = cssW + 'px';
+    this.canvas.style.height = cssH + 'px';
+    this.canvas.width = Math.round(cssW * dpr);
+    this.canvas.height = Math.round(cssH * dpr);
+    this.renderScale = (cssW * dpr) / CFG.W;
+  },
+
+  /* ============================================================
+     ממשק
+     ============================================================ */
+  show(id) {
+    ['loading', 'menu', 'how', 'gallery', 'pause', 'over'].forEach(s => {
+      document.getElementById(s).classList.toggle('show', s === id);
+    });
+  },
+  hideAll() { this.show('__none__'); },
+
+  bindUI() {
+    const click = (id, fn) => {
+      const el = document.getElementById(id);
+      el.addEventListener('click', () => { Sound.unlock(); Sound.ui(); fn(); });
+    };
+
+    click('btnPlay', () => this.start());
+    click('btnHow', () => this.show('how'));
+    click('btnGallery', () => { this.buildGallery(); this.show('gallery'); });
+    click('btnResume', () => this.resume());
+    click('btnQuit', () => this.toMenu());
+    click('btnAgain', () => this.start());
+    click('btnMenu', () => this.toMenu());
+
+    document.querySelectorAll('.close-panel').forEach(b => {
+      b.addEventListener('click', () => { Sound.ui(); this.show('menu'); });
+    });
+
+    document.getElementById('soundBtn').addEventListener('click', () => {
+      Sound.unlock();
+      Sound.setMuted(!Sound.muted);
+      this._syncSoundBtn();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'p' || k === 'escape') {
+        if (this.state === 'playing') this.pause();
+        else if (this.state === 'paused') this.resume();
+      }
+      if (k === 'm') {
+        Sound.unlock();
+        Sound.setMuted(!Sound.muted);
+        this._syncSoundBtn();
+      }
+      if (k === 'enter' && (this.state === 'menu' || this.state === 'over')) this.start();
+    });
+
+    /* יציאה מהטאב משהה — שלא נמות בזמן שלא מסתכלים */
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && this.state === 'playing') this.pause();
+    });
+  },
+
+  _syncSoundBtn() {
+    const b = document.getElementById('soundBtn');
+    b.classList.toggle('off', Sound.muted);
+    b.textContent = Sound.muted ? '×' : '♪';
+  },
+
+  buildGallery() {
+    const grid = document.getElementById('galleryGrid');
+    grid.innerHTML = '';
+    CFG.stickers.forEach((s, i) => {
+      const got = !!this.unlocked[i];
+      const card = document.createElement('div');
+      card.className = 'gcard' + (got ? '' : ' locked');
+
+      const img = document.createElement('img');
+      img.src = 'assets/stickers/' + s.file;
+      img.alt = got ? s.caption : 'נעול';
+      card.appendChild(img);
+
+      if (!got) {
+        const l = document.createElement('div');
+        l.className = 'lock';
+        l.textContent = '?';
+        card.appendChild(l);
+      }
+      const n = document.createElement('div');
+      n.className = 'num';
+      n.textContent = (i + 1) + '/' + CFG.stickers.length;
+      card.appendChild(n);
+
+      card.title = got ? s.caption : 'עוד לא חטפת את זה';
+      grid.appendChild(card);
+    });
+  },
+
+  /* ============================================================
+     מחזור חיי משחק
+     ============================================================ */
+  start() {
+    Sound.unlock();
+
+    this.player = new Player();
+    this.foes.length = 0;
+    this.shots.length = 0;
+    this.pickups.length = 0;
+    this.spawnMarks.length = 0;
+    this.stickers.length = 0;
+    this.slap = null;
+    this.timeScale = 1;
+
+    this.score = 0;
+    this.wave = 1;
+    this.waveTimer = CFG.wave.duration;
+    this.runTime = 0;
+    this.combo = 1;
+    this.comboTimer = 0;
+    this.pickupTimer = CFG.pickup.firstAt;
+    this.powers = {};
+    this.sey = null;
+    this.seyDelay = 0;
+    this.usedStickers = [];
+
+    FX.reset();
+    Assets.resetBag();
+
+    this.hideAll();
+    this.state = 'playing';
+
+    this.startWave(true);
+    Sound.startMusic();
+  },
+
+  pause() {
+    if (this.state !== 'playing') return;
+    this.state = 'paused';
+    this.show('pause');
+  },
+
+  resume() {
+    if (this.state !== 'paused') return;
+    this.state = 'playing';
+    this.hideAll();
+    this.last = performance.now();
+  },
+
+  toMenu() {
+    this.state = 'menu';
+    Sound.stopMusic();
+    this.show('menu');
+    document.getElementById('bestScore').textContent = U.numStr(this.best);
+  },
+
+  gameOver() {
+    this.state = 'over';
+    Sound.stopMusic();
+    Sound.gameOver();
+    FX.addShake(22);
+
+    const isBest = this.score > this.best;
+    if (isBest) {
+      this.best = Math.floor(this.score);
+      U.store.set(CFG.keys.best, this.best);
+    }
+
+    document.getElementById('ovScore').textContent = U.numStr(this.score);
+    document.getElementById('ovWave').textContent = this.wave;
+    document.getElementById('ovTime').textContent = U.timeStr(this.runTime);
+    document.getElementById('overNick').textContent = U.pick(CFG.nicknames);
+    document.getElementById('ovBest').textContent =
+      isBest ? 'שיא חדש!' : 'השיא שלך: ' + U.numStr(this.best);
+
+    setTimeout(() => this.show('over'), 620);
+  },
+
+  /* ============================================================
+     גלים
+     ============================================================ */
+  startWave(first) {
+    if (!first) {
+      this.addScore(CFG.score.waveClear, this.player.x, this.player.y - 40,
+                    'גל ' + (this.wave - 1) + ' הושלם');
+    }
+
+    /* כמה חברה אמורים להיות בזירה */
+    const desired = Math.min(
+      CFG.wave.maxAlive,
+      Math.round(CFG.wave.startCount + CFG.wave.perWave * (this.wave - 1))
+    );
+    const alive = this.foes.length + this.spawnMarks.length;
+    const toSpawn = Math.max(first ? desired : 1, desired - alive);
+
+    /* אילו סוגים פתוחים */
+    const pool = [];
+    for (const key in CFG.foes) {
+      const d = CFG.foes[key];
+      if (this.wave >= d.unlock) {
+        for (let i = 0; i < d.weight; i++) pool.push(key);
+      }
+    }
+
+    for (let i = 0; i < toSpawn; i++) {
+      /* בגל שבו סוג חדש נפתח — מבטיחים שהוא יופיע */
+      let type = U.pick(pool);
+      if (i === 0) {
+        for (const key in CFG.foes) {
+          if (CFG.foes[key].unlock === this.wave) { type = key; break; }
+        }
+      }
+      this.queueSpawn(type, 0.35 + i * CFG.wave.spawnStagger);
+    }
+
+    this.banner = { t: 0, dur: 2.2, wave: this.wave };
+    Sound.wave();
+
+    /* "סיישל" בכל גל שלישי — מחכה שהבאנר של הגל יספיק להיקרא,
+       אחרת שתי הכותרות נחתכות זו בזו במרכז המסך. */
+    if (this.wave % 3 === 0) this.seyDelay = 2.4;   // אחרי שהבאנר נעלם לגמרי
+
+    Sound.setIntensity(U.clamp((this.wave - 1) / 12, 0, 1));
+  },
+
+  queueSpawn(type, delay) {
+    /* נקודה על היקף הזירה, רחוקה מהשחקן ולא בתוך מכשול */
+    let x = 0, y = 0, ok = false;
+    for (let tries = 0; tries < 60 && !ok; tries++) {
+      const m = CFG.WALL + 52;
+      const mt = CFG.WALL_TOP + 52;
+      const side = U.randInt(0, 3);
+      if (side === 0) { x = U.rand(m, CFG.W - m); y = mt; }
+      else if (side === 1) { x = U.rand(m, CFG.W - m); y = CFG.H - m; }
+      else if (side === 2) { x = m; y = U.rand(mt, CFG.H - m); }
+      else { x = CFG.W - m; y = U.rand(mt, CFG.H - m); }
+
+      ok = U.dist(x, y, this.player.x, this.player.y) > 270;
+      if (ok) {
+        for (const ob of this.obstacles) {
+          if (U.circleVsRect(x, y, 34, ob.x, ob.y, ob.w, ob.h)) { ok = false; break; }
+        }
+      }
+    }
+    this.spawnMarks.push({ x, y, type, t: 0, delay, dur: 0.75 });
+  },
+
+  /* ============================================================
+     ניקוד ואפקטים
+     ============================================================ */
+  addScore(n, x, y, label) {
+    this.score += n;
+    if (x != null) {
+      FX.text(x, y, (label ? label + ' ' : '') + '+' + U.numStr(n), {
+        size: label ? 19 : 22,
+        color: '#ffcc3d',
+        life: label ? 1.3 : 0.95
+      });
+    }
+  },
+
+  bumpCombo() {
+    this.combo = Math.min(CFG.combo.max, this.combo + 1);
+    this.comboTimer = CFG.combo.decay;
+    if (this.combo === CFG.combo.max) this.triggerSeychelles(false);
+  },
+
+  triggerSeychelles(fromPickup) {
+    if (this.sey && this.sey.t < 0.8) return;   // לא להציף
+    this.sey = { t: 0, dur: 2.15 };
+    Sound.glitter();
+    FX.glitter(CFG.W / 2, CFG.H / 2, 70);
+    FX.addShake(6);
+    if (fromPickup) {
+      this.addScore(CFG.score.seychelles, CFG.W / 2, CFG.H / 2 + 90);
+      FX.confetti(CFG.W / 2, CFG.H / 2, 60);
+    }
+  },
+
+  /* ============================================================
+     חטיפת סטיקר
+     ============================================================ */
+  takeHit(sourceX, sourceY) {
+    const p = this.player;
+    if (p.safe || this.slap) return;
+
+    /* כל חמשת הסטיקרים בריצה אחת חייבים להיות שונים */
+    let idx = Assets.nextIndex();
+    for (let tries = 0; tries < 24 && this.usedStickers.indexOf(idx) !== -1; tries++) {
+      idx = Assets.nextIndex();
+    }
+    this.usedStickers.push(idx);
+
+    const slotIndex = this.stickers.length;
+    const slot = SLOTS[Math.min(slotIndex, SLOTS.length - 1)];
+
+    this.unlocked[idx] = true;
+    U.store.set(CFG.keys.unlocked, this.unlocked);
+
+    this.slap = {
+      index: idx,
+      slot,
+      slotIndex,
+      t: 0,
+      dur: 1.35,
+      line: U.pick(CFG.hitLines),
+      fromX: sourceX == null ? CFG.W / 2 : sourceX,
+      fromY: sourceY == null ? CFG.H / 2 : sourceY,
+      done: false
+    };
+
+    p.iFrames = CFG.player.hitIFrames;
+    this.combo = 1;
+    this.comboTimer = 0;
+
+    Sound.slap();
+    FX.addShake(20);
+    FX.burst(p.x, p.y, 22, {
+      speedMin: 100, speedMax: 380, rMin: 2, rMax: 6,
+      lifeMin: 0.3, lifeMax: 0.75, grav: 300,
+      colors: ['#ff3b6b', '#ffffff', '#ffcc3d']
+    });
+    FX.ring(p.x, p.y, { r0: 10, r1: 130, life: 0.5, color: 'rgba(255,59,107,.85)', width: 6 });
+  },
+
+  /* ============================================================
+     שדרוגים
+     ============================================================ */
+  spawnPickup() {
+    /* וואגיו הוא מנגנון חזרה למשחק, לא שדרוג שגרתי:
+       הוא מופיע רק אחרי שנדבקו לפחות שני סטיקרים. */
+    let kind;
+    if (U.chance(CFG.pickup.seychellesChance)) kind = 'sey';
+    else if (this.stickers.length >= 1 && U.chance(0.32)) kind = 'wagyu';
+    else kind = U.pick(['duo', 'boeing', 'pun']);
+
+    /* מיקום פנוי, לא צמוד לשחקן ולא בתוך מכשול */
+    let x = 0, y = 0, ok = false;
+    for (let t = 0; t < 60 && !ok; t++) {
+      x = U.rand(CFG.WALL + 70, CFG.W - CFG.WALL - 70);
+      y = U.rand(CFG.WALL_TOP + 60, CFG.H - CFG.WALL - 70);
+      ok = U.dist(x, y, this.player.x, this.player.y) > 130;
+      if (ok) {
+        for (const ob of this.obstacles) {
+          if (U.circleVsRect(x, y, 42, ob.x, ob.y, ob.w, ob.h)) { ok = false; break; }
+        }
+      }
+    }
+    this.pickups.push(new Pickup(kind, x, y));
+    FX.ring(x, y, { r0: 4, r1: 60, life: 0.5, color: CFG.power[kind].color + 'cc' });
+  },
+
+  applyPickup(pk) {
+    const p = this.player;
+    Sound.pickup(pk.kind);
+    FX.burst(pk.x, pk.y, 22, {
+      speedMin: 60, speedMax: 260, rMin: 2, rMax: 5,
+      lifeMin: 0.3, lifeMax: 0.7,
+      colors: [pk.def.color, '#ffffff']
+    });
+    FX.ring(pk.x, pk.y, { r0: 8, r1: 96, life: 0.45, color: pk.def.color });
+
+    switch (pk.kind) {
+
+      case 'duo':
+        this.powers.duo = pk.def.dur;
+        for (const f of this.foes) f.frozen = pk.def.dur;
+        FX.text(p.x, p.y - 56, 'ששש… כולם קופאים', { size: 21, color: '#8ee34a', life: 1.5 });
+        break;
+
+      case 'boeing':
+        this.powers.boeing = pk.def.dur;
+        p.speedMult = CFG.boeingMult;
+        p.freeDash = true;
+        FX.text(p.x, p.y - 56, 'זה בואינג 737', { size: 21, color: '#6ce0ff', life: 1.5 });
+        break;
+
+      case 'wagyu':
+        if (this.stickers.length > 0) {
+          const s = this.stickers.pop();
+          FX.confetti(s.x, s.y, 26);
+          FX.text(p.x, p.y - 56, 'קילפת סטיקר!', { size: 22, color: '#ff7a9c', life: 1.5 });
+        } else {
+          FX.text(p.x, p.y - 56, 'וואגיו A5 נקי', { size: 21, color: '#ff7a9c', life: 1.4 });
+        }
+        break;
+
+      case 'pun':
+        this.powers.pun = pk.def.dur;
+        p.invincible = true;
+        FX.text(p.x, p.y - 56, 'הפאנישר באודיסאה!', { size: 21, color: '#ffffff', life: 1.5 });
+        break;
+
+      case 'sey':
+        this.triggerSeychelles(true);
+        break;
+    }
+
+    if (pk.kind !== 'sey') this.addScore(CFG.score.pickup, pk.x, pk.y - 30);
+  },
+
+  spawnShot(x, y, dx, dy) {
+    this.shots.push(new Shot(x, y, dx, dy, Assets.nextIndex()));
+    Sound.shoot();
+  },
+
+  /* ============================================================
+     לולאה
+     ============================================================ */
+  frame(now) {
+    this.raf = requestAnimationFrame((t) => this.frame(t));
+
+    let dt = (now - this.last) / 1000;
+    this.last = now;
+    if (dt > 0.05) dt = 0.05;          // הגנה מקפיצות אחרי טאב מוסתר
+    this.time += dt;
+
+    if (this.state === 'playing') this.update(dt);
+    else if (this.state === 'over') FX.update(dt);
+
+    this.render();
+    Input.endFrame();
+  },
+
+  update(dt) {
+    /* --- הילוך איטי בזמן הדבקת סטיקר --- */
+    if (this.slap) {
+      this.slap.t += dt;
+      this.timeScale = 0.1;
+      if (this.slap.t >= this.slap.dur) {
+        const s = this.slap;
+        const sl = s.slot;
+        this.stickers.push({
+          index: s.index, x: sl.x, y: sl.y, rot: sl.rot, w: sl.w,
+          settle: 0
+        });
+        this.slap = null;
+        FX.addShake(9);
+        if (this.stickers.length >= CFG.maxStickers) { this.gameOver(); return; }
+      }
+    } else {
+      this.timeScale = U.damp(this.timeScale, 1, 0.25, dt);
+    }
+
+    const gdt = dt * this.timeScale;
+
+    this.runTime += gdt;
+    this.score += CFG.score.perSecond * gdt;
+
+    /* --- שדרוגים פעילים --- */
+    for (const k in this.powers) {
+      this.powers[k] -= gdt;
+      if (this.powers[k] <= 0) {
+        delete this.powers[k];
+        if (k === 'boeing') { this.player.speedMult = 1; this.player.freeDash = false; }
+        if (k === 'pun') this.player.invincible = false;
+      }
+    }
+
+    /* --- קומבו --- */
+    if (this.comboTimer > 0) {
+      this.comboTimer -= gdt;
+      if (this.comboTimer <= 0 && this.combo > 1) {
+        this.combo = Math.max(1, this.combo - 1);
+        if (this.combo > 1) this.comboTimer = CFG.combo.decay;
+      }
+    }
+
+    /* --- גלים --- */
+    this.waveTimer -= gdt;
+    if (this.waveTimer <= 0) {
+      this.wave++;
+      this.waveTimer = CFG.wave.duration;
+      this.startWave(false);
+    }
+
+    /* --- הופעות --- */
+    for (let i = this.spawnMarks.length - 1; i >= 0; i--) {
+      const m = this.spawnMarks[i];
+      m.delay -= gdt;
+      if (m.delay > 0) continue;
+      m.t += gdt;
+      if (m.t >= m.dur) {
+        const f = new Foe(m.type, m.x, m.y, this.wave);
+        if (this.powers.duo) f.frozen = this.powers.duo;
+        this.foes.push(f);
+        FX.ring(m.x, m.y, { r0: 10, r1: 70, life: 0.35, color: CFG.foes[m.type].color });
+        this.spawnMarks.splice(i, 1);
+      }
+    }
+
+    /* --- שחקן --- */
+    this.player.update(gdt, this);
+
+    /* --- שדרוגים על הרצפה --- */
+    this.pickupTimer -= gdt;
+    if (this.pickupTimer <= 0) {
+      this.pickupTimer = U.rand(CFG.pickup.every[0], CFG.pickup.every[1]);
+      if (this.pickups.length < 3) this.spawnPickup();
+    }
+    for (let i = this.pickups.length - 1; i >= 0; i--) {
+      const pk = this.pickups[i];
+      if (!pk.update(gdt)) { this.pickups.splice(i, 1); continue; }
+      if (U.dist(pk.x, pk.y, this.player.x, this.player.y) < pk.r + this.player.r + 4) {
+        this.applyPickup(pk);
+        this.pickups.splice(i, 1);
+      }
+    }
+
+    /* --- חברה --- */
+    for (let i = this.foes.length - 1; i >= 0; i--) {
+      const f = this.foes[i];
+      f.update(gdt, this);
+      if (f.dead) { this.foes.splice(i, 1); continue; }
+
+      const d = U.dist(f.x, f.y, this.player.x, this.player.y);
+      const touch = f.r + this.player.r - 3;
+
+      if (d < touch) {
+        if (this.player.invincible) {
+          f.knockOut();
+          this.addScore(CFG.score.knockout * this.combo, f.x, f.y - 40);
+          this.foes.splice(i, 1);
+          FX.addShake(7);
+          continue;
+        }
+        if (!this.player.safe) {
+          this.takeHit(f.x, f.y);
+          continue;
+        }
+      }
+
+      /* "כמעט!" — חמק ממש בקצה */
+      if (f.frozen <= 0 && !this.player.safe) {
+        const gap = d - (f.r + this.player.r);
+        if (gap < CFG.combo.nearMissDist) {
+          f._near = true;
+          f._nearMin = Math.min(f._nearMin == null ? 999 : f._nearMin, gap);
+        } else if (f._near) {
+          f._near = false;
+          if (f._nearMin < CFG.combo.nearMissDist * 0.55) {
+            this.bumpCombo();
+            this.addScore(CFG.score.nearMiss * this.combo, this.player.x, this.player.y - 46, 'כמעט!');
+            Sound.nearMiss();
+            FX.ring(this.player.x, this.player.y, {
+              r0: 18, r1: 58, life: 0.3, color: 'rgba(255,255,255,.45)', width: 2
+            });
+          }
+          f._nearMin = 999;
+        }
+      }
+    }
+
+    /* --- קליעים --- */
+    for (let i = this.shots.length - 1; i >= 0; i--) {
+      const s = this.shots[i];
+      if (!s.update(gdt, this)) {
+        FX.burst(s.x, s.y, 8, {
+          speedMin: 30, speedMax: 130, rMin: 2, rMax: 4,
+          lifeMin: 0.2, lifeMax: 0.4, colors: ['rgba(201,139,255,.8)', '#fff']
+        });
+        this.shots.splice(i, 1);
+        continue;
+      }
+      if (U.dist(s.x, s.y, this.player.x, this.player.y) < s.r + this.player.r - 2) {
+        if (this.player.invincible) {
+          FX.burst(s.x, s.y, 12, { speedMin: 60, speedMax: 200, colors: ['#fff', '#ffcc3d'] });
+          this.shots.splice(i, 1);
+        } else if (!this.player.safe) {
+          this.takeHit(s.x, s.y);
+          this.shots.splice(i, 1);
+        }
+      }
+    }
+
+    /* --- סיישל מושהה של תחילת גל --- */
+    if (this.seyDelay > 0) {
+      this.seyDelay -= dt;
+      if (this.seyDelay <= 0) this.triggerSeychelles(false);
+    }
+
+    /* --- אירוע סיישל --- */
+    if (this.sey) {
+      this.sey.t += dt;
+      if (this.sey.t < 1.2 && Math.random() < dt * 34) {
+        FX.glitter(U.rand(0, CFG.W), U.rand(CFG.H * 0.2, CFG.H * 0.8), 2);
+      }
+      if (this.sey.t >= this.sey.dur) this.sey = null;
+    }
+
+    /* --- באנר גל --- */
+    if (this.banner) {
+      this.banner.t += dt;
+      if (this.banner.t >= this.banner.dur) this.banner = null;
+    }
+
+    /* --- התיישבות הסטיקרים --- */
+    for (const s of this.stickers) {
+      if (s.settle < 1) s.settle = Math.min(1, s.settle + dt * 3.2);
+    }
+
+    FX.update(dt);
+
+    /* עצימות המוזיקה לפי כמה לחוץ המצב */
+    const danger = U.clamp(this.foes.length / 9, 0, 1) * 0.6 +
+                   U.clamp(this.stickers.length / CFG.maxStickers, 0, 1) * 0.4;
+    Sound.setIntensity(Math.max(U.clamp((this.wave - 1) / 12, 0, 1), danger));
+  },
+
+  /* ============================================================
+     ציור
+     ============================================================ */
+  render() {
+    const ctx = this.ctx;
+    ctx.setTransform(this.renderScale, 0, 0, this.renderScale, 0, 0);
+    ctx.clearRect(0, 0, CFG.W, CFG.H);
+
+    /* ---- עולם (עם רעידה) ---- */
+    ctx.save();
+    ctx.translate(FX.shakeX, FX.shakeY);
+
+    Art.floor(ctx, CFG.W, CFG.H, this.time);
+
+    if (this.state === 'playing' || this.state === 'paused' || this.state === 'over') {
+      this.drawWorld(ctx);
+    } else {
+      this.drawIdleScene(ctx);
+    }
+
+    Art.vignette(ctx, CFG.W, CFG.H);
+    ctx.restore();
+
+    /* ---- שכבות מסך (בלי רעידה) ---- */
+    if (this.state !== 'menu' && this.state !== 'loading') {
+      this.drawStickers(ctx);
+      this.drawPlayerBeacon(ctx);
+      this.drawHUD(ctx);
+      if (this.slap) this.drawSlap(ctx);
+      if (this.banner) this.drawBanner(ctx);
+    }
+    if (this.sey) this.drawSeychelles(ctx);
+  },
+
+  drawWorld(ctx) {
+    /* מכשולים */
+    for (const ob of this.obstacles) Art.obstacle(ctx, ob);
+
+    /* סימוני הופעה */
+    for (const m of this.spawnMarks) {
+      if (m.delay > 0) continue;
+      const k = m.t / m.dur;
+      ctx.save();
+      ctx.globalAlpha = 0.28 + Math.sin(this.time * 18) * 0.16;
+      ctx.strokeStyle = CFG.foes[m.type].color;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([9, 7]);
+      ctx.lineDashOffset = -this.time * 40;
+      U.circle(ctx, m.x, m.y, 30 - k * 8);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = CFG.foes[m.type].color;
+      ctx.textAlign = 'center';
+      ctx.font = '900 13px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+      ctx.fillText(CFG.foes[m.type].name, m.x, m.y - 40);
+      ctx.restore();
+    }
+
+    /* שדרוגים */
+    for (const pk of this.pickups) pk.draw(ctx, this.time);
+
+    FX.drawRings(ctx);
+
+    /* החברה — ממוינים לפי Y לעומק נכון */
+    const cast = this.foes.slice().sort((a, b) => a.y - b.y);
+    for (const c of cast) c.draw(ctx, this.time);
+
+    /* יהלי מצויר תמיד אחרון, מעל כולם. בערימה של תשעה חברים
+       חשוב יותר לראות את עצמך מאשר לשמור על סדר עומק מדויק. */
+    if (this.player) {
+      this.player.drawMarker(ctx, this.time);
+      this.player.draw(ctx, this.time);
+    }
+
+    /* קליעים */
+    for (const s of this.shots) s.draw(ctx);
+
+    FX.drawParticles(ctx);
+    FX.drawTexts(ctx);
+  },
+
+  /* רקע חי לתפריט */
+  drawIdleScene(ctx) {
+    for (const ob of this.obstacles) Art.obstacle(ctx, ob);
+    const t = this.time;
+    Art.person(ctx, {
+      x: CFG.W / 2 + Math.sin(t * 0.6) * 190,
+      y: CFG.H * 0.66 + Math.cos(t * 0.9) * 28,
+      dir: Math.cos(t * 0.6) > 0 ? 1 : -1,
+      walk: t * 6.5, scale: 1.35, squash: 1,
+      colors: Art.YEHALI, style: 'yehali',
+      blink: (Math.sin(t * 1.7) > 0.985)
+    });
+    FX.drawParticles(ctx);
+  },
+
+  /* ============================================================
+     סטיקרים על המסך
+     ============================================================ */
+  drawSticker(ctx, index, x, y, rot, w, alpha) {
+    const h = w * 1.33;
+    const img = Assets.img(index);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+
+    ctx.shadowColor = 'rgba(0,0,0,.5)';
+    ctx.shadowBlur = 22;
+    ctx.shadowOffsetY = 8;
+    ctx.fillStyle = '#fdfaf2';
+    U.roundRect(ctx, -w / 2, -h / 2, w, h, 10);
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+
+    const pad = w * 0.045;
+    ctx.save();
+    U.roundRect(ctx, -w / 2 + pad, -h / 2 + pad, w - pad * 2, h - pad * 2, 6);
+    ctx.clip();
+
+    if (img && img.complete && img.naturalWidth) {
+      Art._cover(ctx, img, -w / 2 + pad, -h / 2 + pad, w - pad * 2, h - pad * 2);
+    } else {
+      /* גיבוי: כרטיס עם הכיתוב */
+      ctx.fillStyle = '#3a2f5e';
+      ctx.fillRect(-w / 2, -h / 2, w, h);
+      ctx.fillStyle = '#ffe9a8';
+      ctx.textAlign = 'center';
+      ctx.direction = 'rtl';
+      const cap = CFG.stickers[index] ? CFG.stickers[index].caption : '';
+      this._wrapText(ctx, cap, 0, -h * 0.08, w * 0.82, w * 0.105, w * 0.13);
+    }
+    ctx.restore();
+
+    ctx.strokeStyle = 'rgba(0,0,0,.16)';
+    ctx.lineWidth = 1.5;
+    U.roundRect(ctx, -w / 2, -h / 2, w, h, 10);
+    ctx.stroke();
+
+    ctx.restore();
+  },
+
+  _wrapText(ctx, text, cx, cy, maxW, fontSize, lineH) {
+    ctx.font = '800 ' + fontSize + 'px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+    const words = String(text).split(' ');
+    const lines = [];
+    let cur = '';
+    for (const w of words) {
+      const test = cur ? cur + ' ' + w : w;
+      if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; }
+      else cur = test;
+    }
+    if (cur) lines.push(cur);
+    const startY = cy - (lines.length - 1) * lineH / 2;
+    lines.forEach((l, i) => ctx.fillText(l, cx, startY + i * lineH));
+  },
+
+  drawStickers(ctx) {
+    for (const s of this.stickers) {
+      const k = U.easeOutBack(s.settle);
+      this.drawSticker(ctx, s.index, s.x, s.y, s.rot, s.w * (0.9 + k * 0.1), 0.96);
+    }
+  },
+
+  /* אם יהלי מתחבא מתחת לסטיקר — מסמנים אותו כדי שלא יהיה לא הוגן */
+  drawPlayerBeacon(ctx) {
+    if (this.state !== 'playing' || !this.player) return;
+    let covered = false;
+    for (const s of this.stickers) {
+      const dx = Math.abs(this.player.x - s.x), dy = Math.abs(this.player.y - s.y);
+      if (dx < s.w * 0.62 && dy < s.w * 0.82) { covered = true; break; }
+    }
+    if (!covered) return;
+
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+    ctx.strokeStyle = '#ffcc3d';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([7, 6]);
+    ctx.lineDashOffset = -this.time * 40;
+    U.circle(ctx, this.player.x, this.player.y, 28 + Math.sin(this.time * 8) * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = '#ffcc3d';
+    U.circle(ctx, this.player.x, this.player.y, 5);
+    ctx.fill();
+    ctx.restore();
+  },
+
+  /* אנימציית ההדבקה */
+  drawSlap(ctx) {
+    const s = this.slap;
+    const k = s.t / s.dur;
+
+    /* עמעום רקע */
+    ctx.save();
+    let dim = 0;
+    if (k < 0.12) dim = (k / 0.12) * 0.5;
+    else if (k < 0.68) dim = 0.5;
+    else dim = 0.5 * (1 - (k - 0.68) / 0.32);
+    ctx.fillStyle = 'rgba(6,4,12,' + dim + ')';
+    ctx.fillRect(0, 0, CFG.W, CFG.H);
+    ctx.restore();
+
+    const cx = CFG.W / 2, cy = CFG.H / 2 - 16;
+    const bigW = 336;
+
+    let x, y, w, rot, alpha = 1;
+
+    if (k < 0.14) {
+      /* טיסה פנימה — גדול ומסתובב */
+      const e = U.easeOutCubic(k / 0.14);
+      x = U.lerp(s.fromX, cx, e);
+      y = U.lerp(s.fromY, cy, e);
+      w = U.lerp(bigW * 2.4, bigW, e);
+      rot = U.lerp(-0.9, 0.04, e);
+      alpha = e;
+    } else if (k < 0.70) {
+      /* החזקה עם רטט קטן */
+      const p = (k - 0.14) / 0.56;
+      const wob = Math.sin(p * 26) * (1 - p) * 0.035;
+      x = cx; y = cy;
+      w = bigW * (1 + Math.sin(p * 20) * (1 - p) * 0.03);
+      rot = 0.04 + wob;
+    } else {
+      /* נסיעה למקום הקבוע */
+      const e = U.easeInOutQuad((k - 0.70) / 0.30);
+      x = U.lerp(cx, s.slot.x, e);
+      y = U.lerp(cy, s.slot.y, e);
+      w = U.lerp(bigW, s.slot.w, e);
+      rot = U.lerp(0.04, s.slot.rot, e);
+    }
+
+    this.drawSticker(ctx, s.index, x, y, rot, w, alpha);
+
+    /* כיתוב "חטפת סטיקר" — מתחת לכרטיס, הרחק מרצועת ה-HUD */
+    if (k > 0.16 && k < 0.72) {
+      const a = Math.min(1, (k - 0.16) / 0.1) * Math.min(1, (0.72 - k) / 0.1);
+      const ty = cy + bigW * 1.33 / 2 + 46;
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.textAlign = 'center';
+      ctx.direction = 'rtl';
+      ctx.font = '900 42px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+      ctx.lineWidth = 9; ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#140d20';
+      ctx.strokeText(s.line, cx, ty);
+      ctx.fillStyle = '#ff3b6b';
+      ctx.fillText(s.line, cx, ty);
+      ctx.restore();
+    }
+  },
+
+  /* ============================================================
+     "סיישל" בענק עם נצנצים
+     ============================================================ */
+  drawSeychelles(ctx) {
+    const s = this.sey;
+    const k = s.t / s.dur;
+
+    let scale, alpha;
+    if (k < 0.22) { scale = U.easeOutElastic(k / 0.22); alpha = Math.min(0.95, k / 0.08); }
+    else if (k < 0.70) { scale = 1; alpha = 0.95; }
+    else { const e = (k - 0.70) / 0.30; scale = 1 + e * 0.25; alpha = 0.95 * (1 - e); }
+
+    /* מעט מעל המרכז — כדי שהחלק הפעיל של הזירה יישאר גלוי */
+    const cx = CFG.W / 2, cy = CFG.H * 0.36;
+    const wob = Math.sin(s.t * 5) * 0.02;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(cx, cy);
+    ctx.rotate(-0.05 + wob);
+    ctx.scale(scale, scale);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.direction = 'rtl';
+
+    const size = 152;
+    ctx.font = '900 ' + size + 'px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+
+    /* זוהר */
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.55;
+    ctx.shadowColor = '#ffd93d';
+    ctx.shadowBlur = 60;
+    ctx.fillStyle = '#ffd93d';
+    ctx.fillText('סיישל', 0, 0);
+    ctx.restore();
+
+    /* מתאר */
+    ctx.lineWidth = 16; ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#3a2100';
+    ctx.strokeText('סיישל', 0, 0);
+
+    /* מילוי זהב מנצנץ */
+    const g = ctx.createLinearGradient(0, -size * 0.6, 0, size * 0.6);
+    const shift = (Math.sin(s.t * 3) * 0.5 + 0.5) * 0.25;
+    g.addColorStop(0, '#fffbe6');
+    g.addColorStop(U.clamp(0.26 + shift, 0.05, 0.7), '#ffd93d');
+    g.addColorStop(U.clamp(0.55 + shift, 0.3, 0.9), '#ff9d1f');
+    g.addColorStop(1, '#ffe98a');
+    ctx.fillStyle = g;
+    ctx.fillText('סיישל', 0, 0);
+
+    /* ניצוצות ארבע־קרניים שרצים על האותיות */
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 8; i++) {
+      const px = Math.sin(s.t * 3.4 + i * 1.7) * 260;
+      const py = Math.cos(s.t * 2.6 + i * 2.3) * 54;
+      const twinkle = Math.abs(Math.sin(s.t * 6 + i * 1.1));
+      const r = 5 + twinkle * 13;
+
+      const rg = ctx.createRadialGradient(px, py, 0, px, py, r * 0.9);
+      rg.addColorStop(0, 'rgba(255,255,255,.9)');
+      rg.addColorStop(1, 'rgba(255,240,180,0)');
+      ctx.fillStyle = rg;
+      U.circle(ctx, px, py, r * 0.9);
+      ctx.fill();
+
+      /* צלב הקרניים */
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.5 + twinkle * 0.45) + ')';
+      ctx.beginPath();
+      ctx.moveTo(px, py - r * 2.2); ctx.lineTo(px + r * 0.30, py);
+      ctx.lineTo(px, py + r * 2.2); ctx.lineTo(px - r * 0.30, py);
+      ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(px - r * 2.2, py); ctx.lineTo(px, py - r * 0.30);
+      ctx.lineTo(px + r * 2.2, py); ctx.lineTo(px, py + r * 0.30);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+
+    ctx.restore();
+  },
+
+  /* ============================================================
+     באנר גל
+     ============================================================ */
+  drawBanner(ctx) {
+    const b = this.banner;
+    const k = b.t / b.dur;
+    let a = 1;
+    if (k < 0.1) a = k / 0.1;
+    else if (k > 0.75) a = (1 - k) / 0.25;
+
+    const slide = k < 0.1 ? (1 - U.easeOutCubic(k / 0.1)) * 90 : 0;
+
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.textAlign = 'center';
+    ctx.direction = 'rtl';
+    ctx.translate(CFG.W / 2 + slide, CFG.H * 0.30);
+
+    ctx.font = '900 64px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+    ctx.lineWidth = 12; ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#140d20';
+    ctx.strokeText('גל ' + b.wave, 0, 0);
+    ctx.fillStyle = '#ffcc3d';
+    ctx.fillText('גל ' + b.wave, 0, 0);
+
+    /* איזה סוג נפתח עכשיו */
+    let newType = null;
+    for (const key in CFG.foes) if (CFG.foes[key].unlock === b.wave) newType = CFG.foes[key];
+    if (newType) {
+      ctx.font = '800 26px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+      ctx.lineWidth = 7;
+      ctx.strokeText('נכנס למגרש: ' + newType.name, 0, 46);
+      ctx.fillStyle = newType.color;
+      ctx.fillText('נכנס למגרש: ' + newType.name, 0, 46);
+    }
+    ctx.restore();
+  },
+
+  /* ============================================================
+     HUD
+     ============================================================ */
+  drawHUD(ctx) {
+    const pad = 22;
+    ctx.save();
+    ctx.direction = 'rtl';
+
+    /* ---- כמה סטיקרים חטף (שמאל למעלה) ---- */
+    const left = this.stickers.length + (this.slap ? 1 : 0);
+    for (let i = 0; i < CFG.maxStickers; i++) {
+      const x = pad + 6 + i * 30;
+      const y = pad + 8;
+      const got = i < left;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(i % 2 ? 0.1 : -0.08);
+      if (got) {
+        ctx.fillStyle = '#ff3b6b';
+        U.roundRect(ctx, -10, -12, 20, 24, 3); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.62)';
+        U.roundRect(ctx, -7, -9, 14, 14, 2); ctx.fill();
+      } else {
+        ctx.fillStyle = 'rgba(255,255,255,.09)';
+        U.roundRect(ctx, -10, -12, 20, 24, 3); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,.35)';
+        ctx.lineWidth = 1.5;
+        U.roundRect(ctx, -10, -12, 20, 24, 3); ctx.stroke();
+      }
+      ctx.restore();
+    }
+    ctx.textAlign = 'left';
+    ctx.font = '700 12px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,.42)';
+    ctx.fillText('סטיקרים', pad + 6 + CFG.maxStickers * 30 + 4, pad + 13);
+
+    /* ---- ניקוד (מרכז למעלה) ---- */
+    ctx.textAlign = 'center';
+    ctx.font = '900 40px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+    ctx.lineWidth = 8; ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(10,7,18,.8)';
+    ctx.strokeText(U.numStr(this.score), CFG.W / 2, pad + 30);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(U.numStr(this.score), CFG.W / 2, pad + 30);
+
+    /* קומבו */
+    if (this.combo > 1) {
+      const pulse = 1 + Math.sin(this.time * 10) * 0.05;
+      ctx.save();
+      ctx.translate(CFG.W / 2, pad + 60);
+      ctx.scale(pulse, pulse);
+      ctx.font = '900 22px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = 'rgba(10,7,18,.8)';
+      ctx.strokeText('קומבו ×' + this.combo, 0, 0);
+      ctx.fillStyle = '#9bff5b';
+      ctx.fillText('קומבו ×' + this.combo, 0, 0);
+      ctx.restore();
+
+      /* מד דעיכה */
+      const kk = U.clamp(this.comboTimer / CFG.combo.decay, 0, 1);
+      ctx.fillStyle = 'rgba(155,255,91,.55)';
+      ctx.fillRect(CFG.W / 2 - 40, pad + 68, 80 * kk, 3);
+    }
+
+    /* ---- גל + טיימר (ימין למעלה) ---- */
+    ctx.textAlign = 'right';
+    ctx.font = '900 24px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = 'rgba(10,7,18,.8)';
+    ctx.strokeText('גל ' + this.wave, CFG.W - pad, pad + 22);
+    ctx.fillStyle = '#ffcc3d';
+    ctx.fillText('גל ' + this.wave, CFG.W - pad, pad + 22);
+
+    const bw = 130;
+    const bk = U.clamp(this.waveTimer / CFG.wave.duration, 0, 1);
+    ctx.fillStyle = 'rgba(255,255,255,.16)';
+    U.roundRect(ctx, CFG.W - pad - bw, pad + 32, bw, 6, 3); ctx.fill();
+    ctx.fillStyle = '#ffcc3d';
+    U.roundRect(ctx, CFG.W - pad - bw * bk, pad + 32, bw * bk, 6, 3); ctx.fill();
+
+    ctx.font = '700 13px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,.5)';
+    ctx.fillText(U.timeStr(this.runTime), CFG.W - pad, pad + 58);
+
+    /* ---- שדרוגים פעילים (למטה במרכז) ---- */
+    const keys = Object.keys(this.powers).filter(k => CFG.power[k].dur > 0);
+    if (keys.length) {
+      const bwid = 128, gap = 12;
+      const total = keys.length * bwid + (keys.length - 1) * gap;
+      let x = CFG.W / 2 - total / 2;
+      const y = CFG.H - 52;
+
+      for (const k of keys) {
+        const def = CFG.power[k];
+        const frac = U.clamp(this.powers[k] / def.dur, 0, 1);
+
+        ctx.fillStyle = 'rgba(10,7,20,.6)';
+        U.roundRect(ctx, x, y, bwid, 30, 15); ctx.fill();
+
+        ctx.save();
+        U.roundRect(ctx, x, y, bwid, 30, 15); ctx.clip();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = def.color;
+        ctx.fillRect(x, y, bwid * frac, 30);
+        ctx.restore();
+
+        ctx.strokeStyle = def.color;
+        ctx.lineWidth = 1.6;
+        U.roundRect(ctx, x, y, bwid, 30, 15); ctx.stroke();
+
+        Art.pickupIcon(ctx, def.glyph, x + 19, y + 15, 10, this.time);
+
+        ctx.textAlign = 'center';
+        ctx.font = '800 14px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+        ctx.fillStyle = '#fff';
+        ctx.fillText(def.name, x + bwid / 2 + 12, y + 20);
+
+        x += bwid + gap;
+      }
+    }
+
+    /* ---- טיפ בגל הראשון ---- */
+    if (this.wave === 1 && this.runTime < 7 && !this.slap) {
+      ctx.globalAlpha = U.clamp((7 - this.runTime) / 2, 0, 1) * 0.8;
+      ctx.textAlign = 'center';
+      ctx.font = '700 17px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+      ctx.fillStyle = '#cfc6e0';
+      ctx.fillText(Input.isTouch ? 'ג׳ויסטיק לתזוזה · כפתור לדאש'
+                                 : 'WASD או חצים לתזוזה · רווח לדאש',
+                   CFG.W / 2, CFG.H - 92);
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.restore();
+  }
+};
+
+window.addEventListener('load', () => Game.init());
