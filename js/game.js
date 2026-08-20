@@ -555,10 +555,14 @@ const Game = {
       }
     }
 
-    /* כמה חברה אמורים להיות בזירה */
+    /* כמה חברה אמורים להיות בזירה.
+       מפה גדולה עם אותה כמות חברה מרגישה ריקה ודווקא *קלה* יותר —
+       לכן הכמות והתקרה גדלות ביחס לשטח המפה מול הסלון המקורי. */
+    const area = (this.map.w * this.map.h) / (CFG.maps[0].w * CFG.maps[0].h);
+    const crowd = Math.min(1.85, Math.sqrt(area));
     const desired = Math.min(
-      CFG.wave.maxAlive,
-      Math.round(CFG.wave.startCount + CFG.wave.perWave * (this.wave - 1))
+      Math.round(CFG.wave.maxAlive * crowd),
+      Math.round((CFG.wave.startCount + CFG.wave.perWave * (this.wave - 1)) * crowd)
     );
     const alive = this.foes.length + this.spawnMarks.length;
     const toSpawn = Math.max(first ? desired : 1, desired - alive);
@@ -1232,7 +1236,9 @@ const Game = {
     ctx.save();
     ctx.translate(-Math.round(this.cam.x), -Math.round(this.cam.y));
 
-    Art.floor(ctx, CFG.worldW, CFG.worldH, this.time, this.map && this.map.pal);
+    /* מרווח קטן מסביב לחלון — כדי שרעידת המסך לא תחשוף שוליים לא מצוירים */
+    const view = { x: this.cam.x - 40, y: this.cam.y - 40, w: CFG.W + 80, h: CFG.H + 80 };
+    Art.floor(ctx, CFG.worldW, CFG.worldH, this.time, this.map && this.map.pal, view);
 
     if (this.state === 'playing' || this.state === 'paused' || this.state === 'over') {
       this.drawWorld(ctx);

@@ -719,19 +719,25 @@ const Art = {
   /* ================================================================
      רצפת הזירה
      ================================================================ */
-  /* pal — פלטת המפה הנוכחית (CFG.maps[i].pal). בלעדיה: צבעי הסלון. */
-  floor(ctx, w, h, t, pal) {
+  /* pal  — פלטת המפה הנוכחית (CFG.maps[i].pal). בלעדיה: צבעי הסלון.
+     view — המלבן הנראה {x,y,w,h} בקואורדינטות עולם. מצייר רק אותו:
+            במפה של 2300×1250 מול חלון 1280×720 זה חוסך פי ~3 פיקסלים
+            לפריים, וזה כל ההבדל בעומס הציור במפות הגדולות. */
+  floor(ctx, w, h, t, pal, view) {
     const p = pal || {
       a: '#2a2340', b: '#1d1830', c: '#120e20',
       grid: '#c9b6ff', glow: '#ff9d1f', frame: '255,204,61'
     };
+    const v = view || { x: 0, y: 0, w: w, h: h };
+    const vx0 = Math.max(0, v.x), vy0 = Math.max(0, v.y);
+    const vx1 = Math.min(w, v.x + v.w), vy1 = Math.min(h, v.y + v.h);
 
     const g = ctx.createRadialGradient(w / 2, h * 0.42, 60, w / 2, h * 0.5, w * 0.72);
     g.addColorStop(0, p.a);
     g.addColorStop(0.55, p.b);
     g.addColorStop(1, p.c);
     ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
+    ctx.fillRect(vx0, vy0, vx1 - vx0, vy1 - vy0);
 
     ctx.save();
     ctx.globalAlpha = 0.055;
@@ -739,13 +745,13 @@ const Art = {
     ctx.lineWidth = 1;
     const T = 80;
     ctx.beginPath();
-    for (let x = T; x < w; x += T) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
-    for (let y = T; y < h; y += T) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
+    for (let x = Math.ceil(vx0 / T) * T; x < vx1; x += T) { ctx.moveTo(x, vy0); ctx.lineTo(x, vy1); }
+    for (let y = Math.ceil(vy0 / T) * T; y < vy1; y += T) { ctx.moveTo(vx0, y); ctx.lineTo(vx1, y); }
     ctx.stroke();
     ctx.restore();
 
     /* כתמי אור על הרצפה — במפה גדולה כתם יחיד במרכז נעלם,
-       אז נפרסים כמה לפי הגודל בפועל. */
+       אז נפרסים כמה לפי הגודל בפועל. מצוירים רק אלה שנראים. */
     ctx.save();
     ctx.globalAlpha = 0.12;
     const cols = Math.max(1, Math.round(w / 900));
@@ -753,6 +759,7 @@ const Art = {
     for (let i = 0; i < cols; i++) {
       for (let j = 0; j < rows; j++) {
         const cx = w * (i + 0.5) / cols, cy = h * (j + 0.5) / rows;
+        if (cx + 310 < vx0 || cx - 310 > vx1 || cy + 220 < vy0 || cy - 220 > vy1) continue;
         const rg = ctx.createRadialGradient(cx, cy, 30, cx, cy, 300);
         rg.addColorStop(0, p.glow);
         rg.addColorStop(1, 'rgba(0,0,0,0)');
