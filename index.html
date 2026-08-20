@@ -179,6 +179,12 @@
     <div class="rot-text">סובב את הטלפון לרוחב</div>
     <div class="rot-sub">הזירה של יהלי רחבה</div>
   </div>
+
+  <!-- ===== התראת עדכון PWA ===== -->
+  <div id="updateBanner" class="update-banner">
+    <span>יש גרסה חדשה</span>
+    <button id="btnUpdate" class="btn-update">רענון</button>
+  </div>
 </div>
 
 <script src="js/utils.js"></script>
@@ -192,12 +198,31 @@
 <script src="js/game.js"></script>
 
 <script>
-  /* מאפשר "הוסף למסך הבית" ומשחק אופליין. נכשל בשקט אם לא נתמך. */
+  /* מאפשר "הוסף למסך הבית", משחק אופליין, ועדכון אוטומטי בלי הסרה+התקנה מחדש.
+     נכשל בשקט אם לא נתמך. */
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
+      navigator.serviceWorker.register('sw.js').then((reg) => {
+        /* iOS Safari עצל בבדיקת עדכונים לבד — בכל פעם שהאפליקציה
+           חוזרת לחזית (נפתחת מהרקע), מבקשים בעצמנו לבדוק אם יש חדש. */
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) reg.update().catch(() => {});
+        });
+      }).catch(() => {});
+
+      /* controllerchange = ה-service worker שמגיש את הדף התחלף.
+         בהתקנה הראשונה זה קורה גם כן (null -> worker) — לא רוצים
+         להראות "יש עדכון" למי שרק עכשיו התקין. hadController שומר
+         על זה: אם כבר היה לנו controller לפני האירוע, זה עדכון אמיתי. */
+      let hadController = !!navigator.serviceWorker.controller;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!hadController) { hadController = true; return; }
+        document.getElementById('updateBanner').classList.add('show');
+      });
     });
   }
+
+  document.getElementById('btnUpdate').addEventListener('click', () => location.reload());
 </script>
 </body>
 </html>
