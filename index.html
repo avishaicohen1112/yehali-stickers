@@ -36,14 +36,23 @@
         <div class="logo-tag">אל תיתן להם לתפוס אותך</div>
       </div>
 
+      <div class="wallet">
+        <div class="w-item"><span class="w-ico w-coin">●</span><b id="coinCount">0</b><i>מטבעות</i></div>
+        <div class="w-item"><span class="w-ico w-trophy">▲</span><b id="trophyCount">0</b><i>גביעים</i></div>
+      </div>
+
       <button id="btnPlay" class="btn btn-primary">שחק</button>
 
+      <div class="menu-row">
+        <button id="btnMaps" class="btn btn-ghost">מפות</button>
+        <button id="btnShop" class="btn btn-ghost">חנות</button>
+      </div>
       <div class="menu-row">
         <button id="btnHow" class="btn btn-ghost">איך משחקים</button>
         <button id="btnGallery" class="btn btn-ghost">אוסף הסטיקרים</button>
       </div>
 
-      <div class="best-line">שיא: <b id="bestScore">0</b></div>
+      <div class="best-line">שיא: <b id="bestScore">0</b> · מפה: <b id="curMap">הסלון של יהלי</b></div>
       <div class="hint-line">חצים / WASD לתזוזה · רווח לדאש</div>
     </div>
   </div>
@@ -65,15 +74,28 @@
         <li><b class="c-sprint">ספרינטר</b> — נעצר, מסמן קו, ואז מסתער. תזוז מהקו.</li>
         <li><b class="c-photo">צלם</b> — שומר מרחק וזורק עליך סטיקרים מעופפים.</li>
         <li><b class="c-tank">טנק</b> — גדול ואיטי, אי אפשר להדוף אותו.</li>
+        <li><b class="c-block">חוסם</b> — רץ לאן שאתה <b>עומד להיות</b>. בריחה בקו ישר לא עובדת עליו.</li>
+        <li><b class="c-sticky">דביק</b> — מטפטף שלוליות שמאטות אותך. תעקוף.</li>
+        <li><b class="c-hopper">קופץ</b> — מזנק בקשת. באוויר אי אפשר לגעת בו.</li>
       </ul>
 
       <h3>שדרוגים</h3>
       <ul class="bullets">
-        <li><b class="c-duo">דואלינגו</b> — כולם קופאים במקום.</li>
+        <li><b class="c-duo">דואלינגו</b> — כולם עוצרים ומקשיבים ליהלי לומד ספרדית.</li>
+        <li><b class="c-duo">דואלינגו+</b> — נדיר. אותו דבר, הרבה יותר זמן.</li>
         <li><b class="c-boeing">בואינג 737</b> — מהירות מטורפת ודאש חופשי.</li>
+        <li><b class="c-pizza">יהלי פיצה</b> — זורק פיצות לבד על מי שהכי קרוב.</li>
+        <li><b class="c-goulash">גולאש</b> — אגרוף בטן שמפיל את כל מי שסביבך.</li>
         <li><b class="c-wagyu">וואגיו A5</b> — מקלף סטיקר אחד מהמסך.</li>
-        <li><b class="c-pun">פאנישר</b> — חסינות, ואתה מפיל כל מי שנוגע בך.</li>
+        <li><b class="c-pun">פאנישר</b> — נדיר. חסינות, ואתה מפיל כל מי שנוגע בך.</li>
         <li><b class="c-sey">סיישל</b> — נדיר. הרבה נקודות והרבה נצנצים.</li>
+      </ul>
+
+      <h3>אוסף, מטבעות וגביעים</h3>
+      <ul class="bullets">
+        <li><b>סטיקרים</b> נפתחים באוסף כשאתה <b>אוסף</b> אותם צפים בזירה — לא כשחוטפים.</li>
+        <li><b>מטבעות</b> על גלים, קומבו וניקוד — לחנות הקוסמטית.</li>
+        <li><b>גביעים</b> פותחים מפות. עולים על ריצה טובה, יורדים על חלשה.</li>
       </ul>
 
       <p class="note">כל פגיעה מדביקה לך סטיקר אמיתי על המסך ומסתירה חלק מהשדה. חמישה סטיקרים — נפסלת.</p>
@@ -85,8 +107,28 @@
   <div id="gallery" class="screen panel-screen">
     <div class="panel">
       <h2>אוסף הסטיקרים</h2>
-      <p class="note">כל סטיקר שחטפת פעם אחת נפתח כאן לתמיד.</p>
+      <p class="note">סטיקרים נפתחים כשאתה <b>אוסף</b> אותם בזירה — לא כשחוטפים. חפש אותם צפים באוויר תוך כדי ריצה.</p>
       <div id="galleryGrid" class="gallery-grid"></div>
+      <button class="btn btn-primary close-panel">חזרה</button>
+    </div>
+  </div>
+
+  <!-- ===== בחירת מפה ===== -->
+  <div id="maps" class="screen panel-screen">
+    <div class="panel">
+      <h2>מפות</h2>
+      <p class="note">מפות נפתחות בגביעים. גביעים עולים על ריצה טובה — ויורדים על ריצה חלשה.</p>
+      <div id="mapList" class="map-list"></div>
+      <button class="btn btn-primary close-panel">חזרה</button>
+    </div>
+  </div>
+
+  <!-- ===== חנות ===== -->
+  <div id="shop" class="screen panel-screen">
+    <div class="panel">
+      <h2>חנות</h2>
+      <p class="note">קוסמטיקה בלבד — כלום פה לא הופך אותך לחזק יותר. יש לך <b id="shopCoins">0</b> מטבעות.</p>
+      <div id="shopList" class="shop-list"></div>
       <button class="btn btn-primary close-panel">חזרה</button>
     </div>
   </div>
@@ -111,8 +153,15 @@
         <div><span id="ovTime">0:00</span><i>זמן</i></div>
       </div>
       <div class="over-best" id="ovBest"></div>
+      <div class="over-earn">
+        <span class="e-coin">+<b id="ovCoins">0</b> מטבעות</span>
+        <span class="e-trophy" id="ovTrophyWrap"><b id="ovTrophy">0</b> גביעים</span>
+      </div>
       <button id="btnAgain" class="btn btn-primary">עוד פעם</button>
-      <button id="btnMenu" class="btn btn-ghost">לתפריט</button>
+      <div class="menu-row">
+        <button id="btnMenu" class="btn btn-ghost">לתפריט</button>
+        <button id="btnOverMaps" class="btn btn-ghost">מפות</button>
+      </div>
     </div>
   </div>
 

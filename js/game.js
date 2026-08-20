@@ -32,6 +32,24 @@ const Game = {
   pickups: [],
   spawnMarks: [],
   obstacles: [],
+  puddles: [],           // שלוליות של ה'דביק'
+  pizzas: [],            // פיצות שיהלי זרק
+  collects: [],          // סטיקרים שצפים בזירה לאיסוף
+
+  /* --- מפה ומצלמה --- */
+  map: null,             // הגדרת המפה הנוכחית מתוך CFG.maps
+  mapIndex: 0,
+  cam: { x: 0, y: 0 },
+
+  /* --- כלכלה והתקדמות --- */
+  coins: 0,
+  trophies: 0,
+  runCoins: 0,           // כמה נצברו בריצה הנוכחית
+  runTrophies: 0,
+  owned: {},             // פריטי חנות שנקנו
+  equipped: {},          // cat -> id
+  mapsOpen: {},          // מפות שנפתחו בפועל (מעבר לחינמיות)
+  bestMap: {},           // שיא לכל מפה
 
   stickers: [],          // סטיקרים שכבר נדבקו
   slap: null,            // אנימציית ההדבקה הנוכחית
@@ -65,10 +83,18 @@ const Game = {
 
     this.best = U.store.get(CFG.keys.best, 0);
     this.unlocked = U.store.get(CFG.keys.unlocked, {});
+    this.coins = U.store.get(CFG.keys.coins, 0);
+    this.trophies = U.store.get(CFG.keys.trophies, 0);
+    this.owned = U.store.get(CFG.keys.owned, { skin_classic: true });
+    this.equipped = U.store.get(CFG.keys.equipped, {});
+    this.mapsOpen = U.store.get(CFG.keys.mapsOpen, {});
+    this.bestMap = U.store.get(CFG.keys.bestMap, {});
     document.getElementById('bestScore').textContent = U.numStr(this.best);
     this._syncSoundBtn();
+    this.syncWallet();
 
-    this.buildObstacles();
+    /* המפה הראשונה היא ברירת המחדל — גם לרקע החי של התפריט */
+    this.setMap(0);
     this.resize();
     window.addEventListener('resize', () => this.resize());
 
@@ -89,12 +115,45 @@ const Game = {
     this.raf = requestAnimationFrame((t) => this.frame(t));
   },
 
+  /* ============================================================
+     מפות
+     ============================================================ */
+  setMap(i) {
+    this.mapIndex = U.clamp(i, 0, CFG.maps.length - 1);
+    this.map = CFG.maps[this.mapIndex];
+    CFG.worldW = this.map.w;
+    CFG.worldH = this.map.h;
+    this.buildObstacles();
+    this.cam.x = 0;
+    this.cam.y = 0;
+  },
+
+  mapOpen(m) {
+    return m.cost === 0 || !!this.mapsOpen[m.id] || this.trophies >= m.cost;
+  },
+
   buildObstacles() {
-    this.obstacles = CFG.obstacles.map(o => ({
-      x: Math.round(CFG.W * o.x - o.w / 2),
-      y: Math.round(CFG.H * o.y - o.h / 2),
+    this.obstacles = this.map.obstacles.map(o => ({
+      x: Math.round(this.map.w * o.x - o.w / 2),
+      y: Math.round(this.map.h * o.y - o.h / 2),
       w: o.w, h: o.h, kind: o.kind
     }));
+  },
+
+  /* המצלמה עוקבת אחרי יהלי ונעצרת בקצוות המפה.
+     מפה בגודל החלון => אין תזוזה בכלל, בדיוק כמו קודם. */
+  updateCamera(dt, snap) {
+    const p = this.player;
+    if (!p) return;
+    const maxX = Math.max(0, CFG.worldW - CFG.W);
+    const maxY = Math.max(0, CFG.worldH - CFG.H);
+
+    const tx = U.clamp(p.x + p.vx * CFG.cam.lookAhead - CFG.W / 2, 0, maxX);
+    const ty = U.clamp(p.y + p.vy * CFG.cam.lookAhead - CFG.H / 2, 0, maxY);
+
+    if (snap) { this.cam.x = tx; this.cam.y = ty; return; }
+    this.cam.x = U.damp(this.cam.x, tx, CFG.cam.follow, dt);
+    this.cam.y = U.damp(this.cam.y, ty, CFG.cam.follow, dt);
   },
 
   resize() {
@@ -118,7 +177,7 @@ const Game = {
      ממשק
      ============================================================ */
   show(id) {
-    ['loading', 'menu', 'how', 'gallery', 'pause', 'over'].forEach(s => {
+    ['loading', 'menu', 'how', 'gallery', 'maps', 'shop', 'pause', 'over'].forEach(s => {
       document.getElementById(s).classList.toggle('show', s === id);
     });
   },
@@ -133,13 +192,16 @@ const Game = {
     click('btnPlay', () => this.start());
     click('btnHow', () => this.show('how'));
     click('btnGallery', () => { this.buildGallery(); this.show('gallery'); });
+    click('btnMaps', () => { this.buildMaps(); this.show('maps'); });
+    click('btnShop', () => { this.buildShop(); this.show('shop'); });
     click('btnResume', () => this.resume());
     click('btnQuit', () => this.toMenu());
     click('btnAgain', () => this.start());
     click('btnMenu', () => this.toMenu());
+    click('btnOverMaps', () => { this.toMenu(); this.buildMaps(); this.show('maps'); });
 
     document.querySelectorAll('.close-panel').forEach(b => {
-      b.addEventListener('click', () => { Sound.ui(); this.show('menu'); });
+      b.addEventListener('click', () => { Sound.ui(); this.toMenu(); });
     });
 
     document.getElementById('soundBtn').addEventListener('click', () => {
@@ -198,9 +260,158 @@ const Game = {
       n.textContent = (i + 1) + '/' + CFG.stickers.length;
       card.appendChild(n);
 
-      card.title = got ? s.caption : 'עוד לא חטפת את זה';
+      /* תג נדירות — צבוע לפי הדרגה */
+      const tier = s.tier || 'רגיל';
+      const tdef = CFG.rarity.tiers[tier];
+      if (tdef) {
+        const t = document.createElement('div');
+        t.className = 'num';
+        t.style.cssText = 'top:auto;bottom:5px;right:6px;left:6px;text-align:center;color:' +
+                          tdef.color + ';font-weight:800;';
+        t.textContent = tier;
+        card.appendChild(t);
+      }
+
+      card.title = got ? s.caption : 'עוד לא אספת את זה';
       grid.appendChild(card);
     });
+  },
+
+  /* ============================================================
+     בחירת מפה
+     ============================================================ */
+  buildMaps() {
+    const list = document.getElementById('mapList');
+    list.innerHTML = '';
+
+    CFG.maps.forEach((m, i) => {
+      const open = this.mapOpen(m);
+      const card = document.createElement('div');
+      card.className = 'map-card' + (i === this.mapIndex ? ' on' : '') + (open ? '' : ' locked');
+
+      const sw = document.createElement('div');
+      sw.className = 'map-swatch';
+      sw.style.background = 'linear-gradient(135deg,' + m.pal.a + ',' + m.pal.c + ')';
+      card.appendChild(sw);
+
+      const info = document.createElement('div');
+      info.className = 'map-info';
+      const best = this.bestMap[m.id] || 0;
+      info.innerHTML =
+        '<div class="map-name">' + m.name + '</div>' +
+        '<div class="map-sub">' + m.sub + '</div>' +
+        '<div class="map-meta">' + m.w + '×' + m.h + ' · ' +
+          m.foes.length + ' סוגי חברה' + (best ? ' · שיא ' + U.numStr(best) : '') + '</div>';
+      card.appendChild(info);
+
+      const tag = document.createElement('div');
+      tag.className = 'map-tag' + (open ? ' open' : '');
+      tag.textContent = open ? (i === this.mapIndex ? 'נבחרה' : 'פתוחה') : ('▲ ' + m.cost);
+      card.appendChild(tag);
+
+      if (open) {
+        card.addEventListener('click', () => {
+          Sound.ui();
+          this.setMap(i);
+          if (m.cost > 0 && !this.mapsOpen[m.id]) {
+            /* פתיחה ראשונה — בונוס חד-פעמי */
+            this.mapsOpen[m.id] = true;
+            U.store.set(CFG.keys.mapsOpen, this.mapsOpen);
+            this.addCoins(CFG.coin.firstClear);
+          }
+          this.buildMaps();
+          this.syncWallet();
+        });
+      }
+      list.appendChild(card);
+    });
+  },
+
+  /* ============================================================
+     חנות — קוסמטיקה בלבד
+     ============================================================ */
+  buildShop() {
+    const list = document.getElementById('shopList');
+    list.innerHTML = '';
+    document.getElementById('shopCoins').textContent = U.numStr(this.coins);
+
+    if (!CFG.shopItems.length) {
+      list.innerHTML = '<div class="shop-empty">בקרוב.</div>';
+      return;
+    }
+
+    for (const it of CFG.shopItems) {
+      const owned = !!this.owned[it.id] || it.cost === 0;
+      const on = this.equipped[it.cat] === it.id;
+      const afford = this.coins >= it.cost;
+
+      const card = document.createElement('div');
+      card.className = 'shop-card' + (on ? ' on' : '') + ((owned || afford) ? '' : ' cant');
+
+      const dot = document.createElement('div');
+      dot.className = 'shop-dot';
+      dot.style.background = it.color || it.shirt || '#888';
+      card.appendChild(dot);
+
+      const nm = document.createElement('div');
+      nm.className = 'shop-name';
+      nm.textContent = it.name;
+      card.appendChild(nm);
+
+      const cost = document.createElement('div');
+      cost.className = 'shop-cost' + (owned ? ' owned' : '');
+      cost.textContent = on ? '✓ מצויד' : (owned ? 'לחץ לצייד' : '● ' + it.cost);
+      card.appendChild(cost);
+
+      card.addEventListener('click', () => {
+        if (owned) {
+          Sound.ui();
+          this.equipped[it.cat] = on ? null : it.id;   // לחיצה שנייה מסירה
+          U.store.set(CFG.keys.equipped, this.equipped);
+          this.buildShop();
+          return;
+        }
+        if (!afford) { Sound.tone(150, 0.12, { type: 'square', vol: 0.05 }); return; }
+        Sound.pickup('sey');
+        this.coins -= it.cost;
+        this.owned[it.id] = true;
+        this.equipped[it.cat] = it.id;
+        U.store.set(CFG.keys.coins, this.coins);
+        U.store.set(CFG.keys.owned, this.owned);
+        U.store.set(CFG.keys.equipped, this.equipped);
+        this.buildShop();
+        this.syncWallet();
+      });
+
+      list.appendChild(card);
+    }
+  },
+
+  /* ============================================================
+     ארנק
+     ============================================================ */
+  syncWallet() {
+    const c = document.getElementById('coinCount');
+    const t = document.getElementById('trophyCount');
+    const m = document.getElementById('curMap');
+    if (c) c.textContent = U.numStr(this.coins);
+    if (t) t.textContent = U.numStr(this.trophies);
+    if (m && this.map) m.textContent = this.map.name;
+  },
+
+  addCoins(n) {
+    this.coins += n;
+    U.store.set(CFG.keys.coins, this.coins);
+  },
+
+  /* צבע/סקין מהחנות אל תוך השחקן */
+  applyCosmetics() {
+    if (!this.player) return;
+    const find = (id) => CFG.shopItems.find(s => s.id === id);
+    const tr = find(this.equipped.trail);
+    const sk = find(this.equipped.skin);
+    this.player.trail = (tr && tr.color) || '#ffcc3d';
+    this.player.shirt = (sk && sk.shirt) || null;
   },
 
   /* ============================================================
@@ -209,12 +420,21 @@ const Game = {
   start() {
     Sound.unlock();
 
+    /* המפה נטענת מחדש בכל ריצה — worldW/H חייבים להיות נכונים
+       *לפני* שנוצר השחקן, כי המיקום ההתחלתי נגזר מהם. */
+    this.setMap(this.mapIndex);
+
     this.player = new Player();
+    this.applyCosmetics();
+
     this.foes.length = 0;
     this.shots.length = 0;
     this.pickups.length = 0;
     this.spawnMarks.length = 0;
     this.stickers.length = 0;
+    this.puddles.length = 0;
+    this.pizzas.length = 0;
+    this.collects.length = 0;
     this.slap = null;
     this.timeScale = 1;
 
@@ -225,13 +445,20 @@ const Game = {
     this.combo = 1;
     this.comboTimer = 0;
     this.pickupTimer = CFG.pickup.firstAt;
+    this.collectTimer = CFG.collect.firstAt;
     this.powers = {};
     this.sey = null;
     this.seyDelay = 0;
     this.usedStickers = [];
+    this.runCoins = 0;
+    this.runTrophies = 0;
+    this.coinScoreMark = 0;
+    this.duoTalk = null;
+    this.replyQueue = [];
 
     FX.reset();
     Assets.resetBag();
+    this.updateCamera(0, true);
 
     this.hideAll();
     this.state = 'playing';
@@ -258,6 +485,7 @@ const Game = {
     Sound.stopMusic();
     this.show('menu');
     document.getElementById('bestScore').textContent = U.numStr(this.best);
+    this.syncWallet();
   },
 
   gameOver() {
@@ -272,13 +500,40 @@ const Game = {
       U.store.set(CFG.keys.best, this.best);
     }
 
+    /* שיא לכל מפה בנפרד — כדי שמפה קשה לא "תיראה גרועה" מול הסלון */
+    const mid = this.map.id;
+    if (this.score > (this.bestMap[mid] || 0)) {
+      this.bestMap[mid] = Math.floor(this.score);
+      U.store.set(CFG.keys.bestMap, this.bestMap);
+    }
+
+    /* --- גביעים: עולים על ריצה טובה, יורדים על ריצה חלשה --- */
+    const t = CFG.trophy;
+    let dTrophy;
+    if (this.wave > t.freeWaves) dTrophy = (this.wave - t.freeWaves) * t.perWave;
+    else dTrophy = t.lossOnBad;
+    /* לא יורדים מתחת לאפס — שלא ייתקע במינוס ויאבד גישה למפות */
+    dTrophy = Math.max(dTrophy, -this.trophies);
+    this.trophies = U.clamp(this.trophies + dTrophy, 0, t.max);
+    this.runTrophies = dTrophy;
+    U.store.set(CFG.keys.trophies, this.trophies);
+
+    /* --- מטבעות שנצברו --- */
+    this.addCoins(this.runCoins);
+
     document.getElementById('ovScore').textContent = U.numStr(this.score);
     document.getElementById('ovWave').textContent = this.wave;
     document.getElementById('ovTime').textContent = U.timeStr(this.runTime);
     document.getElementById('overNick').textContent = U.pick(CFG.nicknames);
     document.getElementById('ovBest').textContent =
       isBest ? 'שיא חדש!' : 'השיא שלך: ' + U.numStr(this.best);
+    document.getElementById('ovCoins').textContent = U.numStr(this.runCoins);
 
+    const tw = document.getElementById('ovTrophyWrap');
+    document.getElementById('ovTrophy').textContent = (dTrophy >= 0 ? '+' : '') + dTrophy;
+    tw.classList.toggle('down', dTrophy < 0);
+
+    this.syncWallet();
     setTimeout(() => this.show('over'), 620);
   },
 
@@ -289,6 +544,15 @@ const Game = {
     if (!first) {
       this.addScore(CFG.score.waveClear, this.player.x, this.player.y - 40,
                     'גל ' + (this.wave - 1) + ' הושלם');
+      this.runCoins += CFG.coin.perWave;
+      FX.text(this.player.x, this.player.y - 74, '+' + CFG.coin.perWave + ' מטבעות', {
+        size: 16, color: '#ffcc3d', life: 1.2, vy: -34
+      });
+
+      /* "בפוקס" — סיכוי קטן שסטיקר נדיר פשוט נופל עליך */
+      if (this.wave >= CFG.collect.luckyMinWave && U.chance(CFG.collect.luckyChance)) {
+        this.spawnCollectible(true);
+      }
     }
 
     /* כמה חברה אמורים להיות בזירה */
@@ -299,21 +563,25 @@ const Game = {
     const alive = this.foes.length + this.spawnMarks.length;
     const toSpawn = Math.max(first ? desired : 1, desired - alive);
 
-    /* אילו סוגים פתוחים */
+    /* אילו סוגים פתוחים — רק אלה שהמפה הנוכחית מגדירה.
+       זה מה שגורם למפה להרגיש שונה ולא רק להיראות שונה. */
+    const roster = this.map.foes;
     const pool = [];
-    for (const key in CFG.foes) {
+    for (const key of roster) {
       const d = CFG.foes[key];
-      if (this.wave >= d.unlock) {
+      if (d && this.wave >= d.unlock) {
         for (let i = 0; i < d.weight; i++) pool.push(key);
       }
     }
+    /* גל מוקדם מאוד במפה שאין בה 'רודף' — שלא ייווצר גל ריק */
+    if (!pool.length) pool.push(roster[0]);
 
     for (let i = 0; i < toSpawn; i++) {
       /* בגל שבו סוג חדש נפתח — מבטיחים שהוא יופיע */
       let type = U.pick(pool);
       if (i === 0) {
-        for (const key in CFG.foes) {
-          if (CFG.foes[key].unlock === this.wave) { type = key; break; }
+        for (const key of roster) {
+          if (CFG.foes[key] && CFG.foes[key].unlock === this.wave) { type = key; break; }
         }
       }
       this.queueSpawn(type, 0.35 + i * CFG.wave.spawnStagger);
@@ -330,18 +598,20 @@ const Game = {
   },
 
   queueSpawn(type, delay) {
-    /* נקודה על היקף הזירה, רחוקה מהשחקן ולא בתוך מכשול */
+    /* נקודה בטבעת סביב השחקן: רחוק מספיק כדי להיות הוגן, קרוב מספיק
+       כדי שלא יבזבזו חצי גל בהליכה. במפה גדולה, הופעה בפינה הרחוקה
+       פשוט מרוקנת את הזירה — לכן הטבעת ולא היקף המפה. */
+    const m = CFG.WALL + 52;
+    const mt = CFG.WALL_TOP + 52;
     let x = 0, y = 0, ok = false;
-    for (let tries = 0; tries < 60 && !ok; tries++) {
-      const m = CFG.WALL + 52;
-      const mt = CFG.WALL_TOP + 52;
-      const side = U.randInt(0, 3);
-      if (side === 0) { x = U.rand(m, CFG.W - m); y = mt; }
-      else if (side === 1) { x = U.rand(m, CFG.W - m); y = CFG.H - m; }
-      else if (side === 2) { x = m; y = U.rand(mt, CFG.H - m); }
-      else { x = CFG.W - m; y = U.rand(mt, CFG.H - m); }
 
-      ok = U.dist(x, y, this.player.x, this.player.y) > 270;
+    for (let tries = 0; tries < 70 && !ok; tries++) {
+      const ang = U.rand(0, Math.PI * 2);
+      const rad = U.rand(340, 560);
+      x = U.clamp(this.player.x + Math.cos(ang) * rad, m, CFG.worldW - m);
+      y = U.clamp(this.player.y + Math.sin(ang) * rad, mt, CFG.worldH - m);
+
+      ok = U.dist(x, y, this.player.x, this.player.y) > 290;
       if (ok) {
         for (const ob of this.obstacles) {
           if (U.circleVsRect(x, y, 34, ob.x, ob.y, ob.w, ob.h)) { ok = false; break; }
@@ -375,11 +645,13 @@ const Game = {
     if (this.sey && this.sey.t < 0.8) return;   // לא להציף
     this.sey = { t: 0, dur: 2.15 };
     Sound.glitter();
-    FX.glitter(CFG.W / 2, CFG.H / 2, 70);
+    /* מרכז *התצוגה* מומר לקואורדינטות עולם — האפקטים חיים בעולם */
+    const wx = this.cam.x + CFG.W / 2, wy = this.cam.y + CFG.H / 2;
+    FX.glitter(wx, wy, 70);
     FX.addShake(6);
     if (fromPickup) {
-      this.addScore(CFG.score.seychelles, CFG.W / 2, CFG.H / 2 + 90);
-      FX.confetti(CFG.W / 2, CFG.H / 2, 60);
+      this.addScore(CFG.score.seychelles, wx, wy + 90);
+      FX.confetti(wx, wy, 60);
     }
   },
 
@@ -400,8 +672,8 @@ const Game = {
     const slotIndex = this.stickers.length;
     const slot = SLOTS[Math.min(slotIndex, SLOTS.length - 1)];
 
-    this.unlocked[idx] = true;
-    U.store.set(CFG.keys.unlocked, this.unlocked);
+    /* שים לב: כאן *לא* נפתח הסטיקר באוסף.
+       פתיחה בגלריה עברה ל-collectSticker() — זוכים בניצחון, לא בהפסד. */
 
     this.slap = {
       index: idx,
@@ -432,28 +704,153 @@ const Game = {
   /* ============================================================
      שדרוגים
      ============================================================ */
+  /* מקום פנוי בזירה, לא צמוד לשחקן ולא בתוך מכשול.
+     מוגבל לאזור סביב המצלמה כדי שלא ייפול משהו בקצה השני של מפה ענקית. */
+  freeSpot(pad, minFromPlayer) {
+    const m = CFG.WALL + pad, mt = CFG.WALL_TOP + pad;
+    let x = 0, y = 0;
+    for (let t = 0; t < 70; t++) {
+      x = U.clamp(this.cam.x + U.rand(m, CFG.W - m), m, CFG.worldW - m);
+      y = U.clamp(this.cam.y + U.rand(mt, CFG.H - m), mt, CFG.worldH - m);
+      if (U.dist(x, y, this.player.x, this.player.y) < minFromPlayer) continue;
+      let hit = false;
+      for (const ob of this.obstacles) {
+        if (U.circleVsRect(x, y, pad, ob.x, ob.y, ob.w, ob.h)) { hit = true; break; }
+      }
+      if (!hit) return { x, y };
+    }
+    return { x, y };
+  },
+
   spawnPickup() {
     /* וואגיו הוא מנגנון חזרה למשחק, לא שדרוג שגרתי:
-       הוא מופיע רק אחרי שנדבקו לפחות שני סטיקרים. */
+       מופיע רק אחרי שכבר נדבק סטיקר, ולכן weight=0 בטבלה. */
     let kind;
     if (U.chance(CFG.pickup.seychellesChance)) kind = 'sey';
     else if (this.stickers.length >= 1 && U.chance(0.32)) kind = 'wagyu';
-    else kind = U.pick(['duo', 'boeing', 'pun']);
-
-    /* מיקום פנוי, לא צמוד לשחקן ולא בתוך מכשול */
-    let x = 0, y = 0, ok = false;
-    for (let t = 0; t < 60 && !ok; t++) {
-      x = U.rand(CFG.WALL + 70, CFG.W - CFG.WALL - 70);
-      y = U.rand(CFG.WALL_TOP + 60, CFG.H - CFG.WALL - 70);
-      ok = U.dist(x, y, this.player.x, this.player.y) > 130;
-      if (ok) {
-        for (const ob of this.obstacles) {
-          if (U.circleVsRect(x, y, 42, ob.x, ob.y, ob.w, ob.h)) { ok = false; break; }
-        }
+    else {
+      /* הגרלה משוקללת — כאן חי הנרף לפאנישר (weight נמוך) */
+      const pool = [];
+      for (const k in CFG.power) {
+        const w = CFG.power[k].weight || 0;
+        for (let i = 0; i < w; i++) pool.push(k);
       }
+      kind = U.pick(pool);
     }
-    this.pickups.push(new Pickup(kind, x, y));
-    FX.ring(x, y, { r0: 4, r1: 60, life: 0.5, color: CFG.power[kind].color + 'cc' });
+
+    const s = this.freeSpot(70, 130);
+    this.pickups.push(new Pickup(kind, s.x, s.y));
+    FX.ring(s.x, s.y, { r0: 4, r1: 60, life: 0.5, color: CFG.power[kind].color + 'cc' });
+  },
+
+  /* ============================================================
+     סטיקר לאיסוף — הערוץ החדש לפתיחת האוסף
+     ============================================================ */
+  spawnCollectible(lucky) {
+    /* בוחרים סטיקר שעוד לא נאסף. אם הכל נאסף — אין מה להפיל. */
+    const pool = [];
+    for (let i = 0; i < CFG.stickers.length; i++) {
+      if (this.unlocked[i]) continue;
+      const st = CFG.stickers[i];
+      const set = CFG.sets[st.set] || { mult: 1, map: null };
+      /* סט שנעול למפה מסוימת לא יופיע במפה אחרת */
+      if (set.map && set.map !== this.map.id) continue;
+      const tier = CFG.rarity.tiers[st.tier || 'רגיל'] || CFG.rarity.tiers['רגיל'];
+      /* נדירות בפועל = משקל הדרגה × מכפיל הסט */
+      const w = Math.max(1, Math.round(tier.weight * (set.mult == null ? 1 : set.mult)));
+      for (let k = 0; k < w; k++) pool.push(i);
+    }
+    if (!pool.length) return;
+
+    const idx = U.pick(pool);
+    /* "בפוקס" נוחת ממש לידך; רגיל מופיע בזירה ודורש להגיע אליו */
+    const s = lucky ? this.freeSpot(50, 60) : this.freeSpot(60, 190);
+    this.collects.push(new Collectible(idx, s.x, s.y));
+
+    const tdef = CFG.rarity.tiers[CFG.stickers[idx].tier || 'רגיל'];
+    FX.ring(s.x, s.y, { r0: 6, r1: 90, life: 0.6, color: tdef.color, width: 4 });
+    Sound.glitter();
+    if (lucky) {
+      FX.text(s.x, s.y - 58, 'בפוקס!', { size: 24, color: tdef.color, life: 1.6, vy: -30 });
+      FX.confetti(s.x, s.y, 30);
+    }
+  },
+
+  collectSticker(c) {
+    this.unlocked[c.index] = true;
+    U.store.set(CFG.keys.unlocked, this.unlocked);
+
+    const bonus = Math.round(60 / Math.max(1, c.def.weight / 12));
+    this.runCoins += bonus;
+    this.addScore(300, c.x, c.y - 30, c.tier);
+
+    FX.confetti(c.x, c.y, 34);
+    FX.ring(c.x, c.y, { r0: 8, r1: 120, life: 0.55, color: c.def.color, width: 5 });
+    FX.text(c.x, c.y - 62, 'נוסף לאוסף!', { size: 22, color: c.def.color, life: 1.7, vy: -34 });
+    FX.text(c.x, c.y - 92, '+' + bonus + ' מטבעות', { size: 15, color: '#ffcc3d', life: 1.5, vy: -30 });
+    Sound.glitter();
+    if (c.def.glow >= 1) this.triggerSeychelles(false);
+  },
+
+  /* ============================================================
+     יהלי עונה לחבר'ה — "אמאשך" + מה שהם אמרו
+     ============================================================ */
+  yehaliReply(line) {
+    if (!U.chance(CFG.yehaliTalk.chance)) return;
+    const d = CFG.yehaliTalk.delay;
+    const text = U.chance(0.72)
+      ? CFG.yehaliTalk.prefix + line.replace(/[!.]+$/, '')
+      : U.pick(CFG.yehaliTalk.solo);
+    this.replyQueue.push({ t: U.rand(d[0], d[1]), text });
+  },
+
+  /* ============================================================
+     יהלי פיצה — זריקה אוטומטית על הקרוב ביותר
+     ============================================================ */
+  throwPizza() {
+    const p = this.player;
+    let best = null, bestD = CFG.pizzaShot.range;
+    for (const f of this.foes) {
+      if (f.untouchable) continue;
+      const d = U.dist(f.x, f.y, p.x, p.y);
+      if (d < bestD) { bestD = d; best = f; }
+    }
+    if (!best) return;
+    const n = U.norm(best.x - p.x, best.y - p.y);
+    this.pizzas.push(new Pizza(p.x + n.x * 20, p.y + n.y * 20 - 6, n.x, n.y));
+    Sound.tone(520, 0.07, { type: 'triangle', vol: 0.06, filter: 2200 });
+  },
+
+  /* ============================================================
+     גולאש — אגרוף בטן שמפיל את כל מי שסביב
+     ============================================================ */
+  goulashSlam() {
+    const p = this.player;
+    const g = CFG.goulash;
+    let hits = 0;
+
+    for (let i = this.foes.length - 1; i >= 0; i--) {
+      const f = this.foes[i];
+      const d = U.dist(f.x, f.y, p.x, p.y);
+      if (d > g.radius) continue;
+      f.knockOut();
+      this.addScore(CFG.score.knockout * this.combo, f.x, f.y - 40);
+      this.foes.splice(i, 1);
+      hits++;
+    }
+
+    FX.ring(p.x, p.y, { r0: 14, r1: g.radius, life: 0.5, color: 'rgba(224,86,59,.9)', width: 8 });
+    FX.ring(p.x, p.y, { r0: 8, r1: g.radius * 0.7, life: 0.34, color: 'rgba(255,255,255,.65)', width: 4 });
+    FX.burst(p.x, p.y, 28, {
+      speedMin: 120, speedMax: 460, rMin: 2, rMax: 7,
+      lifeMin: 0.3, lifeMax: 0.8, grav: 320,
+      colors: ['#e0563b', '#ffcc3d', '#ffffff']
+    });
+    FX.addShake(18);
+    Sound.knockout();
+    FX.text(p.x, p.y - 60, hits ? 'גולאש! ×' + hits : 'גולאש!', {
+      size: 24, color: '#ff7a5c', life: 1.5, vy: -36
+    });
   },
 
   applyPickup(pk) {
@@ -468,10 +865,29 @@ const Game = {
 
     switch (pk.kind) {
 
+      /* דואלינגו: כולם עוצרים ומסתכלים על יהלי לומד ספרדית.
+         דואלינגו+ הוא אותו דבר בדיוק, רק ארוך בהרבה. */
       case 'duo':
+      case 'duoPro': {
         this.powers.duo = pk.def.dur;
         for (const f of this.foes) f.frozen = pk.def.dur;
-        FX.text(p.x, p.y - 56, 'ששש… כולם קופאים', { size: 21, color: '#8ee34a', life: 1.5 });
+        FX.text(p.x, p.y - 56, 'רגע, אני לומד דואלינגו', {
+          size: pk.kind === 'duoPro' ? 24 : 21, color: pk.def.color, life: 1.7
+        });
+        /* בועות הספרדית מתחילות אחרי שהכיתוב הראשי נקרא */
+        this.duoTalk = { t: 0.9, left: pk.def.dur - 0.6, i: U.randInt(0, CFG.duoLines.length - 1) };
+        if (pk.kind === 'duoPro') FX.confetti(p.x, p.y, 26);
+        break;
+      }
+
+      case 'pizza':
+        this.powers.pizza = pk.def.dur;
+        p.pizzaTimer = 0.25;
+        FX.text(p.x, p.y - 56, 'יהלי פיצה!', { size: 22, color: '#ff8a3d', life: 1.5 });
+        break;
+
+      case 'goulash':
+        this.goulashSlam();
         break;
 
       case 'boeing':
@@ -613,6 +1029,86 @@ const Game = {
       }
     }
 
+    /* --- סטיקרים לאיסוף --- */
+    this.collectTimer -= gdt;
+    if (this.collectTimer <= 0) {
+      this.collectTimer = U.rand(CFG.collect.every[0], CFG.collect.every[1]);
+      if (this.collects.length < 2) this.spawnCollectible(false);
+    }
+    for (let i = this.collects.length - 1; i >= 0; i--) {
+      const c = this.collects[i];
+      if (!c.update(gdt)) { this.collects.splice(i, 1); continue; }
+      if (U.dist(c.x, c.y, this.player.x, this.player.y) < c.r + this.player.r + 6) {
+        this.collectSticker(c);
+        this.collects.splice(i, 1);
+      }
+    }
+
+    /* --- שלוליות --- */
+    for (let i = this.puddles.length - 1; i >= 0; i--) {
+      if (!this.puddles[i].update(gdt)) this.puddles.splice(i, 1);
+    }
+
+    /* --- פיצות --- */
+    for (let i = this.pizzas.length - 1; i >= 0; i--) {
+      const pz = this.pizzas[i];
+      if (!pz.update(gdt, this)) {
+        FX.burst(pz.x, pz.y, 9, {
+          speedMin: 40, speedMax: 170, rMin: 2, rMax: 4,
+          lifeMin: 0.2, lifeMax: 0.45, colors: ['#ffcf7a', '#d8442f']
+        });
+        this.pizzas.splice(i, 1);
+        continue;
+      }
+      /* פיצה מפילה חבר — הדרך של יהלי פיצה לנקות את הזירה */
+      let done = false;
+      for (let j = this.foes.length - 1; j >= 0 && !done; j--) {
+        const f = this.foes[j];
+        if (f.untouchable) continue;
+        if (U.dist(pz.x, pz.y, f.x, f.y) < pz.r + f.r) {
+          f.knockOut();
+          this.addScore(CFG.score.knockout * this.combo, f.x, f.y - 40);
+          this.foes.splice(j, 1);
+          this.pizzas.splice(i, 1);
+          FX.addShake(6);
+          done = true;
+        }
+      }
+    }
+
+    /* --- יהלי לומד ספרדית (בועות הדואלינגו) --- */
+    if (this.duoTalk) {
+      this.duoTalk.left -= gdt;
+      this.duoTalk.t -= gdt;
+      if (this.duoTalk.t <= 0 && this.duoTalk.left > 0.4) {
+        this.duoTalk.t = U.rand(1.3, 1.9);
+        const line = CFG.duoLines[this.duoTalk.i % CFG.duoLines.length];
+        this.duoTalk.i++;
+        FX.text(this.player.x, this.player.y - 58, line, {
+          size: 18, color: '#9bff5b', life: 1.5, vy: -26
+        });
+      }
+      if (this.duoTalk.left <= 0) this.duoTalk = null;
+    }
+
+    /* --- תשובות של יהלי, בהשהיה כדי שלא ידברו יחד --- */
+    for (let i = this.replyQueue.length - 1; i >= 0; i--) {
+      const r = this.replyQueue[i];
+      r.t -= gdt;
+      if (r.t <= 0) {
+        FX.text(this.player.x, this.player.y - 56, r.text, {
+          size: 17, color: '#ffcc3d', life: 1.35, vy: -30
+        });
+        this.replyQueue.splice(i, 1);
+      }
+    }
+
+    /* --- מטבעות מניקוד: כל 1000 נקודות --- */
+    while (this.score - this.coinScoreMark >= 1000) {
+      this.coinScoreMark += 1000;
+      this.runCoins += CFG.coin.per1000;
+    }
+
     /* --- חברה --- */
     for (let i = this.foes.length - 1; i >= 0; i--) {
       const f = this.foes[i];
@@ -621,6 +1117,9 @@ const Game = {
 
       const d = U.dist(f.x, f.y, this.player.x, this.player.y);
       const touch = f.r + this.player.r - 3;
+
+      /* קופץ באוויר עובר מעליך — לא פוגע ולא נפגע */
+      if (f.untouchable) continue;
 
       if (d < touch) {
         if (this.player.invincible) {
@@ -647,6 +1146,8 @@ const Game = {
           if (f._nearMin < CFG.combo.nearMissDist * 0.55) {
             this.bumpCombo();
             this.addScore(CFG.score.nearMiss * this.combo, this.player.x, this.player.y - 46, 'כמעט!');
+            /* מטבעות רק בקומבו מקסימלי — תגמול על ביצוע, לא על כל חמיקה */
+            if (this.combo >= CFG.combo.max) this.runCoins += CFG.coin.perCombo;
             Sound.nearMiss();
             FX.ring(this.player.x, this.player.y, {
               r0: 18, r1: 58, life: 0.3, color: 'rgba(255,255,255,.45)', width: 2
@@ -689,7 +1190,8 @@ const Game = {
     if (this.sey) {
       this.sey.t += dt;
       if (this.sey.t < 1.2 && Math.random() < dt * 34) {
-        FX.glitter(U.rand(0, CFG.W), U.rand(CFG.H * 0.2, CFG.H * 0.8), 2);
+        FX.glitter(this.cam.x + U.rand(0, CFG.W),
+                   this.cam.y + U.rand(CFG.H * 0.2, CFG.H * 0.8), 2);
       }
       if (this.sey.t >= this.sey.dur) this.sey = null;
     }
@@ -706,6 +1208,7 @@ const Game = {
     }
 
     FX.update(dt);
+    this.updateCamera(dt, false);
 
     /* עצימות המוזיקה לפי כמה לחוץ המצב */
     const danger = U.clamp(this.foes.length / 9, 0, 1) * 0.6 +
@@ -721,18 +1224,24 @@ const Game = {
     ctx.setTransform(this.renderScale, 0, 0, this.renderScale, 0, 0);
     ctx.clearRect(0, 0, CFG.W, CFG.H);
 
-    /* ---- עולם (עם רעידה) ---- */
+    /* ---- עולם (עם רעידה ומצלמה) ----
+       כל מה שבתוך הבלוק הזה נמצא בקואורדינטות עולם.
+       מה שאחריו (סטיקרים, HUD, באנרים) הוא קואורדינטות מסך. */
     ctx.save();
     ctx.translate(FX.shakeX, FX.shakeY);
+    ctx.save();
+    ctx.translate(-Math.round(this.cam.x), -Math.round(this.cam.y));
 
-    Art.floor(ctx, CFG.W, CFG.H, this.time);
+    Art.floor(ctx, CFG.worldW, CFG.worldH, this.time, this.map && this.map.pal);
 
     if (this.state === 'playing' || this.state === 'paused' || this.state === 'over') {
       this.drawWorld(ctx);
     } else {
       this.drawIdleScene(ctx);
     }
+    ctx.restore();
 
+    if (this.state === 'playing') this.drawOffscreenHints(ctx);
     Art.vignette(ctx, CFG.W, CFG.H);
     ctx.restore();
 
@@ -748,6 +1257,9 @@ const Game = {
   },
 
   drawWorld(ctx) {
+    /* שלוליות — מתחת לכולם, הן על הרצפה */
+    for (const pd of this.puddles) pd.draw(ctx, this.time);
+
     /* מכשולים */
     for (const ob of this.obstacles) Art.obstacle(ctx, ob);
 
@@ -772,8 +1284,9 @@ const Game = {
       ctx.restore();
     }
 
-    /* שדרוגים */
+    /* שדרוגים וסטיקרים לאיסוף */
     for (const pk of this.pickups) pk.draw(ctx, this.time);
+    for (const c of this.collects) c.draw(ctx, this.time);
 
     FX.drawRings(ctx);
 
@@ -790,9 +1303,59 @@ const Game = {
 
     /* קליעים */
     for (const s of this.shots) s.draw(ctx);
+    for (const pz of this.pizzas) pz.draw(ctx);
 
     FX.drawParticles(ctx);
     FX.drawTexts(ctx);
+  },
+
+  /* ============================================================
+     חיצים בקצה המסך למה שחשוב ונמצא מחוץ לתצוגה.
+     בלי זה, מפה גדולה = לחטוף ממישהו שלא ראית, וזה לא הוגן.
+     ============================================================ */
+  drawOffscreenHints(ctx) {
+    const pad = 26;
+    const cx = this.cam.x, cy = this.cam.y;
+
+    const mark = (wx, wy, color, size) => {
+      const sx = wx - cx, sy = wy - cy;
+      if (sx > -40 && sx < CFG.W + 40 && sy > -40 && sy < CFG.H + 40) return;
+
+      /* נקודת החיתוך של הקו מהמרכז אל האובייקט עם מסגרת המסך */
+      const mx = CFG.W / 2, my = CFG.H / 2;
+      const dx = sx - mx, dy = sy - my;
+      const halfW = CFG.W / 2 - pad, halfH = CFG.H / 2 - pad;
+      const s = Math.min(halfW / Math.abs(dx || 1e-3), halfH / Math.abs(dy || 1e-3));
+      const px = mx + dx * s, py = my + dy * s;
+      const ang = Math.atan2(dy, dx);
+
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(ang);
+      ctx.globalAlpha = 0.72;
+      ctx.fillStyle = color;
+      ctx.strokeStyle = 'rgba(10,7,18,.8)';
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(size, 0);
+      ctx.lineTo(-size * 0.72, size * 0.62);
+      ctx.lineTo(-size * 0.72, -size * 0.62);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fill();
+      ctx.restore();
+    };
+
+    /* סטיקרים לאיסוף ושדרוגים — שלא יתפספסו במפה ענקית */
+    for (const c of this.collects) mark(c.x, c.y, c.def.color, 13);
+    for (const pk of this.pickups) mark(pk.x, pk.y, pk.def.color, 10);
+    /* חברה קרובים בלבד — אחרת המסך מתמלא חיצים */
+    for (const f of this.foes) {
+      if (U.dist(f.x, f.y, this.player.x, this.player.y) < 720) {
+        mark(f.x, f.y, f.def.color, 8);
+      }
+    }
   },
 
   /* רקע חי לתפריט */
@@ -800,8 +1363,8 @@ const Game = {
     for (const ob of this.obstacles) Art.obstacle(ctx, ob);
     const t = this.time;
     Art.person(ctx, {
-      x: CFG.W / 2 + Math.sin(t * 0.6) * 190,
-      y: CFG.H * 0.66 + Math.cos(t * 0.9) * 28,
+      x: this.cam.x + CFG.W / 2 + Math.sin(t * 0.6) * 190,
+      y: this.cam.y + CFG.H * 0.66 + Math.cos(t * 0.9) * 28,
       dir: Math.cos(t * 0.6) > 0 ? 1 : -1,
       walk: t * 6.5, scale: 1.35, squash: 1,
       colors: Art.YEHALI, style: 'yehali',
@@ -879,12 +1442,16 @@ const Game = {
     }
   },
 
-  /* אם יהלי מתחבא מתחת לסטיקר — מסמנים אותו כדי שלא יהיה לא הוגן */
+  /* אם יהלי מתחבא מתחת לסטיקר — מסמנים אותו כדי שלא יהיה לא הוגן.
+     הסטיקרים הם שכבת מסך, ולכן ההשוואה נעשית בקואורדינטות מסך. */
   drawPlayerBeacon(ctx) {
     if (this.state !== 'playing' || !this.player) return;
+    const px = this.player.x - this.cam.x;
+    const py = this.player.y - this.cam.y;
+
     let covered = false;
     for (const s of this.stickers) {
-      const dx = Math.abs(this.player.x - s.x), dy = Math.abs(this.player.y - s.y);
+      const dx = Math.abs(px - s.x), dy = Math.abs(py - s.y);
       if (dx < s.w * 0.62 && dy < s.w * 0.82) { covered = true; break; }
     }
     if (!covered) return;
@@ -895,12 +1462,12 @@ const Game = {
     ctx.lineWidth = 3;
     ctx.setLineDash([7, 6]);
     ctx.lineDashOffset = -this.time * 40;
-    U.circle(ctx, this.player.x, this.player.y, 28 + Math.sin(this.time * 8) * 2);
+    U.circle(ctx, px, py, 28 + Math.sin(this.time * 8) * 2);
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.globalAlpha = 0.5;
     ctx.fillStyle = '#ffcc3d';
-    U.circle(ctx, this.player.x, this.player.y, 5);
+    U.circle(ctx, px, py, 5);
     ctx.fill();
     ctx.restore();
   },
@@ -926,10 +1493,11 @@ const Game = {
     let x, y, w, rot, alpha = 1;
 
     if (k < 0.14) {
-      /* טיסה פנימה — גדול ומסתובב */
+      /* טיסה פנימה — גדול ומסתובב.
+         fromX/fromY נשמרו בקואורדינטות עולם, כאן הכל מסך. */
       const e = U.easeOutCubic(k / 0.14);
-      x = U.lerp(s.fromX, cx, e);
-      y = U.lerp(s.fromY, cy, e);
+      x = U.lerp(s.fromX - this.cam.x, cx, e);
+      y = U.lerp(s.fromY - this.cam.y, cy, e);
       w = U.lerp(bigW * 2.4, bigW, e);
       rot = U.lerp(-0.9, 0.04, e);
       alpha = e;
@@ -1078,9 +1646,11 @@ const Game = {
     ctx.fillStyle = '#ffcc3d';
     ctx.fillText('גל ' + b.wave, 0, 0);
 
-    /* איזה סוג נפתח עכשיו */
+    /* איזה סוג נפתח עכשיו — רק מתוך הסוגים שקיימים במפה הזו */
     let newType = null;
-    for (const key in CFG.foes) if (CFG.foes[key].unlock === b.wave) newType = CFG.foes[key];
+    for (const key of this.map.foes) {
+      if (CFG.foes[key] && CFG.foes[key].unlock === b.wave) newType = CFG.foes[key];
+    }
     if (newType) {
       ctx.font = '800 26px "Segoe UI","Arial Hebrew",Arial,sans-serif';
       ctx.lineWidth = 7;
@@ -1175,6 +1745,14 @@ const Game = {
     ctx.font = '700 13px "Segoe UI","Arial Hebrew",Arial,sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,.5)';
     ctx.fillText(U.timeStr(this.runTime), CFG.W - pad, pad + 58);
+
+    /* מטבעות שנצברו בריצה + שם המפה */
+    ctx.font = '800 14px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+    ctx.fillStyle = '#ffcc3d';
+    ctx.fillText('● ' + U.numStr(this.runCoins), CFG.W - pad, pad + 80);
+    ctx.font = '700 12px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,.34)';
+    ctx.fillText(this.map.name, CFG.W - pad, pad + 99);
 
     /* ---- שדרוגים פעילים (למטה במרכז) ---- */
     const keys = Object.keys(this.powers).filter(k => CFG.power[k].dur > 0);

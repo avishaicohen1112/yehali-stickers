@@ -6,14 +6,15 @@
 /* ---------- עזרי פיזיקה משותפים ---------- */
 const Phys = {
 
-  /* מחזיק שחקן/יריב בתוך הזירה */
+  /* מחזיק שחקן/יריב בתוך הזירה.
+     עובד מול גודל המפה הנוכחית (worldW/worldH), לא מול גודל החלון. */
   clampArena(a) {
     const w = CFG.WALL + 4;
     const top = CFG.WALL_TOP + 4;
     if (a.x < w + a.r) { a.x = w + a.r; a.vx = Math.max(0, a.vx); }
-    if (a.x > CFG.W - w - a.r) { a.x = CFG.W - w - a.r; a.vx = Math.min(0, a.vx); }
+    if (a.x > CFG.worldW - w - a.r) { a.x = CFG.worldW - w - a.r; a.vx = Math.min(0, a.vx); }
     if (a.y < top + a.r) { a.y = top + a.r; a.vy = Math.max(0, a.vy); }
-    if (a.y > CFG.H - w - a.r) { a.y = CFG.H - w - a.r; a.vy = Math.min(0, a.vy); }
+    if (a.y > CFG.worldH - w - a.r) { a.y = CFG.worldH - w - a.r; a.vy = Math.min(0, a.vy); }
   },
 
   /* דוחף החוצה ממכשולים ומחליק לאורכם */
@@ -79,12 +80,16 @@ class Player {
 
   constructor() {
     const p = CFG.player;
-    this.x = CFG.W / 2;
-    this.y = CFG.H * 0.72;
+    this.x = CFG.worldW / 2;
+    this.y = CFG.worldH * 0.72;
     this.vx = 0; this.vy = 0;
     this.r = p.r;
     this.dir = 1;
     this.walk = 0;
+    this.slow = 1;           // מכפיל מהירות משלוליות של ה'דביק'
+    this.pizzaTimer = 0;     // שעון הזריקה של יהלי פיצה
+    this.trail = '#ffcc3d';  // צבע השובל — נדרס לפי מה שקנוי ומצויד בחנות
+    this.shirt = null;       // צבע חולצה מהחנות (null = ברירת המחדל של Art)
 
     this.dashTimer = 0;      // כמה נשאר לדאש הנוכחי
     this.dashCd = 0;         // זמן עד שאפשר שוב
@@ -123,9 +128,9 @@ class Player {
       angle: Math.atan2(-n.y, -n.x), spread: 0.7,
       speedMin: 80, speedMax: 300, rMin: 2, rMax: 5,
       lifeMin: 0.2, lifeMax: 0.5,
-      colors: ['rgba(255,214,90,.85)', 'rgba(255,255,255,.6)', 'rgba(180,160,255,.6)']
+      colors: [this.trail, 'rgba(255,255,255,.6)', 'rgba(180,160,255,.6)']
     });
-    FX.ring(this.x, this.y + 8, { r0: 6, r1: 56, life: 0.32, color: 'rgba(255,214,90,.55)', width: 3 });
+    FX.ring(this.x, this.y + 8, { r0: 6, r1: 56, life: 0.32, color: this.trail, width: 3 });
     Sound.dash();
     return true;
   }
@@ -155,7 +160,7 @@ class Player {
       this.vx = U.damp(this.vx, this.vx * 0.55, 0.06, dt);
       this.vy = U.damp(this.vy, this.vy * 0.55, 0.06, dt);
     } else {
-      const target = p.speed * this.speedMult;
+      const target = p.speed * this.speedMult * this.slow;
       if (mv.x || mv.y) {
         this.vx += mv.x * p.accel * dt;
         this.vy += mv.y * p.accel * dt;
@@ -172,6 +177,26 @@ class Player {
 
     Phys.resolveObstacles(this, game.obstacles);
     Phys.clampArena(this);
+
+    /* --- שלוליות של ה'דביק' מאטות --- */
+    this.slow = 1;
+    for (const pd of game.puddles) {
+      if (U.dist2(this.x, this.y, pd.x, pd.y) < (pd.r + this.r * 0.5) * (pd.r + this.r * 0.5)) {
+        this.slow = CFG.foes.sticky.slow;
+        break;
+      }
+    }
+
+    /* --- יהלי פיצה: זורק לבד על הקרוב ביותר --- */
+    if (game.powers.pizza) {
+      this.pizzaTimer -= dt;
+      if (this.pizzaTimer <= 0) {
+        this.pizzaTimer = CFG.pizzaShot.every;
+        game.throwPizza();
+      }
+    } else {
+      this.pizzaTimer = 0;
+    }
 
     /* --- אנימציה --- */
     const sp = Math.hypot(this.vx, this.vy);
@@ -194,7 +219,7 @@ class Player {
       FX.burst(this.x, this.y + 6, 1, {
         speedMin: 0, speedMax: 25, rMin: 3, rMax: 6,
         lifeMin: 0.16, lifeMax: 0.3,
-        colors: ['rgba(255,214,90,.4)', 'rgba(255,255,255,.28)']
+        colors: [this.trail, 'rgba(255,255,255,.28)']
       });
     }
   }
@@ -275,13 +300,25 @@ class Player {
       ctx.restore();
     }
 
+    /* סקין מהחנות — רק צבע החולצה מוחלף, שאר הדמות זהה */
+    let cols = Art.YEHALI;
+    if (this.shirt) {
+      if (!this._skinCache || this._skinCache.shirt !== this.shirt) {
+        this._skinCache = Object.assign({}, Art.YEHALI, {
+          shirt: this.shirt,
+          shirtDark: Art.darken(this.shirt, 0.72)
+        });
+      }
+      cols = this._skinCache;
+    }
+
     Art.person(ctx, {
       x: this.x, y: this.y,
       dir: this.dir,
       walk: this.walk,
       scale: 1,
       squash: this.squash,
-      colors: Art.YEHALI,
+      colors: cols,
       style: 'yehali',
       blink: this.blink,
       mouthOpen: this.dashing,
@@ -334,6 +371,13 @@ class Foe {
     this.blink = false;
     this.blinkTimer = U.rand(1, 5);
     this.tauntCd = U.rand(3, 9);
+
+    /* קופץ */
+    this.hopCd = U.rand(0.6, d.hopEvery || 2);
+    this.hopT = 0;              // >0 => באוויר
+    this.hopZ = 0;              // גובה נוכחי מעל הרצפה (לציור)
+    /* דביק */
+    this.dropCd = U.rand(0.2, 1);
 
     /* גיוון ויזואלי בין החברה */
     const hairs = ['#2b2118', '#6b4423', '#c9a227', '#151015', '#8a6a4a'];
@@ -392,14 +436,16 @@ class Foe {
       return;
     }
 
-    /* --- קריאות מדי פעם --- */
+    /* --- קריאות מדי פעם, ותשובה של יהלי --- */
     this.tauntCd -= dt;
     if (this.tauntCd <= 0) {
       this.tauntCd = U.rand(6, 14);
-      if (U.dist(this.x, this.y, p.x, p.y) < 260 && game.foes.length < 8) {
-        FX.text(this.x, this.y - 62, U.pick(CFG.taunts), {
+      if (U.dist(this.x, this.y, p.x, p.y) < 300 && game.foes.length < 8) {
+        const line = U.pick(CFG.taunts);
+        FX.text(this.x, this.y - 62, line, {
           size: 15, color: '#ffffff', life: 1.1, vy: -30
         });
+        game.yehaliReply(line);
       }
     }
 
@@ -501,10 +547,70 @@ class Foe {
         }
         break;
       }
+
+      /* חוסם: מכוון לאן שהשחקן *יהיה*, לא לאן שהוא נמצא.
+         לכן בריחה בקו ישר דווקא מכניסה אותך לזרועותיו. */
+      case 'blocker': {
+        const lead = this.def.lead;
+        const tx = p.x + p.vx * lead;
+        const ty = p.y + p.vy * lead;
+        desire = U.norm(tx - this.x, ty - this.y);
+        this.aimX = tx; this.aimY = ty;
+        break;
+      }
+
+      /* דביק: הולך ישר, אבל מטפטף שלוליות שמאטות את יהלי */
+      case 'sticky': {
+        desire = U.norm(p.x - this.x, p.y - this.y);
+        this.dropCd -= dt;
+        if (this.dropCd <= 0) {
+          this.dropCd = this.def.dropEvery;
+          if (game.puddles.length < 26) game.puddles.push(new Puddle(this.x, this.y));
+        }
+        break;
+      }
+
+      /* קופץ: צובר, מזנק בקשת, ונוחת עם גל הדף.
+         באוויר לא נוגעים בו — הנחיתה היא החלון שלך. */
+      case 'hopper': {
+        const n = U.norm(p.x - this.x, p.y - this.y);
+
+        if (this.hopT > 0) {
+          /* באוויר — טס בקו ישר, בלי היגוי */
+          this.hopT -= dt;
+          const k = 1 - this.hopT / this.def.hopTime;
+          this.hopZ = Math.sin(k * Math.PI) * this.def.hopHeight;
+          if (this.hopT <= 0) {
+            this.hopZ = 0;
+            this.hopCd = this.def.hopEvery * U.rand(0.8, 1.25);
+            FX.ring(this.x, this.y + 20, {
+              r0: 8, r1: 86, life: 0.36, color: 'rgba(209,78,160,.75)', width: 4
+            });
+            FX.burst(this.x, this.y + 18, 10, {
+              speedMin: 50, speedMax: 210, rMin: 2, rMax: 5,
+              lifeMin: 0.2, lifeMax: 0.45, grav: 300,
+              colors: [this.def.color, '#ffffff']
+            });
+            Sound.tone(150, 0.12, { type: 'sine', vol: 0.09, filter: 900 });
+          }
+        } else {
+          this.hopCd -= dt;
+          desire = n;
+          if (this.hopCd <= 0 && n.len < this.def.hopRange) {
+            this.hopT = this.def.hopTime;
+            const sp = n.len / this.def.hopTime;
+            this.vx = n.x * sp;
+            this.vy = n.y * sp;
+            Sound.tone(420, 0.1, { type: 'square', vol: 0.06, filter: 1800 });
+          }
+        }
+        break;
+      }
     }
 
-    /* --- הרכבת כוחות --- */
-    if (this.state !== 'charge') {
+    /* --- הרכבת כוחות ---
+       זינוק (ספרינטר) וקפיצה (קופץ) הם בליסטיים: אין היגוי באמצע. */
+    if (this.state !== 'charge' && this.hopT <= 0) {
       const avoid = Phys.avoidForce(this, game.obstacles, 44);
       const sep = Phys.separation(this, game.foes);
 
@@ -524,7 +630,8 @@ class Foe {
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 
-    Phys.resolveObstacles(this, game.obstacles);
+    /* בזמן קפיצה הוא באוויר — עובר מעל מכשולים, אבל עדיין בתוך המפה */
+    if (this.hopT <= 0) Phys.resolveObstacles(this, game.obstacles);
     Phys.clampArena(this);
 
     /* אנימציה */
@@ -532,6 +639,9 @@ class Foe {
     this.walk += dt * (4 + sp * 0.03);
     if (Math.abs(this.vx) > 8) this.dir = this.vx > 0 ? 1 : -1;
   }
+
+  /* האם אפשר לגעת בו כרגע — קופץ באוויר חסין */
+  get untouchable() { return this.hopT > 0; }
 
   draw(ctx, time) {
     const grow = U.easeOutBack(this.spawnAnim);
@@ -578,6 +688,31 @@ class Foe {
       ctx.restore();
     }
 
+    /* --- חוסם: מסמן את הנקודה שאליה הוא מיירט --- */
+    if (this.type === 'blocker' && this.frozen <= 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.3 + Math.sin(time * 6) * 0.12;
+      ctx.strokeStyle = this.def.color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 6]);
+      U.circle(ctx, this.aimX, this.aimY, 22);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    /* --- קופץ: צל על הרצפה, הדמות עולה באוויר --- */
+    if (this.hopZ > 1) {
+      ctx.save();
+      ctx.globalAlpha = 0.34 * (1 - this.hopZ / (this.def.hopHeight * 1.6));
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      const sh = 1 - this.hopZ / (this.def.hopHeight * 2.2);
+      ctx.ellipse(this.x, this.y + 22, 17 * sh, 6 * sh, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
     /* --- הילת קיפאון --- */
     if (this.frozen > 0) {
       ctx.save();
@@ -590,17 +725,17 @@ class Foe {
 
     const scale = grow;
     Art.person(ctx, {
-      x: this.x, y: this.y,
+      x: this.x, y: this.y - this.hopZ,
       dir: this.dir,
       walk: this.frozen > 0 ? 0 : this.walk,
       scale: scale * (this.def.r / 19),
-      squash: this.state === 'charge' ? 1.16 : 1,
+      squash: this.state === 'charge' ? 1.16 : (this.hopT > 0 ? 1.14 : 1),
       colors: this.colors,
       style: 'friend',
       big: this.type === 'tank',
       blink: this.blink || this.frozen > 0,
-      angry: this.state === 'windup' || this.state === 'charge',
-      mouthOpen: this.state === 'charge',
+      angry: this.state === 'windup' || this.state === 'charge' || this.hopT > 0,
+      mouthOpen: this.state === 'charge' || this.hopT > 0,
       hand: this.type === 'photog' ? 'phone' : 'sticker',
       phoneLit: this.type === 'photog' && (this.state === 'aim' || this.flash > 0),
       armRaise: this.type === 'photog' ? -0.9 : 0
@@ -738,8 +873,8 @@ class Shot {
     }
 
     /* מתפוצץ על מכשולים וקירות */
-    if (this.x < CFG.WALL || this.x > CFG.W - CFG.WALL ||
-        this.y < CFG.WALL_TOP || this.y > CFG.H - CFG.WALL) return false;
+    if (this.x < CFG.WALL || this.x > CFG.worldW - CFG.WALL ||
+        this.y < CFG.WALL_TOP || this.y > CFG.worldH - CFG.WALL) return false;
     for (const ob of game.obstacles) {
       if (U.circleVsRect(this.x, this.y, this.r, ob.x, ob.y, ob.w, ob.h)) return false;
     }
@@ -748,5 +883,194 @@ class Shot {
 
   draw(ctx) {
     Art.shot(ctx, this.x, this.y, this.rot, this.r, Assets.img(this.imgIndex));
+  }
+}
+
+
+/* ============================================================
+   שלולית של ה'דביק' — מאטה את יהלי כשהוא עובר בה
+   ============================================================ */
+class Puddle {
+
+  constructor(x, y) {
+    const d = CFG.foes.sticky;
+    this.x = x; this.y = y + 14;
+    this.r = d.puddleR;
+    this.age = 0;
+    this.life = d.puddleLife;
+    this.seed = U.rand(0, 6.283);
+  }
+
+  update(dt) { this.age += dt; return this.age < this.life; }
+
+  draw(ctx, time) {
+    /* דוהה בשליש האחרון של החיים כדי שיהיה ברור שהיא נגמרת */
+    const left = 1 - this.age / this.life;
+    const a = U.clamp(left * 3, 0, 1) * 0.55;
+    const grow = U.clamp(this.age * 4, 0, 1);
+
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = '#c98a2b';
+    ctx.beginPath();
+    /* צורה לא-עגולה, שלא ייראה כמו עוד עיגול */
+    for (let i = 0; i <= 14; i++) {
+      const ang = (i / 14) * Math.PI * 2;
+      const wob = 1 + Math.sin(ang * 3 + this.seed + time * 1.4) * 0.13;
+      const rr = this.r * grow * wob;
+      const px = this.x + Math.cos(ang) * rr;
+      const py = this.y + Math.sin(ang) * rr * 0.42;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.globalAlpha = a * 0.6;
+    ctx.strokeStyle = '#e8b44f';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+
+/* ============================================================
+   סטיקר לאיסוף — הדרך החדשה לפתוח סטיקרים באוסף
+   ------------------------------------------------------------
+   פעם סטיקר נפתח כשחטפת אותו (כלומר על הפסד). עכשיו הוא צף
+   בזירה וצריך להגיע אליו לפני שהוא נעלם — כלומר על *ניצחון*.
+   הסיכון הוא הדרך: להיחשף לחברה תוך כדי.
+   ============================================================ */
+class Collectible {
+
+  constructor(index, x, y) {
+    this.index = index;
+    this.st = CFG.stickers[index];
+    this.tier = (this.st && this.st.tier) || 'רגיל';
+    this.def = CFG.rarity.tiers[this.tier] || CFG.rarity.tiers['רגיל'];
+    this.x = x; this.y = y;
+    this.r = CFG.collect.r;
+    this.age = 0;
+    this.life = CFG.collect.life;
+  }
+
+  get expiring() { return this.life - this.age < 3.2; }
+
+  update(dt) {
+    this.age += dt;
+    if (this.def.glow && Math.random() < dt * (6 + this.def.glow * 8)) {
+      FX.burst(this.x + U.rand(-20, 20), this.y + U.rand(-24, 24), 1, {
+        speedMin: 4, speedMax: 26, rMin: 1.5, rMax: 3.4,
+        lifeMin: 0.4, lifeMax: 0.9, shape: 'star',
+        colors: [this.def.color, '#ffffff']
+      });
+    }
+    return this.age < this.life;
+  }
+
+  draw(ctx, time) {
+    const bob = Math.sin(time * 2.6 + this.x * 0.01) * 6;
+    let alpha = 1;
+    if (this.expiring) alpha = 0.4 + 0.6 * (Math.sin(time * 15) * 0.5 + 0.5);
+
+    const y = this.y + bob;
+    const w = 46, h = w * 1.33;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    /* הילה בצבע הנדירות — ככל שנדיר יותר, בולט יותר */
+    const gr = 46 + this.def.glow * 16;
+    const g = ctx.createRadialGradient(this.x, y, 4, this.x, y, gr);
+    g.addColorStop(0, this.def.color + 'bb');
+    g.addColorStop(1, this.def.color + '00');
+    ctx.fillStyle = g;
+    U.circle(ctx, this.x, y, gr); ctx.fill();
+
+    /* הכרטיס עצמו */
+    ctx.save();
+    ctx.translate(this.x, y);
+    ctx.rotate(Math.sin(time * 1.7) * 0.09);
+    ctx.fillStyle = '#fdfaf2';
+    U.roundRect(ctx, -w / 2, -h / 2, w, h, 6); ctx.fill();
+
+    const img = Assets.img(this.index);
+    const pad = 3;
+    ctx.save();
+    U.roundRect(ctx, -w / 2 + pad, -h / 2 + pad, w - pad * 2, h - pad * 2, 4);
+    ctx.clip();
+    if (img && img.complete && img.naturalWidth) {
+      Art._cover(ctx, img, -w / 2 + pad, -h / 2 + pad, w - pad * 2, h - pad * 2);
+    } else {
+      ctx.fillStyle = '#3a2f5e';
+      ctx.fillRect(-w / 2, -h / 2, w, h);
+    }
+    ctx.restore();
+
+    ctx.strokeStyle = this.def.color;
+    ctx.lineWidth = 2.5;
+    U.roundRect(ctx, -w / 2, -h / 2, w, h, 6); ctx.stroke();
+    ctx.restore();
+
+    /* שם הדרגה */
+    ctx.textAlign = 'center';
+    ctx.direction = 'rtl';
+    ctx.font = '900 12px "Segoe UI","Arial Hebrew",Arial,sans-serif';
+    ctx.lineWidth = 3.5; ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(8,6,16,.9)';
+    ctx.strokeText(this.tier, this.x, y + h / 2 + 17);
+    ctx.fillStyle = this.def.color;
+    ctx.fillText(this.tier, this.x, y + h / 2 + 17);
+
+    ctx.restore();
+  }
+}
+
+
+/* ============================================================
+   פיצה — יהלי זורק, החבר יורד
+   ============================================================ */
+class Pizza {
+
+  constructor(x, y, dx, dy) {
+    const c = CFG.pizzaShot;
+    this.x = x; this.y = y;
+    this.vx = dx * c.speed;
+    this.vy = dy * c.speed;
+    this.r = c.r;
+    this.age = 0;
+    this.rot = 0;
+  }
+
+  update(dt, game) {
+    this.age += dt;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.rot += dt * 13;
+
+    if (this.x < CFG.WALL || this.x > CFG.worldW - CFG.WALL ||
+        this.y < CFG.WALL_TOP || this.y > CFG.worldH - CFG.WALL) return false;
+    for (const ob of game.obstacles) {
+      if (U.circleVsRect(this.x, this.y, this.r, ob.x, ob.y, ob.w, ob.h)) return false;
+    }
+    return this.age < 2.4;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rot);
+
+    ctx.fillStyle = '#e8a94f';
+    U.circle(ctx, 0, 0, this.r); ctx.fill();
+    ctx.fillStyle = '#ffcf7a';
+    U.circle(ctx, 0, 0, this.r * 0.82); ctx.fill();
+    ctx.fillStyle = '#d8442f';
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + 0.4;
+      U.circle(ctx, Math.cos(a) * this.r * 0.42, Math.sin(a) * this.r * 0.42, this.r * 0.19);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 }

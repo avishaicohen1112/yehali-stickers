@@ -23,6 +23,15 @@ const Art = {
     facial: '#150f0b'
   },
 
+  /* מכהה צבע hex במכפיל — לגוונים משניים (חולצה כהה וכו') */
+  darken(hex, k) {
+    const n = parseInt(hex.slice(1), 16);
+    const r = Math.round(((n >> 16) & 255) * k);
+    const g = Math.round(((n >> 8) & 255) * k);
+    const b = Math.round((n & 255) * k);
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  },
+
   /* ================================================================
      שלד משותף
      ================================================================ */
@@ -481,6 +490,49 @@ const Art = {
         break;
       }
 
+      /* פרוסת פיצה */
+      case 'pizza': {
+        ctx.rotate(Math.sin(t * 2.2) * 0.16);
+        ctx.fillStyle = '#e8a94f';
+        ctx.beginPath();
+        ctx.moveTo(0, -r * 0.95);
+        ctx.lineTo(r * 0.82, r * 0.7);
+        ctx.lineTo(-r * 0.82, r * 0.7);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#ffcf7a';
+        ctx.beginPath();
+        ctx.moveTo(0, -r * 0.72);
+        ctx.lineTo(r * 0.64, r * 0.52);
+        ctx.lineTo(-r * 0.64, r * 0.52);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#d8442f';
+        U.circle(ctx, 0, -r * 0.1, r * 0.17); ctx.fill();
+        U.circle(ctx, -r * 0.3, r * 0.32, r * 0.15); ctx.fill();
+        U.circle(ctx, r * 0.3, r * 0.32, r * 0.15); ctx.fill();
+        break;
+      }
+
+      /* אגרוף — גולאש */
+      case 'fist': {
+        const punch = 1 + Math.sin(t * 7) * 0.07;
+        ctx.scale(punch, punch);
+        ctx.fillStyle = '#e0b088';
+        U.roundRect(ctx, -r * 0.72, -r * 0.6, r * 1.44, r * 1.2, r * 0.36);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(90,50,30,.55)';
+        ctx.lineWidth = Math.max(1, r * 0.11);
+        for (let i = 0; i < 3; i++) {
+          const yy = -r * 0.26 + i * r * 0.3;
+          ctx.beginPath();
+          ctx.moveTo(-r * 0.5, yy); ctx.lineTo(r * 0.38, yy);
+          ctx.stroke();
+        }
+        ctx.fillStyle = '#c98d5f';
+        U.roundRect(ctx, -r * 0.86, -r * 0.2, r * 0.34, r * 0.62, r * 0.16);
+        ctx.fill();
+        break;
+      }
+
       case 'plane': {
         ctx.rotate(-0.35 + Math.sin(t * 2) * 0.08);
         ctx.fillStyle = '#eaf7ff';
@@ -667,17 +719,23 @@ const Art = {
   /* ================================================================
      רצפת הזירה
      ================================================================ */
-  floor(ctx, w, h, t) {
+  /* pal — פלטת המפה הנוכחית (CFG.maps[i].pal). בלעדיה: צבעי הסלון. */
+  floor(ctx, w, h, t, pal) {
+    const p = pal || {
+      a: '#2a2340', b: '#1d1830', c: '#120e20',
+      grid: '#c9b6ff', glow: '#ff9d1f', frame: '255,204,61'
+    };
+
     const g = ctx.createRadialGradient(w / 2, h * 0.42, 60, w / 2, h * 0.5, w * 0.72);
-    g.addColorStop(0, '#2a2340');
-    g.addColorStop(0.55, '#1d1830');
-    g.addColorStop(1, '#120e20');
+    g.addColorStop(0, p.a);
+    g.addColorStop(0.55, p.b);
+    g.addColorStop(1, p.c);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
 
     ctx.save();
     ctx.globalAlpha = 0.055;
-    ctx.strokeStyle = '#c9b6ff';
+    ctx.strokeStyle = p.grid;
     ctx.lineWidth = 1;
     const T = 80;
     ctx.beginPath();
@@ -686,26 +744,35 @@ const Art = {
     ctx.stroke();
     ctx.restore();
 
+    /* כתמי אור על הרצפה — במפה גדולה כתם יחיד במרכז נעלם,
+       אז נפרסים כמה לפי הגודל בפועל. */
     ctx.save();
-    ctx.globalAlpha = 0.13;
-    const rg = ctx.createRadialGradient(w / 2, h / 2, 30, w / 2, h / 2, 300);
-    rg.addColorStop(0, '#ff9d1f');
-    rg.addColorStop(1, 'rgba(255,157,31,0)');
-    ctx.fillStyle = rg;
-    ctx.beginPath();
-    ctx.ellipse(w / 2, h / 2, 310, 220, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.globalAlpha = 0.12;
+    const cols = Math.max(1, Math.round(w / 900));
+    const rows = Math.max(1, Math.round(h / 700));
+    for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < rows; j++) {
+        const cx = w * (i + 0.5) / cols, cy = h * (j + 0.5) / rows;
+        const rg = ctx.createRadialGradient(cx, cy, 30, cx, cy, 300);
+        rg.addColorStop(0, p.glow);
+        rg.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = rg;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 310, 220, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
     ctx.restore();
 
     const wall = CFG.WALL, top = CFG.FRAME_TOP;
     const aw = w - wall * 2, ah = h - top - wall;
     ctx.save();
-    ctx.strokeStyle = 'rgba(255,204,61,.20)';
+    ctx.strokeStyle = 'rgba(' + p.frame + ',.20)';
     ctx.lineWidth = 3;
     U.roundRect(ctx, wall, top, aw, ah, 18);
     ctx.stroke();
     ctx.globalAlpha = 0.5 + Math.sin(t * 1.6) * 0.12;
-    ctx.strokeStyle = 'rgba(255,204,61,.10)';
+    ctx.strokeStyle = 'rgba(' + p.frame + ',.10)';
     ctx.lineWidth = 10;
     U.roundRect(ctx, wall, top, aw, ah, 18);
     ctx.stroke();

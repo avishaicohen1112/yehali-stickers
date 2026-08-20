@@ -46,15 +46,28 @@ html,body{
 .screen{
   position:absolute; inset:0;
   display:none;
-  place-items:center;
   padding:20px;
   z-index:20;
   background:rgba(7,6,12,.82);
   backdrop-filter:blur(9px);
   -webkit-backdrop-filter:blur(9px);
   animation:fadeIn .22s ease both;
+
+  /* קריטי בטלפון לרוחב: מסך נמוך => התוכן גבוה מהחלון.
+     בלי הגלילה, השורה התחתונה (בדיוק הכפתורים "לתפריט"/"עוד פעם")
+     נחתכת מחוץ למסך ואי אפשר להגיע אליה בכלל.
+     'safe center' ממרכז כשיש מקום, ונופל ל-start כשאין — ואז
+     אפשר לגלול במקום לאבד את הכפתורים. */
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
 }
-.screen.show{ display:grid; }
+.screen.show{
+  display:grid;
+  justify-items:center;
+  align-content:center;
+  align-content:safe center;
+}
 @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
 
 .menu-inner{
@@ -119,7 +132,6 @@ html,body{
 .hint-line{ font-size:13px; color:#7d7391; }
 
 /* ---------- פאנלים ---------- */
-.panel-screen{ align-items:start; }
 .panel{
   max-width:min(94vw,660px);
   max-height:88vh; overflow-y:auto;
@@ -162,11 +174,100 @@ html,body{
 .c-sprint{color:#ff9b45}
 .c-photo{color:#c98bff}
 .c-tank{color:#ff5f6d}
+.c-block{color:#4fd8c4}
+.c-sticky{color:#e8b44f}
+.c-hopper{color:#ff7ac9}
 .c-duo{color:#8ee34a}
 .c-boeing{color:#6ce0ff}
+.c-pizza{color:#ff8a3d}
+.c-goulash{color:#ff7a5c}
 .c-wagyu{color:#ff7a9c}
 .c-pun{color:#e6e6e6}
 .c-sey{color:#ffd93d}
+
+/* ---------- ארנק (תפריט) ---------- */
+.wallet{
+  display:flex; gap:18px; margin:2px 0 4px;
+}
+.w-item{
+  display:flex; align-items:center; gap:6px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:999px; padding:5px 14px;
+}
+.w-item b{ font-size:18px; color:#fff; }
+.w-item i{ font-style:normal; font-size:12px; color:#9a90b0; }
+.w-ico{ font-size:13px; line-height:1; }
+.w-coin{ color:var(--gold); }
+.w-trophy{ color:var(--cool); }
+
+/* ---------- רשימת מפות ---------- */
+.map-list{ display:grid; gap:10px; margin-bottom:18px; }
+.map-card{
+  display:flex; align-items:center; gap:14px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:14px; padding:12px 16px;
+  cursor:pointer;
+  transition:background .13s ease, border-color .13s ease, transform .09s ease;
+}
+.map-card:hover{ background:rgba(255,255,255,.09); }
+.map-card:active{ transform:translateY(2px); }
+.map-card.on{ border-color:var(--gold); background:rgba(255,204,61,.12); }
+.map-card.locked{ opacity:.5; cursor:not-allowed; }
+.map-card.locked:hover{ background:rgba(255,255,255,.05); }
+.map-swatch{
+  width:46px; height:46px; border-radius:10px; flex:none;
+  border:1px solid rgba(255,255,255,.16);
+}
+.map-info{ flex:1; min-width:0; }
+.map-name{ font-weight:900; font-size:17px; }
+.map-sub{ font-size:13px; color:#a79dbd; }
+.map-meta{ font-size:12px; color:#7d7391; margin-top:2px; }
+.map-tag{
+  font-size:13px; font-weight:800; white-space:nowrap;
+  color:var(--cool);
+}
+.map-tag.open{ color:var(--lime); }
+
+/* ---------- חנות ---------- */
+.shop-list{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:10px; margin-bottom:18px;
+}
+.shop-card{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:13px; padding:12px;
+  display:flex; flex-direction:column; align-items:center; gap:7px;
+  cursor:pointer; text-align:center;
+  transition:background .13s ease, border-color .13s ease, transform .09s ease;
+}
+.shop-card:hover{ background:rgba(255,255,255,.09); }
+.shop-card:active{ transform:translateY(2px); }
+.shop-card.on{ border-color:var(--gold); background:rgba(255,204,61,.12); }
+.shop-card.cant{ opacity:.45; cursor:not-allowed; }
+.shop-dot{
+  width:36px; height:36px; border-radius:50%;
+  border:2px solid rgba(255,255,255,.2);
+}
+.shop-name{ font-weight:800; font-size:14px; }
+.shop-cost{ font-size:12px; color:var(--gold); font-weight:800; }
+.shop-cost.owned{ color:var(--lime); }
+.shop-empty{
+  grid-column:1/-1; text-align:center; padding:26px 10px;
+  color:#7d7391; font-size:14px;
+}
+
+/* ---------- רווחים במסך סיום ---------- */
+.over-earn{
+  display:flex; gap:16px; margin:2px 0 12px;
+  font-size:14px; font-weight:800;
+}
+.over-earn b{ font-size:17px; }
+.e-coin{ color:var(--gold); }
+.e-trophy{ color:var(--cool); }
+.e-trophy.down{ color:var(--hot); }
 
 .gallery-grid{
   display:grid;
@@ -214,6 +315,33 @@ html,body{
 .over-stats span{ font-size:clamp(24px,5.4vw,34px); font-weight:900; color:var(--gold); }
 .over-stats i{ font-style:normal; font-size:12px; color:#9a90b0; letter-spacing:.1em; }
 .over-best{ font-size:14px; color:var(--lime); min-height:20px; font-weight:700; }
+
+/* ---------- מסך נמוך (טלפון לרוחב) ----------
+   בלי זה, מסך "נפסלת" גבוה מהחלון והכפתורים יוצאים מהתמונה.
+   כאן מכווצים את הכל כדי שהם ייכנסו בלי לגלול בכלל. */
+@media (max-height: 460px){
+  .screen{ padding:10px; }
+  .menu-inner{ gap:7px; }
+  .logo{ margin-bottom:0; }
+  .logo-sub{ font-size:12px; letter-spacing:.22em; margin-bottom:0; }
+  .logo-main{ font-size:clamp(26px,6vw,38px); }
+  .logo-tag{ margin-top:2px; font-size:12px; }
+  .wallet{ gap:10px; margin:0; }
+  .w-item{ padding:3px 10px; }
+  .w-item b{ font-size:15px; }
+  .btn{ padding:.5em 1.5em; font-size:15px; }
+  .best-line, .hint-line{ font-size:12px; margin-top:0; }
+
+  .over-stamp{ font-size:clamp(30px,7vw,46px); }
+  .over-nick{ font-size:clamp(15px,3.4vw,20px); margin:-2px 0 6px; }
+  .over-stats{ margin:0; gap:18px; }
+  .over-stats span{ font-size:clamp(18px,4vw,24px); }
+  .over-stats i{ font-size:10px; }
+  .over-best{ font-size:12px; min-height:0; }
+  .over-earn{ margin:0 0 4px; font-size:12px; }
+  .over-earn b{ font-size:14px; }
+  .pause-title{ font-size:clamp(22px,5vw,32px); margin-bottom:2px; }
+}
 
 /* ---------- פקדי מגע ---------- */
 .touch-layer{ position:absolute; inset:0; z-index:15; pointer-events:none; display:none; }
