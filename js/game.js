@@ -336,6 +336,14 @@ const Game = {
     }
   },
 
+  /* מערבב hex לכיוון לבן — ליצירת קצה בהיר לגרדיאנט מצבע אקסנט בודד */
+  _lighten(hex, t) {
+    const n = parseInt(hex.slice(1), 16);
+    const mix = (c) => Math.round(c + (255 - c) * t);
+    const r = mix((n >> 16) & 255), g = mix((n >> 8) & 255), b = mix(n & 255);
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  },
+
   /* ============================================================
      אמנות של פריט בתוך כרטיס / עמוד פריט
      ============================================================ */
@@ -443,8 +451,13 @@ const Game = {
       art.className = 'card-art';
       const inner = document.createElement('div');
       inner.className = 'art-map';
-      inner.style.setProperty('--a', m.pal.a);
-      inner.style.setProperty('--c', m.pal.c);
+      /* pal.a/pal.c הם צבעי הרצפה בזירה עצמה — כהים ועמומים בכוונה
+         כרקע מאחורי הדמות. בכרטיס אפשר לראות "מרובע כמעט שחור" —
+         נראה כמו placeholder ריק. משתמשים ב-pal.glow (הצבע הבולט
+         שכל מפה כבר מוגדרת איתו) ומדרגה בהירה ממנו, בשביל תמונה
+         שבאמת מזהים אותה בכרטיס קטן. */
+      inner.style.setProperty('--a', this._lighten(m.pal.glow, 0.55));
+      inner.style.setProperty('--c', m.pal.glow);
       art.appendChild(inner);
       card.appendChild(art);
 
@@ -643,7 +656,8 @@ const Game = {
       set('curMap', this.map.name);
       set('curMapSub', this.map.sub);
       const sw = document.getElementById('curMapSw');
-      if (sw) sw.style.background = 'linear-gradient(150deg,' + this.map.pal.a + ',' + this.map.pal.c + ')';
+      if (sw) sw.style.background =
+        'linear-gradient(150deg,' + this._lighten(this.map.pal.glow, 0.55) + ',' + this.map.pal.glow + ')';
     }
 
     /* לוחית השם מתחת ליהלי — הסקין המצויד והשיא */

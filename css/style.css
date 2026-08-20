@@ -529,7 +529,7 @@ html,body{
 .railwrap{ position:relative; flex:1; min-height:0; }
 .rail{
   position:absolute; inset:0;
-  display:flex; gap:clamp(8px,1.6vw,15px); align-items:stretch;
+  display:flex; gap:clamp(8px,1.6vw,15px); align-items:center;
   overflow-x:auto; overflow-y:hidden;
   padding:6px 3px 12px; scrollbar-width:none;
   scroll-snap-type:x proximity;
@@ -555,8 +555,17 @@ html,body{
 /* ============================================================
    כרטיס (חנות + מפות — אותו כרטיס, שפה אחת)
    ============================================================ */
+/* aspect-ratio קובע את הגובה מהרוחב, לא ממה שנשאר בשורה.
+   בלי זה, align-items:stretch (ברירת המחדל של flex) מותח את
+   הכרטיס לגובה .rail כולו — שעל מסך שולחני גבוה יכול להיות
+   מאות פיקסלים מעל למה שהתוכן צריך. זה מה שקרה בפועל. */
 .card{
   flex:0 0 clamp(132px,26vw,224px);
+  aspect-ratio:0.66;
+  /* בלי זה, על מסך נמוך (טלפון לרוחב) הכרטיס עדיין יכול לצאת גבוה
+     מהשורה עצמה — וה-overflow-y:hidden של .rail פשוט חותך אותו
+     בלי שום דרך לגלול ולראות את החלק החתוך. */
+  max-height:100%;
   scroll-snap-align:start;
   position:relative; display:flex; flex-direction:column;
   border-radius:var(--r-lg); overflow:hidden; cursor:pointer;
