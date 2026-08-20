@@ -8,7 +8,7 @@
 
 <!-- התקנה כאפליקציה (PWA) — מסך מלא בלי סרגל כתובת אחרי "הוסף למסך הבית" -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0b0912">
+<meta name="theme-color" content="#08225a">
 <link rel="icon" href="favicon-v4.png">
 <link rel="apple-touch-icon" href="apple-touch-icon-v4.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,152 +17,377 @@
 </head>
 <body>
 
+<!-- ==================== ספריית סמלים ====================
+     אייקונים מאוירים: קו מתאר כהה + מילוי גרדיאנט + נצנוץ.
+     צורה שטוחה בצבע אחד היא מה שמסגיר ממשק חובבני. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="gCoin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe9a8"/><stop offset="52%" stop-color="#ffc63c"/><stop offset="100%" stop-color="#e08c05"/>
+    </linearGradient>
+    <linearGradient id="gCoinFace" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff3cd"/><stop offset="100%" stop-color="#ffbe2e"/>
+    </linearGradient>
+    <linearGradient id="gCup" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d5f2ff"/><stop offset="46%" stop-color="#7fd8ff"/><stop offset="100%" stop-color="#2b9ed6"/>
+    </linearGradient>
+    <linearGradient id="gBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="100%" stop-color="#cfe4ff"/>
+    </linearGradient>
+  </defs>
+
+  <symbol id="coin" viewBox="0 0 32 32">
+    <ellipse cx="16" cy="18.4" rx="13.4" ry="12.6" fill="#8a5502"/>
+    <ellipse cx="16" cy="16" rx="13.4" ry="12.8" fill="url(#gCoin)" stroke="#6b3f00" stroke-width="1.8"/>
+    <ellipse cx="16" cy="16" rx="9.4" ry="8.9" fill="url(#gCoinFace)" stroke="#e0a316" stroke-width="1.2"/>
+    <path d="M16 9.6l1.9 3.9 4.3.6-3.1 3 .7 4.3-3.8-2-3.8 2 .7-4.3-3.1-3 4.3-.6z" fill="#e59f10"/>
+    <ellipse cx="10.6" cy="8.6" rx="4" ry="2.2" fill="#fff" opacity=".55" transform="rotate(-32 10.6 8.6)"/>
+  </symbol>
+
+  <symbol id="cup" viewBox="0 0 32 32">
+    <path d="M6.4 4.6H2.8v2.2a5.6 5.6 0 0 0 5 5.5V9.9a3.4 3.4 0 0 1-2.6-3z" fill="#2b9ed6" stroke="#0f5f88" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M25.6 4.6h3.6v2.2a5.6 5.6 0 0 1-5 5.5V9.9a3.4 3.4 0 0 0 2.6-3z" fill="#2b9ed6" stroke="#0f5f88" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M7.2 2.8h17.6v8.4a8.8 8.8 0 0 1-17.6 0z" fill="url(#gCup)" stroke="#0f5f88" stroke-width="1.7" stroke-linejoin="round"/>
+    <rect x="13.8" y="19.4" width="4.4" height="4.6" fill="#3aa9de" stroke="#0f5f88" stroke-width="1.5"/>
+    <rect x="8.2" y="23.4" width="15.6" height="5" rx="2.2" fill="url(#gCup)" stroke="#0f5f88" stroke-width="1.7"/>
+    <ellipse cx="11.6" cy="6.6" rx="1.9" ry="3.2" fill="#fff" opacity=".6" transform="rotate(-14 11.6 6.6)"/>
+  </symbol>
+
+  <symbol id="i-shop" viewBox="0 0 32 32">
+    <path d="M5.4 9.6h21.2l-1.8 15.2a3 3 0 0 1-3 2.6H10.2a3 3 0 0 1-3-2.6z" fill="url(#gBlue)" stroke="#123a7a" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M11.4 10.2V8a4.6 4.6 0 0 1 9.2 0v2.2" fill="none" stroke="#123a7a" stroke-width="2.2" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-map" viewBox="0 0 32 32">
+    <path d="M11.6 3.6 3.4 7v21.4l8.2-3.4 8.8 3.4 8.2-3.4V3.6l-8.2 3.4z" fill="url(#gBlue)" stroke="#123a7a" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M11.6 3.6v21.4M20.4 7v21.4" stroke="#123a7a" stroke-width="1.6" fill="none" opacity=".65"/>
+  </symbol>
+  <symbol id="i-album" viewBox="0 0 32 32">
+    <rect x="3.6" y="4.4" width="11.4" height="10.4" rx="2.6" fill="url(#gBlue)" stroke="#123a7a" stroke-width="1.8"/>
+    <rect x="17.4" y="4.4" width="11" height="10.4" rx="2.6" fill="#a8ccff" stroke="#123a7a" stroke-width="1.8"/>
+    <rect x="3.6" y="17.2" width="11.4" height="10.4" rx="2.6" fill="#a8ccff" stroke="#123a7a" stroke-width="1.8"/>
+    <rect x="17.4" y="17.2" width="11" height="10.4" rx="2.6" fill="url(#gBlue)" stroke="#123a7a" stroke-width="1.8"/>
+  </symbol>
+  <symbol id="i-help" viewBox="0 0 32 32">
+    <circle cx="16" cy="16" r="13" fill="url(#gBlue)" stroke="#123a7a" stroke-width="1.9"/>
+    <path d="M11.8 12.2a4.4 4.4 0 0 1 8.5 1.5c0 2.9-4.2 3.4-4.2 6" fill="none" stroke="#123a7a" stroke-width="2.6" stroke-linecap="round"/>
+    <circle cx="16" cy="24" r="1.9" fill="#123a7a"/>
+  </symbol>
+  <symbol id="i-sound" viewBox="0 0 32 32">
+    <path d="M5 12.4h4.8L16 6.6v18.8l-6.2-5.8H5z" fill="url(#gBlue)" stroke="#123a7a" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M20.4 12.2a5.6 5.6 0 0 1 0 7.6M24.2 8.6a10.8 10.8 0 0 1 0 14.8" fill="none" stroke="#123a7a" stroke-width="2.3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-trophy-s" viewBox="0 0 32 32">
+    <path d="M7.2 3.4h17.6v8.4a8.8 8.8 0 0 1-17.6 0z" fill="#4a2d00"/>
+    <rect x="13.8" y="19.4" width="4.4" height="4.4" fill="#4a2d00"/>
+    <rect x="8.6" y="23.2" width="14.8" height="4.6" rx="2" fill="#4a2d00"/>
+  </symbol>
+  <symbol id="i-back" viewBox="0 0 32 32">
+    <path d="M12 6.5l11 9.5-11 9.5" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-next" viewBox="0 0 32 32">
+    <path d="M20 6.5L9 16l11 9.5" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-home" viewBox="0 0 32 32">
+    <path d="M16 3.4 3 14.4h3.6v13.2h7.2v-7.6h4.4v7.6h7.2V14.4H29z" fill="url(#gBlue)" stroke="#123a7a" stroke-width="1.8" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
 <div id="stage">
   <canvas id="game"></canvas>
 
   <!-- ===== מסך טעינה ===== -->
   <div id="loading" class="screen show">
-    <div class="loader-ring"></div>
-    <div class="loader-text">טוען את הסטיקרים…</div>
-    <div class="loader-bar"><i id="loadFill"></i></div>
+    <div class="layer">
+      <div class="loader-ring"></div>
+      <div class="loader-text">טוען את הסטיקרים…</div>
+      <div class="loader-bar"><i id="loadFill"></i></div>
+    </div>
   </div>
 
-  <!-- ===== תפריט ראשי ===== -->
+  <!-- ===== מסך בית ===== -->
   <div id="menu" class="screen">
-    <div class="menu-inner">
-      <div class="logo">
-        <div class="logo-sub">יהלי לוין</div>
-        <div class="logo-main">בריחה מהסטיקרים</div>
-        <div class="logo-tag">אל תיתן להם לתפוס אותך</div>
-      </div>
-
-      <div class="wallet">
-        <div class="w-item"><span class="w-ico w-coin">●</span><b id="coinCount">0</b><i>מטבעות</i></div>
-        <div class="w-item"><span class="w-ico w-trophy">▲</span><b id="trophyCount">0</b><i>גביעים</i></div>
-      </div>
-
-      <button id="btnPlay" class="btn btn-primary">שחק</button>
-
-      <div class="menu-row">
-        <button id="btnMaps" class="btn btn-ghost">מפות</button>
-        <button id="btnShop" class="btn btn-ghost">חנות</button>
-      </div>
-      <div class="menu-row">
-        <button id="btnHow" class="btn btn-ghost">איך משחקים</button>
-        <button id="btnGallery" class="btn btn-ghost">אוסף הסטיקרים</button>
-      </div>
-
-      <div class="best-line">שיא: <b id="bestScore">0</b> · מפה: <b id="curMap">הסלון של יהלי</b></div>
-      <div class="hint-line">חצים / WASD לתזוזה · רווח לדאש</div>
+    <div class="sc">
+      <div class="sc-base"></div>
+      <div class="sc-blob b1"></div><div class="sc-blob b2"></div><div class="sc-blob b3"></div>
+      <div class="sc-shaft"></div><div class="sc-dots"></div>
     </div>
-  </div>
 
-  <!-- ===== הוראות ===== -->
-  <div id="how" class="screen panel-screen">
-    <div class="panel">
-      <h2>איך משחקים</h2>
-      <div class="how-grid">
-        <div class="how-item"><span class="how-key">WASD / חצים</span><span>תזוזה</span></div>
-        <div class="how-item"><span class="how-key">רווח</span><span>דאש — קפיצה מהירה עם חסינות קצרה</span></div>
-        <div class="how-item"><span class="how-key">P / Esc</span><span>השהיה</span></div>
-        <div class="how-item"><span class="how-key">M</span><span>סאונד</span></div>
+    <div class="hud-top">
+      <button id="soundBtn" class="ibtn" title="סאונד"><svg><use href="#i-sound"/></svg></button>
+      <div class="hud-cur">
+        <span class="pill"><svg><use href="#coin"/></svg><b id="coinCount">0</b></span>
+        <span class="pill"><svg><use href="#cup"/></svg><b id="trophyCount">0</b></span>
+      </div>
+    </div>
+
+    <div class="home">
+      <div class="stage">
+        <div class="stage-in">
+          <div class="pod-rim"></div>
+          <div class="pod-ring"></div>
+          <div class="pod-disc"></div>
+          <div class="pod-contact"></div>
+          <canvas id="heroCanvas"></canvas>
+          <button id="btnPortrait" class="plate" title="החלף מראה">
+            <b>יהלי לוין</b>
+            <span id="plateSub">שיא <i>0</i></span>
+          </button>
+        </div>
       </div>
 
-      <h3>החברה</h3>
-      <ul class="bullets">
-        <li><b class="c-chase">רודף</b> — הולך אליך ישר. לא מהיר, אבל לא מוותר.</li>
-        <li><b class="c-sprint">ספרינטר</b> — נעצר, מסמן קו, ואז מסתער. תזוז מהקו.</li>
-        <li><b class="c-photo">צלם</b> — שומר מרחק וזורק עליך סטיקרים מעופפים.</li>
-        <li><b class="c-tank">טנק</b> — גדול ואיטי, אי אפשר להדוף אותו.</li>
-        <li><b class="c-block">חוסם</b> — רץ לאן שאתה <b>עומד להיות</b>. בריחה בקו ישר לא עובדת עליו.</li>
-        <li><b class="c-sticky">דביק</b> — מטפטף שלוליות שמאטות אותך. תעקוף.</li>
-        <li><b class="c-hopper">קופץ</b> — מזנק בקשת. באוויר אי אפשר לגעת בו.</li>
-      </ul>
+      <div class="launch">
+        <div class="logo">
+          <span class="logo-eyebrow">יהלי לוין</span>
+          <span class="logo-word" data-t="בריחה מהסטיקרים">בריחה מהסטיקרים</span>
+        </div>
 
-      <h3>שדרוגים</h3>
-      <ul class="bullets">
-        <li><b class="c-duo">דואלינגו</b> — כולם עוצרים ומקשיבים ליהלי לומד ספרדית.</li>
-        <li><b class="c-duo">דואלינגו+</b> — נדיר. אותו דבר, הרבה יותר זמן.</li>
-        <li><b class="c-boeing">בואינג 737</b> — מהירות מטורפת ודאש חופשי.</li>
-        <li><b class="c-pizza">יהלי פיצה</b> — זורק פיצות לבד על מי שהכי קרוב.</li>
-        <li><b class="c-goulash">גולאש</b> — אגרוף בטן שמפיל את כל מי שסביבך.</li>
-        <li><b class="c-wagyu">וואגיו A5</b> — מקלף סטיקר אחד מהמסך.</li>
-        <li><b class="c-pun">פאנישר</b> — נדיר. חסינות, ואתה מפיל כל מי שנוגע בך.</li>
-        <li><b class="c-sey">סיישל</b> — נדיר. הרבה נקודות והרבה נצנצים.</li>
-      </ul>
+        <div class="statcard">
+          <div class="stat-ico"><svg><use href="#i-album"/></svg></div>
+          <div class="stat-body">
+            <div class="stat-top"><b>אוסף הסטיקרים</b><span id="collCount">0 / 0</span></div>
+            <div class="stat-txt" id="collHint">אסוף אותם בזירה כדי לפתוח</div>
+            <div class="bar"><i id="collBar" style="width:0%"></i></div>
+          </div>
+        </div>
 
-      <h3>אוסף, מטבעות וגביעים</h3>
-      <ul class="bullets">
-        <li><b>סטיקרים</b> נפתחים באוסף כשאתה <b>אוסף</b> אותם צפים בזירה — לא כשחוטפים.</li>
-        <li><b>מטבעות</b> על גלים, קומבו וניקוד — לחנות הקוסמטית.</li>
-        <li><b>גביעים</b> פותחים מפות. עולים על ריצה טובה, יורדים על חלשה.</li>
-      </ul>
+        <div class="lbl">המפה הנבחרת</div>
+        <button id="btnMaps" class="mapcard">
+          <div class="map-sw" id="curMapSw"></div>
+          <div class="map-t"><b id="curMap">הסלון של יהלי</b><span id="curMapSub"></span></div>
+          <span class="swap">החלף</span>
+        </button>
 
-      <p class="note">כל פגיעה מדביקה לך סטיקר אמיתי על המסך ומסתירה חלק מהשדה. חמישה סטיקרים — נפסלת.</p>
-      <button class="btn btn-primary close-panel">חזרה</button>
+        <button id="btnPlay" class="btn btn-play">שחק</button>
+        <div class="hint">חצים / WASD לתזוזה · רווח לדאש</div>
+      </div>
     </div>
-  </div>
 
-  <!-- ===== גלריית סטיקרים ===== -->
-  <div id="gallery" class="screen panel-screen">
-    <div class="panel">
-      <h2>אוסף הסטיקרים</h2>
-      <p class="note">סטיקרים נפתחים כשאתה <b>אוסף</b> אותם בזירה — לא כשחוטפים. חפש אותם צפים באוויר תוך כדי ריצה.</p>
-      <div id="galleryGrid" class="gallery-grid"></div>
-      <button class="btn btn-primary close-panel">חזרה</button>
+    <div class="nav">
+      <button id="btnShop" class="tile"><svg><use href="#i-shop"/></svg><span>חנות</span></button>
+      <button id="btnMaps2" class="tile"><svg><use href="#i-map"/></svg><span>מפות</span></button>
+      <button id="btnGallery" class="tile"><svg><use href="#i-album"/></svg><span>אוסף</span></button>
+      <button id="btnHow" class="tile"><svg><use href="#i-help"/></svg><span>איך משחקים</span></button>
     </div>
-  </div>
 
-  <!-- ===== בחירת מפה ===== -->
-  <div id="maps" class="screen panel-screen">
-    <div class="panel">
-      <h2>מפות</h2>
-      <p class="note">מפות נפתחות בגביעים. גביעים עולים על ריצה טובה — ויורדים על ריצה חלשה.</p>
-      <div id="mapList" class="map-list"></div>
-      <button class="btn btn-primary close-panel">חזרה</button>
-    </div>
+    <div class="sc-vig"></div><div class="sc-grain"></div>
   </div>
 
   <!-- ===== חנות ===== -->
-  <div id="shop" class="screen panel-screen">
-    <div class="panel">
-      <h2>חנות</h2>
-      <p class="note">קוסמטיקה בלבד — כלום פה לא הופך אותך לחזק יותר. יש לך <b id="shopCoins">0</b> מטבעות.</p>
-      <div id="shopList" class="shop-list"></div>
-      <button class="btn btn-primary close-panel">חזרה</button>
+  <div id="shop" class="screen">
+    <div class="sc">
+      <div class="sc-base"></div>
+      <div class="sc-blob b1"></div><div class="sc-blob b2"></div>
+      <div class="sc-shaft"></div><div class="sc-dots"></div>
     </div>
+
+    <div class="hud-top">
+      <button class="ibtn close-panel" title="חזרה"><svg><use href="#i-back"/></svg></button>
+      <div class="hud-title">חנות</div>
+      <div class="hud-cur">
+        <span class="pill"><svg><use href="#coin"/></svg><b id="shopCoins">0</b></span>
+      </div>
+      <button class="ibtn close-panel" title="לבית"><svg><use href="#i-home"/></svg></button>
+    </div>
+
+    <div class="content">
+      <div class="band"><b id="shopBandName">סקינים</b><em id="shopBandMeta"></em><i></i></div>
+      <div class="railwrap">
+        <div id="shopRail" class="rail"></div>
+        <div class="fade"></div>
+        <button class="rail-arrow" data-rail="shopRail"><svg><use href="#i-next"/></svg></button>
+      </div>
+    </div>
+
+    <div id="shopTabs" class="tabs"></div>
+    <div class="sc-vig"></div><div class="sc-grain"></div>
+  </div>
+
+  <!-- ===== פרטי פריט ===== -->
+  <div id="itemDetail" class="screen">
+    <div class="sc">
+      <div class="sc-base"></div>
+      <div class="sc-blob b1"></div><div class="sc-blob b2"></div><div class="sc-blob b3"></div>
+      <div class="sc-shaft"></div><div class="sc-dots"></div>
+    </div>
+
+    <div class="hud-top">
+      <button id="btnItemBack" class="ibtn" title="חזרה"><svg><use href="#i-back"/></svg></button>
+      <div class="hud-title" id="itemTitle">פריט</div>
+      <div class="hud-cur">
+        <span class="pill"><svg><use href="#coin"/></svg><b id="itemCoins">0</b></span>
+      </div>
+    </div>
+
+    <div class="detail">
+      <div class="det-art" id="itemHeroArt">
+        <div class="det-rare" id="itemRare" hidden></div>
+      </div>
+      <div class="det-body">
+        <span class="chip-kind" id="itemKindTag">קוסמטי בלבד</span>
+        <h2 id="itemName">שם הפריט</h2>
+        <p class="det-desc" id="itemDesc"></p>
+        <div class="vals">
+          <div class="val"><i class="cos">◆</i><div><em>ערך קוסמטי</em><b id="itemCosmeticVal"></b></div></div>
+          <div class="val"><i class="gam">✕</i><div><em>ערך משחקי</em><b id="itemGameplayVal"></b></div></div>
+        </div>
+        <div class="det-acts">
+          <button id="btnItemBuy" class="btn btn-buy">קנייה</button>
+          <button id="btnItemBack2" class="btn btn-ghost">חזרה</button>
+        </div>
+      </div>
+    </div>
+    <div class="sc-vig"></div><div class="sc-grain"></div>
+  </div>
+
+  <!-- ===== מפות ===== -->
+  <div id="maps" class="screen">
+    <div class="sc">
+      <div class="sc-base"></div>
+      <div class="sc-blob b1"></div><div class="sc-blob b2"></div>
+      <div class="sc-shaft"></div><div class="sc-dots"></div>
+    </div>
+
+    <div class="hud-top">
+      <button class="ibtn close-panel" title="חזרה"><svg><use href="#i-back"/></svg></button>
+      <div class="hud-title">מפות</div>
+      <div class="hud-cur">
+        <span class="pill"><svg><use href="#cup"/></svg><b id="mapsTrophies">0</b></span>
+      </div>
+      <button class="ibtn close-panel" title="לבית"><svg><use href="#i-home"/></svg></button>
+    </div>
+
+    <div class="content">
+      <div class="band"><b>הזירות</b><em id="mapsBandMeta">נפתחות בגביעים</em><i></i></div>
+      <div class="railwrap">
+        <div id="mapRail" class="rail"></div>
+        <div class="fade"></div>
+        <button class="rail-arrow" data-rail="mapRail"><svg><use href="#i-next"/></svg></button>
+      </div>
+    </div>
+    <div class="sc-vig"></div><div class="sc-grain"></div>
+  </div>
+
+  <!-- ===== אוסף הסטיקרים ===== -->
+  <div id="gallery" class="screen">
+    <div class="sc">
+      <div class="sc-base"></div>
+      <div class="sc-blob b1"></div><div class="sc-blob b2"></div>
+      <div class="sc-shaft"></div><div class="sc-dots"></div>
+    </div>
+
+    <div class="hud-top">
+      <button class="ibtn close-panel" title="חזרה"><svg><use href="#i-back"/></svg></button>
+      <div class="hud-title">אוסף הסטיקרים</div>
+      <button class="ibtn close-panel" title="לבית" style="margin-inline-start:auto"><svg><use href="#i-home"/></svg></button>
+    </div>
+
+    <div class="content">
+      <div class="band"><b id="galBandName">נאספו 0</b><em>נפתחים כשאוספים אותם בזירה, לא כשחוטפים</em><i></i></div>
+      <div id="galleryGrid" class="grid"></div>
+    </div>
+    <div class="sc-vig"></div><div class="sc-grain"></div>
+  </div>
+
+  <!-- ===== הוראות ===== -->
+  <div id="how" class="screen">
+    <div class="sc">
+      <div class="sc-base"></div>
+      <div class="sc-blob b1"></div><div class="sc-blob b2"></div>
+      <div class="sc-shaft"></div><div class="sc-dots"></div>
+    </div>
+    <div class="layer">
+      <div class="panel">
+        <h2>איך משחקים</h2>
+        <div class="how-grid">
+          <div class="how-item"><span class="how-key">WASD / חצים</span><span>תזוזה</span></div>
+          <div class="how-item"><span class="how-key">רווח</span><span>דאש — קפיצה מהירה עם חסינות קצרה</span></div>
+          <div class="how-item"><span class="how-key">P / Esc</span><span>השהיה</span></div>
+          <div class="how-item"><span class="how-key">M</span><span>סאונד</span></div>
+        </div>
+
+        <h3>החברה</h3>
+        <ul class="bullets">
+          <li><b class="c-chase">רודף</b> — הולך אליך ישר. לא מהיר, אבל לא מוותר.</li>
+          <li><b class="c-sprint">ספרינטר</b> — נעצר, מסמן קו, ואז מסתער. תזוז מהקו.</li>
+          <li><b class="c-photo">צלם</b> — שומר מרחק וזורק עליך סטיקרים מעופפים.</li>
+          <li><b class="c-tank">טנק</b> — גדול ואיטי, אי אפשר להדוף אותו.</li>
+          <li><b class="c-block">חוסם</b> — רץ לאן שאתה <b>עומד להיות</b>. בריחה בקו ישר לא עובדת עליו.</li>
+          <li><b class="c-sticky">דביק</b> — מטפטף שלוליות שמאטות אותך. תעקוף.</li>
+          <li><b class="c-hopper">קופץ</b> — מזנק בקשת. באוויר אי אפשר לגעת בו.</li>
+        </ul>
+
+        <h3>שדרוגים</h3>
+        <ul class="bullets">
+          <li><b class="c-duo">דואלינגו</b> — כולם עוצרים ומקשיבים ליהלי לומד ספרדית.</li>
+          <li><b class="c-duo">דואלינגו+</b> — נדיר. אותו דבר, הרבה יותר זמן.</li>
+          <li><b class="c-boeing">בואינג 737</b> — מהירות מטורפת ודאש חופשי.</li>
+          <li><b class="c-pizza">יהלי פיצה</b> — זורק פיצות לבד על מי שהכי קרוב.</li>
+          <li><b class="c-goulash">גולאש</b> — אגרוף בטן שמפיל את כל מי שסביבך.</li>
+          <li><b class="c-wagyu">וואגיו A5</b> — מקלף סטיקר אחד מהמסך.</li>
+          <li><b class="c-pun">פאנישר</b> — נדיר. חסינות, ואתה מפיל כל מי שנוגע בך.</li>
+          <li><b class="c-sey">סיישל</b> — נדיר. הרבה נקודות והרבה נצנצים.</li>
+        </ul>
+
+        <h3>אוסף, מטבעות וגביעים</h3>
+        <ul class="bullets">
+          <li><b>סטיקרים</b> נפתחים באוסף כשאתה <b>אוסף</b> אותם צפים בזירה — לא כשחוטפים.</li>
+          <li><b>מטבעות</b> על גלים, קומבו וניקוד — לחנות הקוסמטית.</li>
+          <li><b>גביעים</b> פותחים מפות. עולים על ריצה טובה, יורדים על חלשה.</li>
+        </ul>
+
+        <p class="note">כל פגיעה מדביקה לך סטיקר אמיתי על המסך ומסתירה חלק מהשדה. חמישה סטיקרים — נפסלת.</p>
+        <button class="btn close-panel">חזרה</button>
+      </div>
+    </div>
+    <div class="sc-vig"></div><div class="sc-grain"></div>
   </div>
 
   <!-- ===== השהיה ===== -->
   <div id="pause" class="screen">
-    <div class="menu-inner">
-      <div class="pause-title">הפסקה</div>
-      <button id="btnResume" class="btn btn-primary">המשך</button>
-      <button id="btnQuit" class="btn btn-ghost">לתפריט</button>
+    <div class="sc">
+      <div class="sc-base"></div>
+      <div class="sc-blob b1"></div><div class="sc-blob b2"></div>
+      <div class="sc-shaft"></div>
     </div>
+    <div class="layer">
+      <div class="menu-inner">
+        <div class="pause-title">הפסקה</div>
+        <button id="btnResume" class="btn">המשך</button>
+        <button id="btnQuit" class="btn btn-ghost">לתפריט</button>
+      </div>
+    </div>
+    <div class="sc-vig"></div><div class="sc-grain"></div>
   </div>
 
   <!-- ===== סוף משחק ===== -->
   <div id="over" class="screen">
-    <div class="menu-inner">
-      <div class="over-stamp">נפסלת!</div>
-      <div class="over-nick" id="overNick">גולד</div>
-      <div class="over-stats">
-        <div><span id="ovScore">0</span><i>ניקוד</i></div>
-        <div><span id="ovWave">0</span><i>גל</i></div>
-        <div><span id="ovTime">0:00</span><i>זמן</i></div>
-      </div>
-      <div class="over-best" id="ovBest"></div>
-      <div class="over-earn">
-        <span class="e-coin">+<b id="ovCoins">0</b> מטבעות</span>
-        <span class="e-trophy" id="ovTrophyWrap"><b id="ovTrophy">0</b> גביעים</span>
-      </div>
-      <button id="btnAgain" class="btn btn-primary">עוד פעם</button>
-      <div class="menu-row">
-        <button id="btnMenu" class="btn btn-ghost">לתפריט</button>
-        <button id="btnOverMaps" class="btn btn-ghost">מפות</button>
+    <div class="sc">
+      <div class="sc-base"></div>
+      <div class="sc-blob b1"></div><div class="sc-blob b2"></div>
+      <div class="sc-shaft"></div><div class="sc-dots"></div>
+    </div>
+    <div class="layer">
+      <div class="menu-inner">
+        <div class="over-stamp" id="overStamp">נפסלת!</div>
+        <div class="over-nick" id="overNick">גולד</div>
+        <div class="over-stats">
+          <div><span id="ovScore">0</span><i>ניקוד</i></div>
+          <div><span id="ovWave">0</span><i>גל</i></div>
+          <div><span id="ovTime">0:00</span><i>זמן</i></div>
+        </div>
+        <div class="over-best" id="ovBest"></div>
+        <div class="over-earn">
+          <span class="e-coin">+<b id="ovCoins">0</b> מטבעות</span>
+          <span class="e-trophy" id="ovTrophyWrap"><b id="ovTrophy">0</b> גביעים</span>
+        </div>
+        <button id="btnAgain" class="btn">עוד פעם</button>
+        <div class="menu-row">
+          <button id="btnMenu" class="btn btn-ghost">לתפריט</button>
+          <button id="btnOverMaps" class="btn btn-ghost">מפות</button>
+        </div>
       </div>
     </div>
+    <div class="sc-vig"></div><div class="sc-grain"></div>
   </div>
 
   <!-- ===== פקדי מגע ===== -->
@@ -170,8 +395,6 @@
     <div id="stick" class="stick"><i id="knob"></i></div>
     <div id="dashBtn" class="dash-btn">דאש</div>
   </div>
-
-  <button id="soundBtn" class="corner-btn" title="סאונד">♪</button>
 
   <!-- ===== בקשת סיבוב מסך בנייד ===== -->
   <div id="rotate">

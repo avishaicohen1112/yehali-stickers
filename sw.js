@@ -5,14 +5,20 @@
 'use strict';
 
 /* חובה להעלות את המספר בכל שינוי בקוד/CSS, אחרת מכשירים שכבר התקינו
-   ימשיכו לקבל את הגרסה הישנה מהקאש. v8 = התראת "יש עדכון" + רענון עצמי. */
-const CACHE = 'yehali-stickers-v8';
+   ימשיכו לקבל את הגרסה הישנה מהקאש. v10 = עיצוב ממשק מחדש: פונטים
+   מקומיים, סולם צבעים, מערכת חומרים, מסך בית, חנות עם טאבים. */
+const CACHE = 'yehali-stickers-v10';
 
 const FILES = [
   './',
   './index.html',
   './manifest.json',
   './css/style.css',
+  /* הפונטים חייבים להיות בקאש — בלעדיהם המשחק נופל לפונט מערכת אופליין */
+  './assets/fonts/rubik-hebrew.woff2',
+  './assets/fonts/rubik-latin.woff2',
+  './assets/fonts/suezone-hebrew.woff2',
+  './assets/fonts/suezone-latin.woff2',
   './js/utils.js',
   './js/config.js',
   './js/audio.js',

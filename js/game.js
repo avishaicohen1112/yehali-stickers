@@ -89,7 +89,6 @@ const Game = {
     this.equipped = U.store.get(CFG.keys.equipped, {});
     this.mapsOpen = U.store.get(CFG.keys.mapsOpen, {});
     this.bestMap = U.store.get(CFG.keys.bestMap, {});
-    document.getElementById('bestScore').textContent = U.numStr(this.best);
     this._syncSoundBtn();
     this.syncWallet();
 
@@ -177,7 +176,7 @@ const Game = {
      ממשק
      ============================================================ */
   show(id) {
-    ['loading', 'menu', 'how', 'gallery', 'maps', 'shop', 'pause', 'over'].forEach(s => {
+    ['loading', 'menu', 'how', 'gallery', 'maps', 'shop', 'itemDetail', 'pause', 'over'].forEach(s => {
       document.getElementById(s).classList.toggle('show', s === id);
     });
   },
@@ -189,11 +188,16 @@ const Game = {
       el.addEventListener('click', () => { Sound.unlock(); Sound.ui(); fn(); });
     };
 
+    const openShop = () => { this.buildShop(); this.show('shop'); };
+    const openMaps = () => { this.buildMaps(); this.show('maps'); };
+
     click('btnPlay', () => this.start());
     click('btnHow', () => this.show('how'));
     click('btnGallery', () => { this.buildGallery(); this.show('gallery'); });
-    click('btnMaps', () => { this.buildMaps(); this.show('maps'); });
-    click('btnShop', () => { this.buildShop(); this.show('shop'); });
+    click('btnMaps', openMaps);
+    click('btnMaps2', openMaps);
+    click('btnShop', openShop);
+    click('btnPortrait', openShop);
     click('btnResume', () => this.resume());
     click('btnQuit', () => this.toMenu());
     click('btnAgain', () => this.start());
@@ -202,6 +206,54 @@ const Game = {
 
     document.querySelectorAll('.close-panel').forEach(b => {
       b.addEventListener('click', () => { Sound.ui(); this.toMenu(); });
+    });
+
+    /* חצי הגלילה של השורות — לחיצה מזיזה עמוד שלם.
+       ב-RTL הגלילה "קדימה" היא לכיוון שלילי. */
+    document.querySelectorAll('.rail-arrow').forEach(btn => {
+      btn.addEventListener('click', () => {
+        Sound.ui();
+        const rail = document.getElementById(btn.dataset.rail);
+        if (rail) rail.scrollBy({ left: -rail.clientWidth * 0.8, behavior: 'smooth' });
+      });
+    });
+
+    const backToShop = () => {
+      Sound.unlock(); Sound.ui();
+      this.buildShop();
+      this.show('shop');
+    };
+    document.getElementById('btnItemBack').addEventListener('click', backToShop);
+    document.getElementById('btnItemBack2').addEventListener('click', backToShop);
+
+    /* קנייה/ציוד מתוך עמוד פרטי הפריט — לוגיקה זהה למה שהיה קודם
+       ישירות על כרטיס החנות, רק שעכשיו יש עצירה בעמוד ביניים. */
+    document.getElementById('btnItemBuy').addEventListener('click', () => {
+      Sound.unlock();
+      const it = this._detailItem;
+      if (!it) return;
+      const owned = !!this.owned[it.id] || it.cost === 0;
+      const on = this.equipped[it.cat] === it.id;
+
+      if (owned) {
+        Sound.ui();
+        this.equipped[it.cat] = on ? null : it.id;   // לחיצה שנייה מסירה
+        U.store.set(CFG.keys.equipped, this.equipped);
+        this.refreshItemBuyBtn();
+        return;
+      }
+      const afford = this.coins >= it.cost;
+      if (!afford) { Sound.tone(150, 0.12, { type: 'square', vol: 0.05 }); return; }
+      Sound.pickup('sey');
+      this.coins -= it.cost;
+      this.owned[it.id] = true;
+      this.equipped[it.cat] = it.id;
+      U.store.set(CFG.keys.coins, this.coins);
+      U.store.set(CFG.keys.owned, this.owned);
+      U.store.set(CFG.keys.equipped, this.equipped);
+      document.getElementById('itemCoins').textContent = U.numStr(this.coins);
+      this.refreshItemBuyBtn();
+      this.syncWallet();
     });
 
     document.getElementById('soundBtn').addEventListener('click', () => {
@@ -230,84 +282,185 @@ const Game = {
     });
   },
 
+  /* האייקון עצמו קבוע (SVG) — רק מעומעם כשמושתק */
   _syncSoundBtn() {
     const b = document.getElementById('soundBtn');
-    b.classList.toggle('off', Sound.muted);
-    b.textContent = Sound.muted ? '×' : '♪';
-  },
-
-  buildGallery() {
-    const grid = document.getElementById('galleryGrid');
-    grid.innerHTML = '';
-    CFG.stickers.forEach((s, i) => {
-      const got = !!this.unlocked[i];
-      const card = document.createElement('div');
-      card.className = 'gcard' + (got ? '' : ' locked');
-
-      const img = document.createElement('img');
-      img.src = 'assets/stickers/' + s.file;
-      img.alt = got ? s.caption : 'נעול';
-      card.appendChild(img);
-
-      if (!got) {
-        const l = document.createElement('div');
-        l.className = 'lock';
-        l.textContent = '?';
-        card.appendChild(l);
-      }
-      const n = document.createElement('div');
-      n.className = 'num';
-      n.textContent = (i + 1) + '/' + CFG.stickers.length;
-      card.appendChild(n);
-
-      /* תג נדירות — צבוע לפי הדרגה */
-      const tier = s.tier || 'רגיל';
-      const tdef = CFG.rarity.tiers[tier];
-      if (tdef) {
-        const t = document.createElement('div');
-        t.className = 'num';
-        t.style.cssText = 'top:auto;bottom:5px;right:6px;left:6px;text-align:center;color:' +
-                          tdef.color + ';font-weight:800;';
-        t.textContent = tier;
-        card.appendChild(t);
-      }
-
-      card.title = got ? s.caption : 'עוד לא אספת את זה';
-      grid.appendChild(card);
-    });
+    if (b) b.classList.toggle('off', Sound.muted);
   },
 
   /* ============================================================
-     בחירת מפה
+     יהלי בתצוגה מקדימה
+     ------------------------------------------------------------
+     התיבה החוסמת של הדמות נמדדה מהפיקסלים בפועל: רוחב 40.25 יחידות
+     (‎-20.25..+20‎), גובה 109 (‎-68.75..+40.25‎). לכן קנבס של
+     52×121 יחידות עם מוצא ב-y=74 נותן שוליים מאוזנים.
+     ============================================================ */
+  paintPerson(canvas, shirt, scale, blink) {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.round(52 * scale), h = Math.round(121 * scale);
+
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    let cols = Art.YEHALI;
+    if (shirt) cols = Object.assign({}, Art.YEHALI, { shirt, shirtDark: Art.darken(shirt, 0.72) });
+
+    Art.person(ctx, {
+      x: w / 2, y: 74 * scale, dir: 1, walk: 0, scale, squash: 1,
+      colors: cols, style: 'yehali', blink: !!blink
+    });
+  },
+
+  /* הדמות הגדולה על הבמה במסך הבית */
+  renderHero() {
+    const cv = document.getElementById('heroCanvas');
+    if (!cv) return;
+    const skin = this.equipped.skin && CFG.shopItems.find(s => s.id === this.equipped.skin);
+    const shirt = (skin && skin.shirt) || null;
+
+    /* גודל הדמות נגזר מגובה הבמה בפועל, כדי שתתאים גם לטלפון לרוחב */
+    const stage = document.querySelector('#menu .stage');
+    const avail = stage ? stage.clientHeight : 380;
+    const scale = U.clamp(avail * 0.62 / 121, 1.1, 3.4);
+
+    const blink = Math.sin(this.time * 1.7) > 0.985;
+    if (this._heroKey !== shirt + '|' + scale.toFixed(2) + '|' + blink) {
+      this._heroKey = shirt + '|' + scale.toFixed(2) + '|' + blink;
+      this.paintPerson(cv, shirt, scale, blink);
+    }
+  },
+
+  /* ============================================================
+     אמנות של פריט בתוך כרטיס / עמוד פריט
+     ============================================================ */
+  fillItemArt(box, it, scale) {
+    box.querySelectorAll('.item-art').forEach(n => n.remove());
+
+    if (it.cat === 'skin') {
+      const shadow = document.createElement('div');
+      shadow.className = 'card-contact item-art';
+      box.appendChild(shadow);
+      const cv = document.createElement('canvas');
+      cv.className = 'item-art';
+      box.appendChild(cv);
+      this.paintPerson(cv, it.shirt, scale, false);
+    } else {
+      const d = document.createElement('div');
+      d.className = 'item-art ' + (it.cat === 'trail' ? 'art-trail' : 'art-stamp');
+      d.style.setProperty('--c', it.color);
+      if (it.cat === 'stamp') d.textContent = 'נפסלת!';
+      box.appendChild(d);
+    }
+  },
+
+  /* ============================================================
+     אוסף הסטיקרים
+     ============================================================ */
+  buildGallery() {
+    const grid = document.getElementById('galleryGrid');
+    grid.innerHTML = '';
+
+    let got = 0;
+    CFG.stickers.forEach((s, i) => {
+      const has = !!this.unlocked[i];
+      if (has) got++;
+
+      const card = document.createElement('div');
+      card.className = 'scard' + (has ? '' : ' locked');
+
+      const img = document.createElement('img');
+      img.src = 'assets/stickers/' + s.file;
+      img.alt = has ? s.caption : 'נעול';
+      card.appendChild(img);
+
+      if (!has) {
+        const l = document.createElement('div');
+        l.className = 'lockq';
+        l.textContent = '?';
+        card.appendChild(l);
+      }
+
+      const n = document.createElement('div');
+      n.className = 'num';
+      n.textContent = i + 1;
+      card.appendChild(n);
+
+      const tier = s.tier || 'רגיל';
+      const tdef = CFG.rarity.tiers[tier];
+      const r = document.createElement('div');
+      r.className = 'rar';
+      if (tdef) r.style.setProperty('--rc', tdef.color);
+      r.textContent = tier;
+      card.appendChild(r);
+
+      card.title = has ? s.caption : 'עוד לא אספת את זה';
+      grid.appendChild(card);
+    });
+
+    const b = document.getElementById('galBandName');
+    if (b) b.textContent = 'נאספו ' + got + ' מתוך ' + CFG.stickers.length;
+  },
+
+  /* ============================================================
+     בחירת מפה — אותו כרטיס בדיוק כמו בחנות
      ============================================================ */
   buildMaps() {
-    const list = document.getElementById('mapList');
-    list.innerHTML = '';
+    const rail = document.getElementById('mapRail');
+    rail.innerHTML = '';
+    const t = document.getElementById('mapsTrophies');
+    if (t) t.textContent = U.numStr(this.trophies);
+
+    let openCount = 0;
 
     CFG.maps.forEach((m, i) => {
       const open = this.mapOpen(m);
-      const card = document.createElement('div');
-      card.className = 'map-card' + (i === this.mapIndex ? ' on' : '') + (open ? '' : ' locked');
-
-      const sw = document.createElement('div');
-      sw.className = 'map-swatch';
-      sw.style.background = 'linear-gradient(135deg,' + m.pal.a + ',' + m.pal.c + ')';
-      card.appendChild(sw);
-
-      const info = document.createElement('div');
-      info.className = 'map-info';
+      if (open) openCount++;
+      const sel = i === this.mapIndex;
       const best = this.bestMap[m.id] || 0;
-      info.innerHTML =
-        '<div class="map-name">' + m.name + '</div>' +
-        '<div class="map-sub">' + m.sub + '</div>' +
-        '<div class="map-meta">' + m.w + '×' + m.h + ' · ' +
-          m.foes.length + ' סוגי חברה' + (best ? ' · שיא ' + U.numStr(best) : '') + '</div>';
-      card.appendChild(info);
 
-      const tag = document.createElement('div');
-      tag.className = 'map-tag' + (open ? ' open' : '');
-      tag.textContent = open ? (i === this.mapIndex ? 'נבחרה' : 'פתוחה') : ('▲ ' + m.cost);
-      card.appendChild(tag);
+      const card = document.createElement('div');
+      card.className = 'card' + (sel ? ' on' : '') + (open ? '' : ' locked');
+
+      if (sel) {
+        const chk = document.createElement('div');
+        chk.className = 'check';
+        chk.textContent = '✓';
+        card.appendChild(chk);
+      }
+
+      const hd = document.createElement('div');
+      hd.className = 'card-hd';
+      hd.textContent = open ? (sel ? 'נבחרה' : 'פתוחה') : 'נעולה';
+      card.appendChild(hd);
+
+      const art = document.createElement('div');
+      art.className = 'card-art';
+      const inner = document.createElement('div');
+      inner.className = 'art-map';
+      inner.style.setProperty('--a', m.pal.a);
+      inner.style.setProperty('--c', m.pal.c);
+      art.appendChild(inner);
+      card.appendChild(art);
+
+      const nm = document.createElement('div');
+      nm.className = 'card-nm';
+      nm.textContent = m.name;
+      card.appendChild(nm);
+
+      const ft = document.createElement('div');
+      ft.className = 'card-ft';
+      if (open) {
+        ft.innerHTML = '<span class="own">' + (best ? 'שיא ' + U.numStr(best) : m.w + '×' + m.h) + '</span>';
+      } else {
+        ft.innerHTML = '<span class="lock"><svg><use href="#cup"/></svg>' + m.cost + '</span>';
+      }
+      card.appendChild(ft);
 
       if (open) {
         card.addEventListener('click', () => {
@@ -322,81 +475,191 @@ const Game = {
           this.buildMaps();
           this.syncWallet();
         });
+      } else {
+        card.addEventListener('click', () => Sound.tone(150, 0.12, { type: 'square', vol: 0.05 }));
       }
-      list.appendChild(card);
+      rail.appendChild(card);
+    });
+
+    const meta = document.getElementById('mapsBandMeta');
+    if (meta) meta.textContent = 'נפתחות בגביעים · ' + openCount + ' מתוך ' + CFG.maps.length + ' פתוחות';
+    this._syncRailHints();
+  },
+
+  /* ============================================================
+     חנות — קטגוריה אחת בכל פעם, טאבים למטה, גלילה אופקית.
+     לחיצה על כרטיס לא קונה ישר — פותחת עמוד פרטי-פריט.
+     ============================================================ */
+  shopCat: 'skin',
+
+  buildShop() {
+    document.getElementById('shopCoins').textContent = U.numStr(this.coins);
+
+    /* --- טאבים --- */
+    const cats = ['skin', 'trail', 'stamp'].filter(c => CFG.shopItems.some(it => it.cat === c));
+    const tabs = document.getElementById('shopTabs');
+    tabs.innerHTML = '';
+    if (!cats.includes(this.shopCat)) this.shopCat = cats[0];
+
+    for (const cat of cats) {
+      const b = document.createElement('button');
+      b.className = 'tab' + (cat === this.shopCat ? ' on' : '');
+      b.textContent = CFG.shopCatInfo[cat].title;
+      b.addEventListener('click', () => {
+        Sound.ui();
+        this.shopCat = cat;
+        this.buildShop();
+      });
+      tabs.appendChild(b);
+    }
+
+    /* --- הכרטיסים של הקטגוריה הנבחרת --- */
+    const items = CFG.shopItems.filter(it => it.cat === this.shopCat);
+    const rail = document.getElementById('shopRail');
+    rail.innerHTML = '';
+
+    const ownedCount = items.filter(it => this.owned[it.id] || it.cost === 0).length;
+    document.getElementById('shopBandName').textContent = CFG.shopCatInfo[this.shopCat].title;
+    document.getElementById('shopBandMeta').textContent =
+      items.length + ' פריטים · ' + ownedCount + ' בבעלותך';
+
+    for (const it of items) rail.appendChild(this.buildShopCard(it));
+    this._syncRailHints();
+  },
+
+  buildShopCard(it) {
+    const owned = !!this.owned[it.id] || it.cost === 0;
+    const on = this.equipped[it.cat] === it.id;
+    const afford = this.coins >= it.cost;
+    const rare = !!it.rare;
+
+    const card = document.createElement('div');
+    card.className = 'card' + (on ? ' on' : (rare ? ' rare' : '')) +
+                     ((owned || afford) ? '' : ' cant');
+
+    if (rare && !on) {
+      const sh = document.createElement('div');
+      sh.className = 'shine';
+      card.appendChild(sh);
+    }
+    if (on) {
+      const chk = document.createElement('div');
+      chk.className = 'check';
+      chk.textContent = '✓';
+      card.appendChild(chk);
+    }
+
+    const hd = document.createElement('div');
+    hd.className = 'card-hd';
+    hd.textContent = on ? 'מצויד' : (owned ? 'בבעלותך' : (rare ? 'נדיר' : 'רגיל'));
+    card.appendChild(hd);
+
+    const art = document.createElement('div');
+    art.className = 'card-art';
+    card.appendChild(art);
+    this.fillItemArt(art, it, 2.5);
+
+    const nm = document.createElement('div');
+    nm.className = 'card-nm';
+    nm.textContent = it.name;
+    card.appendChild(nm);
+
+    const ft = document.createElement('div');
+    ft.className = 'card-ft';
+    if (owned) ft.innerHTML = '<span class="own">' + (on ? '✓ מצויד' : 'בבעלותך') + '</span>';
+    else ft.innerHTML = '<svg><use href="#coin"/></svg><b>' + it.cost + '</b>';
+    card.appendChild(ft);
+
+    card.addEventListener('click', () => { Sound.ui(); this.openItemDetail(it); });
+    return card;
+  },
+
+  /* עמוד פרטי-פריט: ערך קוסמטי/משחקי, תיאור, חזרה וקנייה */
+  openItemDetail(it) {
+    this._detailItem = it;
+    /* כדי שכפתור "חזרה" יחזיר לטאב של הפריט ולא לטאב שהיה פתוח לפני */
+    this.shopCat = it.cat;
+
+    document.getElementById('itemName').textContent = it.name;
+    document.getElementById('itemTitle').textContent = it.name;
+    document.getElementById('itemDesc').textContent = it.desc || '';
+    document.getElementById('itemCoins').textContent = U.numStr(this.coins);
+
+    const info = CFG.shopCatInfo[it.cat];
+    document.getElementById('itemKindTag').textContent = info.tag;
+    document.getElementById('itemCosmeticVal').textContent = info.cosmetic;
+    document.getElementById('itemGameplayVal').textContent = info.gameplay;
+
+    const rareTag = document.getElementById('itemRare');
+    rareTag.hidden = !it.rare;
+    rareTag.textContent = 'נדיר';
+
+    const hero = document.getElementById('itemHeroArt');
+    hero.classList.toggle('rare', !!it.rare);
+    this.fillItemArt(hero, it, 3.4);
+
+    this.refreshItemBuyBtn();
+    this.show('itemDetail');
+  },
+
+  /* מעדכן את כפתור הקנייה לפי מצב הפריט (בלי לבנות מחדש את כל העמוד) */
+  refreshItemBuyBtn() {
+    const it = this._detailItem;
+    if (!it) return;
+    const owned = !!this.owned[it.id] || it.cost === 0;
+    const on = this.equipped[it.cat] === it.id;
+    const afford = this.coins >= it.cost;
+
+    const btn = document.getElementById('btnItemBuy');
+    btn.classList.toggle('cant', !owned && !afford);
+    if (on) btn.textContent = 'מצויד — הסר';
+    else if (owned) btn.textContent = 'צייד';
+    else btn.textContent = 'קנייה · ' + it.cost;
+  },
+
+  /* חץ הגלילה ודהיית הקצה מופיעים רק כשבאמת יש לאן לגלול.
+     נמדד אחרי layout, ולכן ב-rAF ולא מיד. */
+  _syncRailHints() {
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.railwrap').forEach(wrap => {
+        const rail = wrap.querySelector('.rail');
+        wrap.classList.toggle('no-scroll', !rail || rail.scrollWidth <= rail.clientWidth + 4);
+      });
     });
   },
 
   /* ============================================================
-     חנות — קוסמטיקה בלבד
-     ============================================================ */
-  buildShop() {
-    const list = document.getElementById('shopList');
-    list.innerHTML = '';
-    document.getElementById('shopCoins').textContent = U.numStr(this.coins);
-
-    if (!CFG.shopItems.length) {
-      list.innerHTML = '<div class="shop-empty">בקרוב.</div>';
-      return;
-    }
-
-    for (const it of CFG.shopItems) {
-      const owned = !!this.owned[it.id] || it.cost === 0;
-      const on = this.equipped[it.cat] === it.id;
-      const afford = this.coins >= it.cost;
-
-      const card = document.createElement('div');
-      card.className = 'shop-card' + (on ? ' on' : '') + ((owned || afford) ? '' : ' cant');
-
-      const dot = document.createElement('div');
-      dot.className = 'shop-dot';
-      dot.style.background = it.color || it.shirt || '#888';
-      card.appendChild(dot);
-
-      const nm = document.createElement('div');
-      nm.className = 'shop-name';
-      nm.textContent = it.name;
-      card.appendChild(nm);
-
-      const cost = document.createElement('div');
-      cost.className = 'shop-cost' + (owned ? ' owned' : '');
-      cost.textContent = on ? '✓ מצויד' : (owned ? 'לחץ לצייד' : '● ' + it.cost);
-      card.appendChild(cost);
-
-      card.addEventListener('click', () => {
-        if (owned) {
-          Sound.ui();
-          this.equipped[it.cat] = on ? null : it.id;   // לחיצה שנייה מסירה
-          U.store.set(CFG.keys.equipped, this.equipped);
-          this.buildShop();
-          return;
-        }
-        if (!afford) { Sound.tone(150, 0.12, { type: 'square', vol: 0.05 }); return; }
-        Sound.pickup('sey');
-        this.coins -= it.cost;
-        this.owned[it.id] = true;
-        this.equipped[it.cat] = it.id;
-        U.store.set(CFG.keys.coins, this.coins);
-        U.store.set(CFG.keys.owned, this.owned);
-        U.store.set(CFG.keys.equipped, this.equipped);
-        this.buildShop();
-        this.syncWallet();
-      });
-
-      list.appendChild(card);
-    }
-  },
-
-  /* ============================================================
-     ארנק
+     ארנק ומסך הבית
      ============================================================ */
   syncWallet() {
-    const c = document.getElementById('coinCount');
-    const t = document.getElementById('trophyCount');
-    const m = document.getElementById('curMap');
-    if (c) c.textContent = U.numStr(this.coins);
-    if (t) t.textContent = U.numStr(this.trophies);
-    if (m && this.map) m.textContent = this.map.name;
+    const set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+
+    set('coinCount', U.numStr(this.coins));
+    set('trophyCount', U.numStr(this.trophies));
+    set('shopCoins', U.numStr(this.coins));
+    set('mapsTrophies', U.numStr(this.trophies));
+
+    if (this.map) {
+      set('curMap', this.map.name);
+      set('curMapSub', this.map.sub);
+      const sw = document.getElementById('curMapSw');
+      if (sw) sw.style.background = 'linear-gradient(150deg,' + this.map.pal.a + ',' + this.map.pal.c + ')';
+    }
+
+    /* לוחית השם מתחת ליהלי — הסקין המצויד והשיא */
+    const skin = this.equipped.skin && CFG.shopItems.find(s => s.id === this.equipped.skin);
+    const sub = document.getElementById('plateSub');
+    if (sub) {
+      sub.innerHTML = (skin ? skin.name + ' · ' : '') + 'שיא <i>' + U.numStr(this.best) + '</i>';
+    }
+
+    /* כרטיס האוסף — נתונים אמיתיים, לא ממלא מקום */
+    const total = CFG.stickers.length;
+    const got = CFG.stickers.reduce((n, _, i) => n + (this.unlocked[i] ? 1 : 0), 0);
+    set('collCount', got + ' / ' + total);
+    const bar = document.getElementById('collBar');
+    if (bar) bar.style.width = (total ? (got / total) * 100 : 0) + '%';
+    set('collHint', got >= total ? 'אספת את כולם!' : 'אסוף אותם בזירה כדי לפתוח');
   },
 
   addCoins(n) {
@@ -484,8 +747,8 @@ const Game = {
     this.state = 'menu';
     Sound.stopMusic();
     this.show('menu');
-    document.getElementById('bestScore').textContent = U.numStr(this.best);
     this.syncWallet();
+    this._heroKey = null;   // מכריח ציור מחדש של הדמות על הבמה
   },
 
   gameOver() {
@@ -520,6 +783,10 @@ const Game = {
 
     /* --- מטבעות שנצברו --- */
     this.addCoins(this.runCoins);
+
+    /* צבע חותמת ה'נפסלת!' — לפי מה שמצויד בחנות (ברירת מחדל: צבע ה-CSS) */
+    const stamp = this.equipped.stamp && CFG.shopItems.find(s => s.id === this.equipped.stamp);
+    document.getElementById('overStamp').style.color = (stamp && stamp.color) || '';
 
     document.getElementById('ovScore').textContent = U.numStr(this.score);
     document.getElementById('ovWave').textContent = this.wave;
@@ -1224,6 +1491,10 @@ const Game = {
      ציור
      ============================================================ */
   render() {
+    /* מסך הבית הוא DOM מלא ומכסה את הקנבס — אין טעם לצייר עולם מתחתיו,
+       רק את הדמות שעל הבמה (שהיא קנבס נפרד ב-DOM). */
+    if (this.state === 'menu') { this.renderHero(); return; }
+
     const ctx = this.ctx;
     ctx.setTransform(this.renderScale, 0, 0, this.renderScale, 0, 0);
     ctx.clearRect(0, 0, CFG.W, CFG.H);
@@ -1368,12 +1639,26 @@ const Game = {
   drawIdleScene(ctx) {
     for (const ob of this.obstacles) Art.obstacle(ctx, ob);
     const t = this.time;
+
+    /* הדמות ברקע התפריט לובשת את הסקין המצויד — אותו קאש כמו ב-Player.draw */
+    const skin = this.equipped.skin && CFG.shopItems.find(s => s.id === this.equipped.skin);
+    if (skin && skin.shirt) {
+      if (!this._idleSkinCache || this._idleSkinCache.shirt !== skin.shirt) {
+        this._idleSkinCache = Object.assign({}, Art.YEHALI, {
+          shirt: skin.shirt,
+          shirtDark: Art.darken(skin.shirt, 0.72)
+        });
+      }
+    } else {
+      this._idleSkinCache = null;
+    }
+
     Art.person(ctx, {
       x: this.cam.x + CFG.W / 2 + Math.sin(t * 0.6) * 190,
       y: this.cam.y + CFG.H * 0.66 + Math.cos(t * 0.9) * 28,
       dir: Math.cos(t * 0.6) > 0 ? 1 : -1,
       walk: t * 6.5, scale: 1.35, squash: 1,
-      colors: Art.YEHALI, style: 'yehali',
+      colors: this._idleSkinCache || Art.YEHALI, style: 'yehali',
       blink: (Math.sin(t * 1.7) > 0.985)
     });
     FX.drawParticles(ctx);

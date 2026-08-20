@@ -372,17 +372,53 @@ const CFG = {
      cat: skin | trail | stamp
      ============================================================ */
   shopItems: [
-    { id: 'trail_gold',  cat: 'trail', name: 'שובל זהב',    cost: 40,  color: '#ffcc3d' },
-    { id: 'trail_ice',   cat: 'trail', name: 'שובל קרח',    cost: 60,  color: '#49d6ff' },
-    { id: 'trail_lime',  cat: 'trail', name: 'שובל ליים',   cost: 60,  color: '#9bff5b' },
-    { id: 'trail_hot',   cat: 'trail', name: 'שובל ורוד',   cost: 90,  color: '#ff3b6b' },
-    { id: 'skin_classic',cat: 'skin',  name: 'יהלי קלאסי',  cost: 0,   shirt: '#ffcc3d' },
-    { id: 'skin_night',  cat: 'skin',  name: 'יהלי לילה',   cost: 120, shirt: '#6a5acd' },
-    { id: 'skin_pizza',  cat: 'skin',  name: 'יהלי פיצה',   cost: 150, shirt: '#ff8a3d' },
-    { id: 'skin_sey',    cat: 'skin',  name: 'יהלי סיישל',  cost: 250, shirt: '#ffd93d' },
-    { id: 'stamp_gold',  cat: 'stamp', name: 'חותמת זהב',   cost: 80,  color: '#ffcc3d' },
-    { id: 'stamp_lime',  cat: 'stamp', name: 'חותמת ליים',  cost: 80,  color: '#9bff5b' }
+    /* --- סקינים --- */
+    { id: 'skin_classic',cat: 'skin',  name: 'יהלי קלאסי',  cost: 0,   shirt: '#7d8a72', desc: 'המראה המקורי של יהלי. תמיד פתוח.' },
+    { id: 'skin_pizza',  cat: 'skin',  name: 'יהלי פיצה',   cost: 150, shirt: '#ff8a3d', desc: 'כתום פיצה — קריצה לשדרוג האהוב.' },
+    { id: 'skin_night',  cat: 'skin',  name: 'יהלי לילה',   cost: 120, shirt: '#6a5acd', desc: 'חולצה כהה לריצות מאוחרות בלילה.' },
+    { id: 'skin_ice',    cat: 'skin',  name: 'יהלי קרח',    cost: 180, shirt: '#49d6ff', desc: 'תכלת קרח. קר, רגוע, לא נלחץ מאף אחד.' },
+    { id: 'skin_hot',    cat: 'skin',  name: 'יהלי ורוד',   cost: 150, shirt: '#ff5fa2', desc: 'ורוד בוהק. אי אפשר לפספס אותו בזירה.' },
+    { id: 'skin_sea',    cat: 'skin',  name: 'יהלי ים',     cost: 140, shirt: '#1fbfa0', desc: 'טורקיז של ים — לריצות ארוכות ורגועות.' },
+    { id: 'skin_lime',   cat: 'skin',  name: 'יהלי ליים',   cost: 220, shirt: '#9bff5b', desc: 'ירוק זוהר שנראה טוב בכל מפה.', rare: true },
+    { id: 'skin_sey',    cat: 'skin',  name: 'יהלי סיישל',  cost: 250, shirt: '#ffd93d', desc: 'זהב סיישל, לשחקנים עם טעם.', rare: true },
+
+    /* --- שובלים --- */
+    { id: 'trail_gold',  cat: 'trail', name: 'שובל זהב',    cost: 40,  color: '#ffcc3d', desc: 'שובל זהב קלאסי — נוצץ בכל דאש.' },
+    { id: 'trail_ice',   cat: 'trail', name: 'שובל קרח',    cost: 60,  color: '#49d6ff', desc: 'קרח כחול שנדלק מאחורי הרגליים.' },
+    { id: 'trail_lime',  cat: 'trail', name: 'שובל ליים',   cost: 60,  color: '#9bff5b', desc: 'ירוק חד שאי אפשר לפספס.' },
+    { id: 'trail_grape', cat: 'trail', name: 'שובל סגול',   cost: 75,  color: '#a26bff', desc: 'סגול עמוק שנשאר באוויר רגע אחרי שעברת.' },
+    { id: 'trail_fire',  cat: 'trail', name: 'שובל אש',     cost: 70,  color: '#ff8a3d', desc: 'כתום בוער. נראה הכי טוב בדאש ארוך.' },
+    { id: 'trail_hot',   cat: 'trail', name: 'שובל ורוד',   cost: 90,  color: '#ff3b6b', desc: 'ורוד בוהק, בשביל הדרמה.', rare: true },
+
+    /* --- חותמות --- */
+    { id: 'stamp_gold',  cat: 'stamp', name: 'חותמת זהב',   cost: 80,  color: '#ffcc3d', desc: "צובעת בזהב את חותמת ה'נפסלת!' במסך הסיום." },
+    { id: 'stamp_lime',  cat: 'stamp', name: 'חותמת ליים',  cost: 80,  color: '#9bff5b', desc: "צובעת בירוק את חותמת ה'נפסלת!' במסך הסיום." },
+    { id: 'stamp_ice',   cat: 'stamp', name: 'חותמת קרח',   cost: 80,  color: '#49d6ff', desc: "צובעת בתכלת את חותמת ה'נפסלת!' במסך הסיום." },
+    { id: 'stamp_grape', cat: 'stamp', name: 'חותמת סגול',  cost: 110, color: '#a26bff', desc: "צובעת בסגול את חותמת ה'נפסלת!' במסך הסיום.", rare: true }
   ],
+
+  /* טקסטים לעמוד "פרטי פריט" בחנות — לפי קטגוריה, כי כל הפריטים
+     בכל קטגוריה נתונה מתנהגים אותו דבר מבחינת קוסמטי/משחקי. */
+  shopCatInfo: {
+    skin: {
+      title: 'סקינים',
+      tag: 'קוסמטי בלבד',
+      cosmetic: 'משנה את צבע החולצה של יהלי בזירה ובתפריט.',
+      gameplay: 'אין — לא משפיע על מהירות, חוזק או קושי.'
+    },
+    trail: {
+      title: 'שובלים',
+      tag: 'קוסמטי בלבד',
+      cosmetic: 'צובע את הבזק האבק והטבעת שנוצרים בזמן דאש.',
+      gameplay: 'אין — לא משפיע על מהירות הדאש, הקירור או קושי.'
+    },
+    stamp: {
+      title: 'חותמות',
+      tag: 'קוסמטי בלבד',
+      cosmetic: "צובע את חותמת ה'נפסלת!' שמופיעה במסך הסיום.",
+      gameplay: 'אין — לא משפיע על ניקוד, מטבעות או גביעים.'
+    }
+  },
 
   /* --- קריאות של החברה כשהם מתקרבים --- */
   taunts: [
