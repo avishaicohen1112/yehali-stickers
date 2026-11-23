@@ -12,3 +12,7 @@ html,body{margin:0;height:100%;background:#05060a;overflow:hidden;touch-action:n
 .t-jump{right:0;bottom:0}.t-attack{right:34%;bottom:4%}.t-dash{right:6%;bottom:52%}.t-focus{right:44%;bottom:54%}
 #ttop{position:absolute;top:2vh;left:2vw;pointer-events:none}
 #ttop .tb{position:relative;display:inline-block;width:10vmin;height:10vmin;max-width:52px;max-height:52px;font-size:16px;margin-right:6px}
+#rotate{display:none;position:fixed;inset:0;z-index:20;background:#05060a;color:#efe6da;font:400 26px "Frank Ruhl Libre",serif;align-items:center;justify-content:center;flex-direction:column;text-align:center}
+#rotate div{font-size:64px;animation:spin 2.5s ease-in-out infinite}
+@keyframes spin{0%,20%{transform:rotate(0)}60%,100%{transform:rotate(90deg)}}
+@media (orientation:portrait) and (pointer:coarse){#rotate{display:flex}}

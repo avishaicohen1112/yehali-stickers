@@ -71,7 +71,20 @@ G.Render = (function () {
         for (let x = ox % dw - dw; x < VW; x += dw) ctx.drawImage(im, x, oy, dw + 1, dh);
       } else ctx.drawImage(im, ox, oy, dw, dh);
       if (L.fog) { ctx.fillStyle = rgba(A.fog, L.fog); ctx.fillRect(0, 0, VW, VH); }
+      if (L.id === 'far') drawRays(room, t, A);
     }
+  }
+  // animated volumetric light shafts over the far background
+  function drawRays(room, t, A) {
+    const seed = hashStr(room.id); ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 4; i++) {
+      const r = mulberry(seed + i * 77)(); const x = ((r * 1.3 + i * 0.27) % 1) * VW * 1.2 - VW * 0.1 - cam.x * 0.18;
+      const w = 90 + r * 160, a = (0.05 + 0.04 * Math.sin(t * (0.2 + r * 0.3) + i * 2)) * (A.rays ?? 1);
+      const g = ctx.createLinearGradient(0, 0, 0, VH); g.addColorStop(0, rgba(A.fog, a * 1.6)); g.addColorStop(0.7, rgba(A.fog, a * 0.5)); g.addColorStop(1, rgba(A.fog, 0));
+      ctx.fillStyle = g; ctx.beginPath(); const sk = 220 + r * 200;
+      ctx.moveTo(x, -10); ctx.lineTo(x + w, -10); ctx.lineTo(x + w + sk, VH); ctx.lineTo(x + sk - w * 0.3, VH); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
   }
   // ---- props
   let propFlames = [];

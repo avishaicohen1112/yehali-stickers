@@ -125,7 +125,6 @@ G.UI = (function () {
   function map() { modal = { kind: 'map', t: 0 }; G.Sound.sfx('ui_move'); }
   function confirmP() { return I.p('jump') || I.p('attack') || I.p('confirm') || I.p('interact'); }
   function update(dt) {
-    taps = [];
     for (const t of toasts) t.t += dt; toasts = toasts.filter(t => t.t < t.dur);
     if (!modal) return false;
     modal.t += dt; const m = modal;
@@ -252,6 +251,6 @@ G.UI = (function () {
     const VW = R().VW, VH = R().VH;
     toasts.forEach((t, i) => { const a = Math.min(1, t.t * 4, (t.dur - t.t) * 2); text(c, t.s, VW / 2, VH * 0.86 - i * 40, { size: 28, a, c: '#f2e2c8' }); });
   }
-  return { hud, prompt, toast, tallowPing, areaCard, bossCard, drawCard, talk, lore, ability, openShop, pause, map, update, drawModal, drawToasts, handleTap, tapRegion, text, ornament, panel, wrap,
+  return { clearTaps: () => { taps = []; }, hud, prompt, toast, tallowPing, areaCard, bossCard, drawCard, talk, lore, ability, openShop, pause, map, update, drawModal, drawToasts, handleTap, tapRegion, text, ornament, panel, wrap,
     get modal() { return modal; }, set modal(v) { modal = v; }, get card() { return card; }, HE, EN };
 })();

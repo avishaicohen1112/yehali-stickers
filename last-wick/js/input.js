@@ -64,7 +64,8 @@ G.Input = (function () {
   }
   // generic tap anywhere (for menus)
   let tapped = false, tapPos = null;
-  addEventListener('pointerdown', e => { tapped = true; tapPos = { x: e.clientX, y: e.clientY }; if (G.Sound) G.Sound.init(); });
+  addEventListener('pointerdown', e => { tapped = true; tapPos = { x: e.clientX, y: e.clientY }; if (G.Sound) G.Sound.init();
+    if (isTouch && !document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); });
 
   return {
     held, setupTouch, isTouch,

@@ -162,7 +162,7 @@ G.Main = (function () {
     else if (mode === 'intro') updateIntro(dt);
     else if (mode === 'play') updatePlay(dt);
     else if (mode === 'ending') updateEnding(dt);
-    G.UI.handleTap();
+    G.UI.handleTap(); G.UI.clearTaps();
     G.Input.endFrame();
   }
   function updateTitle(dt) {

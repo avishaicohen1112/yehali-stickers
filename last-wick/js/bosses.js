@@ -171,7 +171,7 @@ G.Bosses = (function () {
     }
     hurtbox() { if (this.dead || !this.active || this.hidden || this.alpha < 0.6) return null; return { x: this.x + 20, y: this.y + 20, w: this.w - 40, h: this.h - 40 }; }
     update(dt, room, p) {
-      this.common(dt);
+      this.common(dt); this.dark = this.active && !this.dead ? 0.3 : 0;
       if (this.dead) { this.deathFX(dt); this.y += 80 * dt; this.setAnim('death'); return; }
       const sp = this.phase > 1 ? 1.3 : 1; this.hits = [];
       const lureTarget = { x: p.cx + Math.sin(this.t * 0.7) * 160, y: 7 * TILE + Math.sin(this.t * 1.3) * 60 };
