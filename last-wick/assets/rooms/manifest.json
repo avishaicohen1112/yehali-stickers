@@ -477,5 +477,11 @@
   "pad": 150,
   "flames": [],
   "lights": []
+ },
+ "n3": {
+  "img": "assets/rooms/n3.webp",
+  "pad": 150,
+  "flames": [],
+  "lights": []
  }
 }
