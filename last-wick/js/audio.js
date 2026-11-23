@@ -1019,8 +1019,8 @@
           lo: 11, hi: 18, len: 16, density: 0.2, vel: 0.5,
           voice: function (t, m, v) { vPluck(tr.in, t, m, v * 0.8, 2.6, 3); }
         });
-        drone(tr, { freqs: [mtof(29), mtof(36) * 1.003, mtof(41) * 0.998], type: 'triangle', cut: 240, q: 0.8, vol: 0.1, lr: 0.035, ld: 90 });
-        bed(tr, { brown: 1, ft: 'lowpass', ff: 320, fq: 0.5, vol: 0.06, lr: 0.03, ld: 140 });
+        drone(tr, { freqs: [mtof(29), mtof(36) * 1.003, mtof(41) * 0.998], type: 'triangle', cut: 240, q: 0.8, vol: 0.07, lr: 0.035, ld: 90 });
+        bed(tr, { brown: 1, ft: 'lowpass', ff: 320, fq: 0.5, vol: 0.045, lr: 0.03, ld: 140 });
         bed(tr, { ff: 900, fq: 0.5, vol: 0.01, lr: 0.11, ld: 500 });
         tr.waveAt = tr.t0 + 1.2; tr.call = null;
       },
@@ -1151,7 +1151,7 @@
     // ---------------------------------------------------------------- paper
     // D lydian. Pizzicato, celesta, soft rustling, page turns.
     paper: {
-      bpm: 76, spb: 2, bpb: 4, bpc: 2, root: 50, scale: LYD, vol: 1.15, wet: 0.5, seed: 134,
+      bpm: 76, spb: 2, bpb: 4, bpc: 2, root: 50, scale: LYD, vol: 1.35, wet: 0.5, seed: 134,
       progs: [[0, 1, 5, 1], [0, 4, 1, 0], [0, 2, 1, 5], [0, 1, 0, 6]],
       setup: function (tr) {
         tr.mel = new Melody(tr, {
@@ -1188,7 +1188,7 @@
     // ---------------------------------------------------------------- clock
     // B whole-tone. Tick-tock on quarters, a second gear in threes, music-box arpeggios, organ; the clock stalls every 8 bars.
     clock: {
-      bpm: 92, spb: 4, bpb: 4, bpc: 2, root: 47, scale: WT, vol: 0.9, wet: 0.45, seed: 145,
+      bpm: 92, spb: 4, bpb: 4, bpc: 2, root: 47, scale: WT, vol: 0.8, wet: 0.45, seed: 145,
       progs: [[0, 1, 0, 5], [0, 2, 1, 5], [0, 5, 4, 1], [0, 3, 2, 1]],
       setup: function (tr) {
         tr.mel = new Melody(tr, {
@@ -1224,7 +1224,7 @@
     },
 
     // ----------------------------------------------------------------- core
-    // Eb major, very slow. Choir, organ, sub swells; layers enter over ~2 minutes, then breathe in a long arc.
+    // Eb major, very slow. Choir, organ, sub swells; layers enter over ~90 s, then breathe in a long arc.
     core: {
       bpm: 40, spb: 1, bpb: 4, bpc: 2, root: 39, scale: MAJ, vol: 0.9, wet: 0.6, seed: 156, fadeIn: 4,
       progs: [[0, 5, 3, 4], [0, 3, 5, 4], [5, 3, 0, 4], [0, 4, 5, 3], [3, 0, 4, 0]],
@@ -1236,18 +1236,19 @@
             if (tr.lvl >= 4) vBowed(tr.in, t, m + 12, Math.max(1, dur * 0.95), v * 0.35, 3.5);
           }
         });
-        drone(tr, { freqs: [mtof(27), mtof(34) * 1.002, mtof(39)], type: 'sine', cut: 300, vol: 0.12, lr: 0.03, ld: 60 });
+        drone(tr, { freqs: [mtof(27), mtof(34) * 1.002, mtof(39)], type: 'sine', cut: 300, vol: 0.06, lr: 0.03, ld: 60 });
         bed(tr, { brown: 1, ft: 'lowpass', ff: 200, vol: 0.06, lr: 0.03, ld: 60 });
         tr.lvl = 0;
       },
       step: function (tr, t, s, bar, sib, chg) {
         var c = tr.chordDeg, bd = tr.barDur, L;
-        if (bar < 20) L = Math.floor(bar / 4);
-        else { var k = (bar - 20) % 24; L = k < 12 ? 4 : k < 18 ? 3 : k < 22 ? 2 : 3; }
+        if (bar < 15) L = Math.floor(bar / 3);
+        else { var k = (bar - 15) % 24; L = k < 12 ? 4 : k < 18 ? 3 : k < 22 ? 2 : 3; }
         tr.lvl = L;
         if (chg) {
-          T(tr.in, t, { f: mtof(tr.deg(c) - 12), a: bd * 0.8, h: bd * 0.4, d: bd * 0.9, vol: 0.2 + L * 0.03, kind: 'm' });
+          T(tr.in, t, { f: mtof(tr.deg(c) - 12), a: bd * 0.8, h: bd * 0.4, d: bd * 0.9, vol: 0.1 + L * 0.02, kind: 'm' });
           vOrgan(tr.in, t, [tr.deg(c)], bd * 2.05, 0.07, 1.5);
+          vOrgan(tr.in, t, tr.chord(1, 3), bd * 2.05, 0.03, 2);
           if (L >= 1) vChoir(tr.in, t, tr.chord(1, 3), bd * 2.3, { vol: 0.12 + L * 0.01, a: bd * 0.6, r: bd * 0.8 });
           if (L >= 2) vOrgan(tr.in, t + bd, tr.chord(1, 3), bd * 1.05, 0.035, 1.5);
           if (L >= 3) vBowed(tr.in, t, tr.deg(c + 7) + 12, bd * 2.1, 0.3, 3.5);
@@ -1264,7 +1265,7 @@
     // ------------------------------------------------------------- boss_sea
     // B minor, driving 6/8. Rocking low-string ostinato, timpani, low brass, breaking waves.
     boss_sea: {
-      bpm: 100, spb: 3, bpb: 2, bpc: 2, root: 35, scale: AEOL, vol: 0.8, wet: 0.28, seed: 167,
+      bpm: 100, spb: 3, bpb: 2, bpc: 2, root: 35, scale: AEOL, vol: 0.75, wet: 0.28, seed: 167,
       progs: [[0, 5, 6, 0], [0, 3, 5, 6], [0, 6, 5, 4], [0, 5, 3, 4]],
       setup: function (tr) {
         tr.mel = new Melody(tr, {
@@ -1311,7 +1312,7 @@
     // E phrygian-dominant, 7/8 alternating 2+2+3 / 3+2+2. bpm counts eighths; steps are sixteenths.
     // Clockwork ticks, plucked ostinato, timpani on the groups, choir stabs.
     boss_dream: {
-      bpm: 300, spb: 2, bpb: 7, bpc: 2, root: 40, scale: PHRYD, vol: 0.8, wet: 0.3, seed: 178,
+      bpm: 300, spb: 2, bpb: 7, bpc: 2, root: 40, scale: PHRYD, vol: 0.72, wet: 0.3, seed: 178,
       progs: [[0, 1, 0, 6], [0, 5, 1, 0], [0, 3, 1, 6], [0, 1, 5, 4]],
       setup: function (tr) {
         tr.mel = new Melody(tr, {
