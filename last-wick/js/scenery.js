@@ -57,13 +57,14 @@ G.Scenery = (function () {
     }
   }
   // draw all layers for a room; cam: {x,y}; VW/VH view size; room: {pw,ph,area}
-  function draw(ctx, room, cam, VW, VH, t) {
+  function draw(ctx, room, cam, VW, VH, t, front) {
     const S = window.SCENES && window.SCENES[room.area]; if (!S) return false;
-    const g = ctx.createLinearGradient(0, 0, 0, VH); const sk = S.sky || ['#000', '#111', '#000'];
-    g.addColorStop(0, sk[0]); g.addColorStop(0.55, sk[1]); g.addColorStop(1, sk[2]); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
+    if (!front) { const g = ctx.createLinearGradient(0, 0, 0, VH); const sk = S.sky || ['#000', '#111', '#000'];
+    g.addColorStop(0, sk[0]); g.addColorStop(0.55, sk[1]); g.addColorStop(1, sk[2]); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH); }
     const roomX = Math.max(0, room.pw - VW), roomY = Math.max(0, room.ph - VH);
     const kx = roomX ? cam.x / roomX : 0.5, ky = roomY ? cam.y / roomY : 0.5;
     for (const L of S.layers) {
+      if (!!L.front !== !!front) continue;
       const p = L.p ?? 0.2, py = L.py ?? p;
       if (L.kind === 'fog') {
         const tex = fogTex(room.area + (L.seed || '')); const h = VH * (L.h || 0.5), w = h * 2;
@@ -80,10 +81,10 @@ G.Scenery = (function () {
       const im = G.Assets.get(L.img);
       // layer height in view px; layer scrolls by parallax over room travel
       const travelX = roomX * p, travelY = roomY * py;
-      const dh = Math.max(VH * (L.h || 1.1), VH + travelY + 2);
+      const dh = L.front ? VH * (L.h || 1.0) : Math.max(VH * (L.h || 1.1), VH + travelY + 2);
       const s = im ? dh / im.height : 1, dw = im ? im.width * s : VW;
       const ox = L.tile ? -(cam.x * p) : -(kx * Math.max(0, dw - VW));
-      const oy = -(ky * (dh - VH)) + (L.y || 0) * VH;
+      const oy = L.front ? (L.y || 0) * VH - (cam.y * (p - 1)) % VH * 0 : -(ky * (dh - VH)) + (L.y || 0) * VH;
       ctx.save(); if (L.alpha !== undefined) ctx.globalAlpha = L.alpha; if (L.blend) ctx.globalCompositeOperation = L.blend;
       if (im) {
         if (L.tile) { let x0 = ox % dw; if (x0 > 0) x0 -= dw; for (let x = x0; x < VW; x += dw) ctx.drawImage(im, x, oy, dw + 1, dh); }
@@ -110,5 +111,6 @@ G.Scenery = (function () {
     ctx.restore();
   }
   function images() { const out = []; if (!window.SCENES) return out; for (const a in window.SCENES) for (const L of window.SCENES[a].layers) { if (L.img) out.push([L.img, L.src]); if (L.items) for (const it of L.items) { if (it.img && it.src) out.push([it.img, it.src]); if (it.frames) it.frames.imgs.forEach((k, i) => out.push([k, it.frames.srcs[i]])); } } return out; }
-  return { draw, images, elementDraw };
+  function drawFront(ctx, room, cam, VW, VH, t) { return draw(ctx, room, cam, VW, VH, t, true); }
+  return { draw, drawFront, images, elementDraw };
 })();

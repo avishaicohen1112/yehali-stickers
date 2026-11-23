@@ -311,6 +311,7 @@ G.Main = (function () {
     player.drawFlame(ctx, t);
     ctx.restore();
     Rn.drawProps(room, 'front', t);
+    G.Scenery.drawFront(ctx, room, Rn.cam, VW, VH, t);
     Rn.drawFog(room, t);
     ctx.restore();
     if (G.FX.S.flashA > 0) { ctx.globalAlpha = G.FX.S.flashA; ctx.fillStyle = G.FX.S.flashC; ctx.fillRect(0, 0, VW, VH); ctx.globalAlpha = 1; }
