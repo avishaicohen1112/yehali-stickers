@@ -17,6 +17,7 @@ G.Player = (function () {
       this.anim = 'idle'; this.animT = 0; this.landT = 0; this.dead = false; this.deadT = 0; this.sitting = false;
       this.safe = { x: this.x, y: this.y }; this.safeT = 0; this.stepT = 0; this.recoilT = 0; this.flameT = 0;
       this.hazardT = 0;
+      this.pup = window.RIGS && window.RIGS.wick ? new G.Puppet.Puppet('wick') : null;
     }
     get cx() { return this.x + this.w / 2; } get cy() { return this.y + this.h / 2; }
     get feet() { return this.y + this.h; }
@@ -155,6 +156,7 @@ G.Player = (function () {
       // ---- interact
       if ((I.p('up') || I.p('interact')) && this.ground && this.atkT <= 0) G.Objects.interact(this);
       this.pickAnim();
+      if (this.pup) this.pup.update(dt, { vx: this.vx, vy: this.vy, facing: this.facing });
     }
     tryCast(room) {
       const S = G.state; if (!S.abil.spell || S.soul < C.SPELL_COST || this.castT > 0 || this.lock > 0) return;
@@ -225,6 +227,16 @@ G.Player = (function () {
       this.setAnim(a);
     }
     draw(ctx) {
+      if (this.pup) {
+        const flip = (this.anim === 'wall' ? -this.wall : this.facing) < 0, fx = this.cx, fy = this.feet + 1;
+        const blink = this.inv > 0 && !this.dead && Math.floor(this.inv * 14) % 2 === 0;
+        this.pup.play(this.anim);
+        const T = window.RIGS.wick.points && window.RIGS.wick.points.tip;
+        this.tip = T ? this.pup.point(T[0], T[1], T[2], fx, fy, flip) : { x: fx, y: this.y };
+        if (this.hazardT > 0) return;
+        this.pup.draw(ctx, fx, fy, { flip, alpha: blink ? 0.45 : 1, flash: this.hurtT > 0.2 ? 0.8 : 0 });
+        return;
+      }
       const fi = G.Sprite.frameOf('wick', this.anim, this.animT);
       const blink = this.inv > 0 && !this.dead && Math.floor(this.inv * 14) % 2 === 0;
       const fx = this.cx, fy = this.feet + 1;

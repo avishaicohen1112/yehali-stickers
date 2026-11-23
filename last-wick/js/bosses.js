@@ -36,7 +36,16 @@ G.Bosses = (function () {
       if (this.deadT < 2.2 && Math.random() < 0.2) { G.FX.ring(this.cx + rand(-60, 60), this.cy + rand(-60, 60), 10, 140, this.glowC || [255, 170, 90], 0.5, 6); G.FX.shake(8, 0.2); }
     }
     sprite(ctx, o = {}) {
-      const at = 'b_' + this.kind; const m = G.Sprite.meta(at); if (!m) return false;
+      const at = 'b_' + this.kind;
+      if (window.RIGS && window.RIGS[at]) {
+        if (!this.pup) this.pup = new G.Puppet.Puppet(at);
+        const R = window.RIGS[at]; this.pup.play(R.clips[this.anim] ? this.anim : 'idle');
+        this.pup.update(1 / 60, { vx: this.vx, vy: this.vy, facing: o.facing ?? this.facing });
+        const a = this.dead ? Math.max(0, 1 - Math.max(0, this.deadT - 1.6) * 1.2) : this.alpha;
+        this.pup.draw(ctx, (o.x ?? this.cx) + (o.shake || 0), o.y ?? (this.y + this.h), { flip: (o.facing ?? this.facing) < 0, alpha: a * (o.alpha ?? 1), flash: Math.max(this.flash * 0.7, this.dead ? Math.min(1, this.deadT) * 0.6 : 0) });
+        return true;
+      }
+      const m = G.Sprite.meta(at); if (!m) return false;
       const an = m.anims[this.anim] ? this.anim : 'idle';
       const fi = G.Sprite.frameOf(at, an, this.animT, o.loop);
       const a = this.dead ? Math.max(0, 1 - Math.max(0, this.deadT - 1.6) * 1.2) : this.alpha;
@@ -323,9 +332,104 @@ G.Bosses = (function () {
     draw(ctx, t) { if (!this.sprite(ctx, { y: this.y + this.h })) this.blob(ctx, '#1c1416'); }
   }
 
+
+  // ================= 6. THE CANDLE CHOIR (optional) =================
+  class Singer {
+    constructor(boss, i) { this.boss = boss; this.i = i; this.w = 56; this.h = 80; this.x = 0; this.y = 0; this.hp = 9; this.maxHp = 9; this.flash = 0; this.dead = false; this.deadT = 0; this.facing = 1; this.charge = 0; this.isPart = true; this.t = rand(3); }
+    get cx() { return this.x + this.w / 2; } get cy() { return this.y + this.h / 2; }
+    hurtbox() { return this.dead || !this.boss.active ? null : { x: this.x, y: this.y, w: this.w, h: this.h }; }
+    hitbox() { return this.dead ? null : { x: this.x + 10, y: this.y + 10, w: this.w - 20, h: this.h - 20 }; }
+    hurt(dmg) { if (this.dead || !this.boss.active) return false; this.hp -= dmg; this.flash = 1; G.Sound.sfx('hit', { pitch: 1.3 }); this.boss.flash = 0.6;
+      if (this.hp <= 0) { this.dead = true; G.Sound.sfx('enemy_die'); G.FX.burst(this.cx, this.cy, 30, { speed: 420, life: 0.7, size: 3, c: [255, 200, 120], kind: 'ember' }); G.FX.ring(this.cx, this.cy, 10, 120, [255, 210, 150], 0.5, 8); G.FX.shake(10, 0.3); this.boss.onSingerDeath(); }
+      return true; }
+    update(dt) { this.t += dt; this.flash = Math.max(0, this.flash - dt * 5); if (this.dead) this.deadT += dt; }
+    draw(ctx, t) {
+      if (this.dead) return; const a = 1;
+      if (window.RIGS && window.RIGS.b_choir) { if (!this.pup) this.pup = new G.Puppet.Puppet('b_choir'); this.pup.play(this.charge > 0 ? 'sing' : 'idle'); this.pup.update(1 / 60, {}); this.pup.draw(ctx, this.cx, this.y + this.h, { flash: this.flash }); }
+      else if (G.Sprite.meta('b_choir')) { const fi = G.Sprite.frameOf('b_choir', 'idle', this.t); G.Sprite.draw(ctx, 'b_choir', 'idle', fi, this.cx, this.y + this.h, { flash: this.flash * 0.8 }); }
+      else {
+        ctx.save(); ctx.fillStyle = this.flash > 0.3 ? '#fff' : '#efe2c8'; ctx.beginPath(); ctx.roundRect(this.x + 12, this.y + 18, this.w - 24, this.h - 18, 10); ctx.fill();
+        ctx.fillStyle = '#111'; ctx.beginPath(); ctx.ellipse(this.cx - 7, this.y + 40, 4, 7, 0, 0, 7); ctx.ellipse(this.cx + 7, this.y + 40, 4, 7, 0, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.cx, this.y + 58, 5, 8 + Math.sin(this.t * 8) * 3, 0, 0, 7); ctx.fill(); ctx.restore();
+      }
+      G.FX.flame(ctx, this.cx, this.y + 14, 4 + this.charge * 4, t + this.i, { glow: 1 + this.charge });
+    }
+    drawGlow(ctx) { if (!this.dead) G.FX.glow(ctx, this.cx, this.cy, 140 + this.charge * 120, [255, 190, 110], 0.3 + this.charge * 0.4); }
+  }
+  class Choir extends Boss {
+    constructor(tx, ty) { super('choir', tx, ty, { w: 10, h: 10, maxHp: 27, glowC: [255, 200, 120] }); this.cxp = tx * TILE; this.cyp = 6 * TILE; this.ang = 0; this.singers = [0, 1, 2].map(i => new Singer(this, i)); this.spawned = false; this.noSoul = false; this.y = 6 * TILE; }
+    hurtbox() { return null; } hitboxes() { return []; }
+    onSingerDeath() { this.hp = this.singers.reduce((s, g) => s + Math.max(0, g.hp), 0); if (this.singers.every(s => s.dead)) this.die(); else { this.phase = 2; G.Sound.sfx('boss_roar', { pitch: 1.6, vol: 0.6 }); } }
+    update(dt, room, p) {
+      this.common(dt);
+      if (!this.spawned) { this.spawned = true; for (const s of this.singers) G.Main.addEnemy(s); }
+      this.hp = this.singers.reduce((s, g) => s + Math.max(0, g.hp), 0);
+      if (this.dead) { this.deathFX(dt); return; }
+      const live = this.singers.filter(s => !s.dead); const sp = this.phase > 1 ? 1.35 : 1;
+      if (!this.active) { this.place(dt, 0.6); return; }
+      switch (this.state) {
+        case 'wait': this.set('circle'); break;
+        case 'circle': this.cxp = lerp(this.cxp, p.cx, dt * 0.6); this.cyp = lerp(this.cyp, Math.min(p.cy - 230, 9 * TILE), dt * 0.8); this.ang += dt * 1.3 * sp; this.place(dt, 8);
+          for (const s of live) { if ((this.st + s.i * 0.6) % (1.8 / sp) < dt) this.note(s, p); }
+          if (this.st > 5) this.set(pick(['line', 'dive', 'line'])); break;
+        case 'line': { const xs = [-220, 0, 220]; live.forEach((s, k) => { const tx = clamp(p.cx + xs[k % 3], 2 * TILE, 33 * TILE), ty = 2.5 * TILE; s.x = lerp(s.x, tx - s.w / 2, dt * 4); s.y = lerp(s.y, ty, dt * 4); s.charge = Math.min(1, this.st / 1.0); });
+          if (this.st > 1.1 && !this.fired) { this.fired = true; G.Sound.sfx('cast', { pitch: 0.7 }); G.FX.shake(8, 0.4); for (const s of live) this.beam(s.cx); }
+          if (this.st > 1.9) { this.fired = false; live.forEach(s => s.charge = 0); this.set('circle'); } break; }
+        case 'dive': { const s = live[Math.floor(this.st / 1.1) % live.length]; const k = this.st % 1.1;
+          if (k < 0.45) { s.charge = k / 0.45; this.tgt = { x: p.cx, y: p.cy }; } else if (k < 0.8) { s.charge = 0; const a = Math.atan2(this.tgt.y - s.cy, this.tgt.x - s.cx); s.x += Math.cos(a) * 900 * sp * dt; s.y += Math.sin(a) * 900 * sp * dt; }
+          this.ang += dt; if (this.st > 1.1 * live.length) { live.forEach(s => s.charge = 0); this.set('circle'); } break; }
+      }
+      for (const s of live) { const hb = s.hitbox(); if (hb) G.Main.hitPlayer(hb, s.cx); G.FX.light(s.cx, s.y + 20, 260, [255, 190, 110], 1); }
+    }
+    place(dt, k) { const live = this.singers.filter(s => !s.dead); live.forEach((s, i) => { const a = this.ang + i / live.length * Math.PI * 2; const tx = this.cxp + Math.cos(a) * 170 - s.w / 2, ty = this.cyp + Math.sin(a) * 90; s.x = lerp(s.x || tx, tx, Math.min(1, dt * k)); s.y = lerp(s.y || ty, ty, Math.min(1, dt * k)); }); }
+    note(s, p) { const a = Math.atan2(p.cy - s.cy, p.cx - s.cx); G.Sound.sfx('shard', { pitch: 0.8 + s.i * 0.25, vol: 0.5 }); G.Objects.spawnProj({ x: s.cx, y: s.cy, vx: Math.cos(a) * 330, vy: Math.sin(a) * 330, r: 13, life: 4, dmg: 1, c: [255, 220, 150], light: [255, 200, 120, 100], update: (pr, dt) => { pr.vy += Math.sin(pr.t * 6) * 30; } }); }
+    beam(x) {
+      G.Objects.spawnProj({ x, y: 0, vx: 0, vy: 0, r: 1, life: 0.55, dmg: 1, ghost: true,
+        update: (pr) => { if (!G.Main.player.dead && overlap({ x: x - 26, y: 0, w: 52, h: 20 * TILE }, G.Main.player.hitbox())) G.Main.player.damage(1, x); },
+        draw: (c, pr) => { const k = 1 - pr.t / 0.55; c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createLinearGradient(x - 40, 0, x + 40, 0); g.addColorStop(0, 'rgba(255,170,80,0)'); g.addColorStop(0.5, `rgba(255,240,200,${0.9 * k})`); g.addColorStop(1, 'rgba(255,170,80,0)'); c.fillStyle = g; c.fillRect(x - 40, 0, 80, 20 * TILE); c.restore(); } });
+    }
+    draw(ctx, t) {}
+  }
+
+  // ================= 7. THE MOSS COLOSSUS (optional) =================
+  class Colossus extends Boss {
+    constructor(tx, ty) { super('colossus', tx, ty, { w: 170, h: 270, maxHp: 44, glowC: [140, 255, 200], phases: [0.5] }); this.facing = -1; }
+    hurtbox() { if (this.dead || !this.active) return null; return { x: this.x + 15, y: this.y, w: this.w - 30, h: this.h }; }
+    update(dt, room, p) {
+      this.common(dt); if (this.dead) { this.deathFX(dt); this.gravity(dt, room); this.setAnim('death'); return; }
+      if (!this.active) { this.setAnim('idle'); this.gravity(dt, room); return; }
+      const sp = this.phase > 1 ? 1.25 : 1, dx = p.cx - this.cx; this.hits = [];
+      switch (this.state) {
+        case 'wait': this.set('walk'); break;
+        case 'walk': this.setAnim('walk'); this.faceP(p); this.vx = this.facing * 70 * sp;
+          if (this.st > (this.phase > 1 ? 1.0 : 1.6)) { const o = Math.abs(dx) < 300 ? ['sweep', 'stomp'] : ['stomp', 'spawn', 'stomp']; if (this.phase > 1) o.push('roll', 'roll'); let n = pick(o); if (n === 'spawn' && G.Main.enemies().filter(e => e.kind === 'sporecap' && !e.dead).length >= 3) n = 'stomp'; this.set(n + '_w'); this.vx = 0; } break;
+        case 'stomp_w': this.setAnim('raise'); if (this.st > 0.7 / sp) { this.set('stomp'); G.Sound.sfx('boss_slam'); G.FX.shake(18, 0.5);
+            for (const d of [-1, 1]) G.Bosses.wave(room, this.cx + d * 90, this.y + this.h, d, 560 * sp, [140, 255, 180]);
+            for (let i = 0; i < 5 + this.phase * 2; i++) { const x = rand(2, 42) * TILE; G.Objects.spawnProj({ kind: 'spore', x, y: TILE, vx: 0, vy: rand(50, 150), g: 700, r: 14, life: 4, dmg: 1 }); } } break;
+        case 'stomp': this.setAnim('stomp'); if (this.st > 0.8) this.set('walk'); break;
+        case 'sweep_w': this.setAnim('windup'); this.faceP(p); if (this.st > 0.6 / sp) { this.set('sweep'); G.Sound.sfx('swoop', { pitch: 0.45 }); G.FX.slash(this.cx + this.facing * 150, this.y + this.h - 70, 'side', this.facing, { big: 2.8, dur: 0.3, c: [150, 255, 190] }); } break;
+        case 'sweep': this.setAnim('sweep'); if (this.st < 0.25) this.hits.push({ x: this.facing > 0 ? this.cx : this.cx - 330, y: this.y + this.h - 130, w: 330, h: 130 }); if (this.st > 0.7) this.set('walk'); break;
+        case 'spawn_w': this.setAnim('raise'); if (this.st > 0.8) { this.set('walk'); for (const d of [-1, 1]) { const e = new G.Enemies.Enemy('sporecap', (this.cx + d * 220) / TILE, (this.y + this.h) / TILE); G.Main.addEnemy(e); G.FX.burst(e.cx, e.cy, 20, { speed: 200, life: 0.6, size: 6, c: [120, 255, 200], kind: 'smoke', a: 0.3 }); } } break;
+        case 'roll_w': this.setAnim('curl'); this.faceP(p); if (this.st > 0.6) { this.set('roll'); this.bounces = 1; } break;
+        case 'roll': this.setAnim('roll'); this.vx = this.facing * 640; this.hits.push({ x: this.x + 10, y: this.y + 80, w: this.w - 20, h: this.h - 80 });
+          if (room.wallAhead(this, this.facing)) { G.Sound.sfx('boss_slam'); G.FX.shake(14, 0.3); if (this.bounces-- > 0) this.facing *= -1; else { this.set('walk'); this.vx = 0; } } break;
+      }
+      room.moveX(this, this.vx * dt); this.gravity(dt, room);
+      for (const h of this.hits) G.Main.hitPlayer(h, this.cx);
+      G.Main.hitPlayer({ x: this.x + 30, y: this.y + 40, w: this.w - 60, h: this.h - 40 }, this.cx);
+      G.FX.light(this.cx, this.y + 60, 420, [140, 255, 200], 0.9);
+    }
+    draw(ctx, t) { if (!this.sprite(ctx, { shake: this.state.endsWith('_w') ? Math.sin(t * 50) * 3 : 0, rot: this.state === 'roll' ? 0 : 0 })) this.blob(ctx, '#1f3a2a'); }
+  }
+  function wave(room, x, y, d, speed, c) {
+    G.Objects.spawnProj({ x, y: y - 34, vx: d * speed, vy: 0, r: 30, life: 2.2, dmg: 1, ghost: true, c,
+      update: (pr) => { if (room.solidAt(pr.x + sign(pr.vx) * 30, pr.y)) pr.t = 99; if (Math.random() < 0.8) G.FX.spawn({ x: pr.x, y: y - rand(0, 50), vx: rand(-40, 40), vy: rand(-260, -120), life: 0.5, size: rand(2, 4), kind: 'ember', c, add: true }); },
+      draw: (cx, pr, t) => { G.FX.glow(cx, pr.x, y - 30, 80, c, 0.9); cx.save(); cx.globalCompositeOperation = 'lighter'; const g = cx.createLinearGradient(0, y, 0, y - 80); g.addColorStop(0, rgba(c, 0.9)); g.addColorStop(1, rgba(c, 0)); cx.fillStyle = g; cx.beginPath(); cx.moveTo(pr.x - 30, y); cx.quadraticCurveTo(pr.x - 10 * sign(pr.vx), y - 90 - Math.sin(t * 30) * 10, pr.x + 30 * sign(pr.vx), y); cx.fill(); cx.restore(); } });
+  }
+
   function create(kind, tx, ty) {
-    const C = { knight: Knight, moth: Moth, angler: Angler, vesper: Vesper, extinguisher: Extinguisher }[kind];
+    const C = { knight: Knight, moth: Moth, angler: Angler, vesper: Vesper, extinguisher: Extinguisher, choir: Choir, colossus: Colossus }[kind];
     return C ? new C(tx, ty) : null;
   }
-  return { create };
+  return { create, wave };
 })();

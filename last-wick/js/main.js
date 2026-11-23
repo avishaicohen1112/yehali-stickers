@@ -29,6 +29,8 @@ G.Main = (function () {
   function preloadAll() {
     for (const a in window.ATLAS) G.Assets.load(a, 'assets/sprites/' + a + '.webp');
     for (const p in window.PROPS) G.Assets.load('prop_' + p, window.PROPS[p].img);
+    for (const [k, src] of G.Scenery.images()) if (src) G.Assets.load(k, src);
+    for (const r in (window.RIGS || {})) G.Assets.load(window.RIGS[r].atlas, window.RIGS[r].src);
     areaImgs('crypts');
     const s = hasSave() ? JSON.parse(localStorage.getItem(SAVE_KEY)).room : 'c1'; roomImg(s || 'c1');
   }
@@ -92,6 +94,7 @@ G.Main = (function () {
     if (kind === 'djump') S.abil.djump = true;
     if (kind === 'wall') S.abil.wall = true;
     if (kind === 'moon') S.needle += 0.5;
+    if (kind === 'spellup') { S.spellMul = Math.max(S.spellMul || 1, 1.8); S.abil.spell = true; }
     G.FX.flash('#fff2d8', 0.6, 0.8); G.FX.burst(player.cx, player.cy, 40, { speed: 500, life: 1, size: 3, c: [255, 220, 160], kind: 'ember' });
     G.UI.ability(kind, () => save());
     save();
@@ -126,7 +129,7 @@ G.Main = (function () {
       G.Objects.lockArena(room, false);
       enemies = enemies.filter(e => e !== boss);
       if (boss.kind === 'extinguisher') { setMode('ending'); G.Sound.music('victory'); save(); return; }
-      const reward = { knight: 'dash', moth: 'djump', angler: 'wall', vesper: 'moon' }[boss.kind];
+      const reward = { knight: 'dash', moth: 'djump', angler: 'wall', vesper: 'moon', choir: 'heart', colossus: 'spellup' }[boss.kind];
       if (boss.kind === 'vesper') G.Objects.openSeals(room);
       G.UI.toast(G.T('boss_defeated'), 3);
       grant(reward); G.Sound.music(room.area);
@@ -204,6 +207,7 @@ G.Main = (function () {
     if (player.tip) { const S = G.state; const k = player.dead ? Math.max(0, 1 - player.deadT) : 0.6 + 0.4 * S.hp / S.hpMax; G.FX.light(player.tip.x, player.tip.y - 10, (360 + Math.sin(t * 13) * 8) * k * (player.focusing ? 1.3 : 1), [255, 170, 90], 1); }
     for (const e of enemies) e.update(dt, room, player);
     enemies = enemies.filter(e => !(e.dead && !e.isBoss && e.deadT > 0.5));
+    if (boss && boss.dead) enemies = enemies.filter(e => !e.isPart);
     G.Objects.update(dt, room, player);
     // boss
     if (boss && !boss.active && !boss.dead && !player.dead) {

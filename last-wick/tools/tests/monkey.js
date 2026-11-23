@@ -1,5 +1,5 @@
 const { chromium } = require('playwright');
-const arenas = [['c6', 30, 13, 'knight'], ['g5', 10, 15, 'moth'], ['n4', 38, 14, 'angler'], ['s4', 6, 14, 'vesper'], ['h2', 10, 20, 'extinguisher'], ['c2', 5, 15, 'none'], ['g2', 5, 24, 'none'], ['n2', 50, 11, 'none'], ['s2', 5, 20, 'none'], ['h1', 10, 32, 'none']];
+const arenas = [['c8', 6, 17, 'choir'], ['g6', 8, 18, 'colossus'], ['c7', 5, 14, 'none'], ['g4', 5, 21, 'none'], ['s5', 30, 17, 'none'], ['n5', 9, 19, 'none']];
 (async () => {
   const b = await chromium.launch();
   const p = await b.newPage({ viewport: { width: 960, height: 540 } });

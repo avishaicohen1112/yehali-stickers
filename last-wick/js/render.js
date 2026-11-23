@@ -57,6 +57,7 @@ G.Render = (function () {
   // ---- background
   function drawBG(room, t) {
     const A = AREA[room.area];
+    if (G.Scenery.draw(ctx, room, cam, VW, VH, t)) return;
     const bg = window.BGS[room.area];
     const g = ctx.createLinearGradient(0, 0, 0, VH); g.addColorStop(0, A.sky[0]); g.addColorStop(0.55, A.sky[1]); g.addColorStop(1, A.sky[2]);
     ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);

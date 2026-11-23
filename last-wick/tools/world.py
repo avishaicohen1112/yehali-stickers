@@ -101,7 +101,7 @@ c5.ent('enemy', 8, 21, kind='husk').ent('enemy', 18, 21, kind='wickling')
 
 c6 = room('c6', 'crypts', 36, 26, 36, 18, 'זירת אביר החלב')
 c6.carve(1, 1, 34, 12)
-c6.ent('boss', 12, 13, kind='knight').ent('gate', 35, 13, h=4, id='g_knight')
+c6.ent('boss', 12, 13, kind='knight').ent('gate', 35, 13, h=4, id='g_knight').ent('gate', 0, 13, h=4, id='g_knight_w')
 
 # ---------------- GARDENS ----------------
 g1 = room('g1', 'gardens', 184, 0, 40, 22, 'שער הגנים')
@@ -112,7 +112,7 @@ g1.ent('enemy', 16, 15, kind='sporecap').ent('enemy', 12, 6, kind='mothling').en
 g2 = room('g2', 'gardens', 224, -6, 52, 26, 'כר אור העש')
 g2.carve(1, 1, 50, 23).fill(1, 16, 12, 8).fill(38, 22, 2, 2).fill(40, 20, 11, 4).fill(46, 14, 5, 2)
 g2.plat(42, 17, 4).fill(1, 1, 6, 4).fill(20, 1, 14, 3)
-g2.plat(22, 13, 6).plat(30, 9, 6)
+g2.plat(22, 13, 6).plat(30, 9, 6).plat(24, 6, 4)
 g2.carve(30, 24, 5, 2)  # well down to the nave
 g2.ent('bench', 9, 16).ent('pickup', 45, 20, kind='spell').ent('npc', 25, 24, id='gardener')
 g2.ent('enemy', 19, 24, kind='sporecap').ent('enemy', 14, 8, kind='mothling').ent('enemy', 38, 6, kind='mothling')
@@ -143,7 +143,8 @@ n2.ent('enemy', 33, 6, kind='jelly').ent('enemy', 24, 5, kind='jelly').ent('enem
 n2.ent('lore', 52, 11, text='lore_wall')
 
 n3 = room('n3', 'nave', 144, 38, 40, 20, 'קפלת הטובעים')
-n3.carve(1, 2, 38, 10).fill(1, 2, 5, 2).fill(16, 2, 8, 2)
+n3.carve(1, 2, 38, 10).fill(1, 2, 5, 2).fill(19, 2, 6, 2)
+n3.plat(11, 9, 4).plat(15, 6, 3).plat(14, 3, 3)
 n3.ent('bench', 20, 12).ent('npc', 28, 12, id='monk').ent('enemy', 9, 12, kind='acolyte')
 
 n4 = room('n4', 'nave', 100, 36, 44, 24, 'מעמקי הדייג')
@@ -166,7 +167,7 @@ s2.ent('enemy', 24, 20, kind='sentinel').ent('enemy', 30, 5, kind='shardwing').e
 s3 = room('s3', 'spire', 160, -66, 32, 28, 'מקדש הירח')
 s3.carve(1, 1, 30, 23).fill(1, 13, 10, 11)
 s3.fill(16, 1, 15, 3).fill(14, 8, 2, 12)
-s3.plat(20, 20, 5).plat(25, 16, 5).plat(18, 12, 5)
+s3.plat(20, 20, 5).plat(25, 16, 5).plat(18, 12, 5).plat(2, 9, 3).plat(7, 5, 3)
 s3.ent('bench', 5, 13).ent('npc', 8, 13, id='glassmaker').ent('enemy', 24, 24, kind='sentinel')
 s3.ent('pickup', 27, 8, kind='heart', id='heart_s3')
 
@@ -186,6 +187,42 @@ h2 = room('h2', 'hearth', 190, -114, 48, 24, 'האח הכבויה')
 h2.carve(1, 1, 46, 19)
 h2.plat(6, 15, 6).plat(36, 15, 6).plat(20, 11, 8)
 h2.ent('boss', 34, 20, kind='extinguisher').ent('seal', 14, 20, w=4, id='seal_h2', closeOnBoss=1)
+
+
+# ---------------- EXPANSION ----------------
+c7 = room('c7', 'crypts', 0, 26, 36, 18, 'ספריית העצמות')
+c7.carve(1, 2, 34, 12).fill(1, 2, 4, 3).fill(14, 2, 8, 2).fill(8, 10, 6, 4).fill(24, 9, 5, 5)
+c7.plat(16, 10, 5).plat(10, 6, 4).plat(28, 5, 5)
+c7.ent('lore', 20, 14, text='lore_library').ent('enemy', 12, 10, kind='husk').ent('enemy', 30, 14, kind='wickling')
+c7.ent('pickup', 30, 5, kind='heart', id='heart_c7')
+c8 = room('c8', 'crypts', 0, 44, 36, 20, 'קודש המקהלה')
+c8.carve(1, 1, 34, 16)
+c8.plat(5, 12, 6).plat(15, 8, 6).plat(25, 14, 4).plat(30, 11, 4).plat(25, 8, 4).plat(29, 5, 3).plat(31, 2, 3)
+c8.ent('boss', 15, 17, kind='choir').ent('seal', 30, 0, w=4, id='seal_choir', closeOnBoss=1)
+
+g4 = room('g4', 'gardens', 230, -30, 70, 24, 'כוורת העשים')
+g4.carve(1, 1, 68, 20).fill(1, 1, 8, 4).fill(30, 1, 12, 3).fill(56, 1, 13, 5)
+g4.fill(12, 14, 8, 7).fill(34, 12, 6, 9).fill(50, 15, 8, 6)
+g4.plat(22, 12, 5).plat(42, 9, 5).plat(60, 12, 6).plat(26, 7, 5).plat(27, 18, 4).plat(21, 15, 4).plat(30, 10, 4).plat(60, 8, 9)
+g4.ent('enemy', 16, 8, kind='mothling').ent('enemy', 36, 6, kind='mothling').ent('enemy', 54, 8, kind='mothling').ent('enemy', 26, 21, kind='sporecap').ent('enemy', 46, 21, kind='sporecap')
+g4.ent('pickup', 28, 7, kind='vessel', id='vessel_g4').ent('lore', 6, 21, text='lore_hive')
+g6 = room('g6', 'gardens', 300, -30, 44, 22, 'מאורת ענק הטחב')
+g6.carve(1, 1, 42, 17)
+g6.plat(6, 12, 6).plat(32, 12, 6)
+g6.ent('boss', 28, 18, kind='colossus').ent('gate', 0, 8, h=4, id='g_colossus')
+
+n5 = room('n5', 'nave', 150, 18, 20, 20, 'מגדל הפעמון הטבוע')
+n5.carve(3, 1, 14, 18)
+n5.fill(3, 5, 3, 1).fill(14, 9, 3, 1).fill(3, 13, 3, 1)
+n5.plat(8, 16, 3).plat(12, 13, 3).plat(7, 10, 3).plat(11, 7, 3)
+n5.ent('pickup', 10, 4, kind='heart', id='heart_n5').ent('enemy', 10, 10, kind='jelly').ent('lore', 9, 19, text='lore_bell')
+
+s5 = room('s5', 'spire', 120, -86, 70, 20, 'המצפה')
+s5.carve(1, 1, 68, 16).fill(1, 1, 10, 4).fill(58, 1, 11, 5)
+s5.fill(20, 12, 8, 5).fill(40, 10, 6, 7)
+s5.plat(30, 8, 6).plat(48, 6, 5).plat(10, 10, 6).plat(46, 13, 3).plat(50, 10, 4)
+s5.ent('enemy', 24, 12, kind='sentinel').ent('enemy', 34, 5, kind='shardwing').ent('enemy', 54, 4, kind='shardwing').ent('enemy', 62, 17, kind='sentinel')
+s5.ent('pickup', 50, 6, kind='vessel', id='vessel_s5').ent('lore', 14, 17, text='lore_observatory').ent('npc', 6, 17, id='astronomer')
 
 # ---------------- LINKS ----------------
 link('c1', 'c2', 9, 3)
@@ -207,6 +244,12 @@ link('s2', 's3', -57, 4)
 link('s3', 's4', -46, 4)
 link('s4', 'h1', 220, 4)
 link('h1', 'h2', 204, 4)
+link('c6', 'c7', 35, 4)
+link('c7', 'c8', 30, 4)
+link('g2', 'g4', 250, 4)
+link('g4', 'g6', -26, 4)
+link('n3', 'n5', 158, 4)
+link('s3', 's5', 166, 4)
 # platforms inside link openings (after carving)
 c3.plat(4, 24, 3)
 c5.plat(16, 1, 3)

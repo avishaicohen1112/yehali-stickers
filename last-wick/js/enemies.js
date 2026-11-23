@@ -180,7 +180,12 @@ G.Enemies = (function () {
       if (a <= 0) return;
       const shake = this.state === 'windup' ? Math.sin(this.t * 60) * 2 : 0;
       const atlas = 'e_' + this.kind;
-      if (G.Sprite.meta(atlas)) {
+      if (window.RIGS && window.RIGS[atlas]) {
+        if (!this.pup) this.pup = new G.Puppet.Puppet(atlas);
+        const R = window.RIGS[atlas]; this.pup.play(R.clips[this.anim] ? this.anim : (R.clips.idle ? 'idle' : Object.keys(R.clips)[0]));
+        this.pup.update(1 / 60, { vx: this.vx, vy: this.vy, facing: this.facing });
+        this.pup.draw(ctx, fx + shake, fy + (this.dead ? this.deadT * 60 : 0), { flip: this.facing < 0, alpha: a, flash: this.flash * 0.85 });
+      } else if (G.Sprite.meta(atlas)) {
         const m = G.Sprite.meta(atlas); let an = m.anims[this.anim] ? this.anim : (m.anims.idle ? 'idle' : Object.keys(m.anims)[0]);
         if (this.anim === 'walk' && !m.anims.walk && m.anims.fly) an = 'fly';
         const fi = G.Sprite.frameOf(atlas, an, this.animT);
