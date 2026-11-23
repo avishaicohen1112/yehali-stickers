@@ -471,5 +471,11 @@
   "pad": 150,
   "flames": [],
   "lights": []
+ },
+ "n2": {
+  "img": "assets/rooms/n2.webp",
+  "pad": 150,
+  "flames": [],
+  "lights": []
  }
 }
