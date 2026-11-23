@@ -1,0 +1,120 @@
+{
+ "atlas": "b_knight",
+ "sources": {
+  "D01_poses": "art_src/D01_poses"
+ },
+ "grids": {
+  "D01_poses": [
+   4,
+   2
+  ]
+ },
+ "cells": {
+  "D01_poses": [
+   "idle1",
+   "idle2",
+   "windup",
+   "attack",
+   "follow",
+   "special",
+   "hurt",
+   "dead"
+  ]
+ },
+ "scale": {
+  "D01_poses": [
+   "idle1",
+   236
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "idle1",
+    "idle2"
+   ],
+   "fps": 2,
+   "loop": true
+  },
+  "hurt": {
+   "f": [
+    "hurt"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "death": {
+   "f": [
+    "hurt",
+    "dead"
+   ],
+   "fps": 3
+  },
+  "walk": {
+   "f": [
+    "idle1",
+    "idle2"
+   ],
+   "fps": 3,
+   "loop": true
+  },
+  "windup": {
+   "f": [
+    "windup"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "charge": {
+   "f": [
+    "attack"
+   ],
+   "fps": 8,
+   "loop": true
+  },
+  "stun": {
+   "f": [
+    "hurt"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "windup2": {
+   "f": [
+    "windup"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "swing": {
+   "f": [
+    "attack",
+    "follow"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "crouch": {
+   "f": [
+    "windup"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "jump": {
+   "f": [
+    "special"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "slam": {
+   "f": [
+    "follow"
+   ],
+   "fps": 8,
+   "loop": false
+  }
+ }
+}

@@ -1,0 +1,105 @@
+{
+ "atlas": "b_colossus",
+ "sources": {
+  "D07_poses": "art_src/D07_poses"
+ },
+ "grids": {
+  "D07_poses": [
+   4,
+   2
+  ]
+ },
+ "cells": {
+  "D07_poses": [
+   "idle1",
+   "idle2",
+   "windup",
+   "attack",
+   "follow",
+   "special",
+   "hurt",
+   "dead"
+  ]
+ },
+ "scale": {
+  "D07_poses": [
+   "idle1",
+   290
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "idle1",
+    "idle2"
+   ],
+   "fps": 2,
+   "loop": true
+  },
+  "hurt": {
+   "f": [
+    "hurt"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "death": {
+   "f": [
+    "hurt",
+    "dead"
+   ],
+   "fps": 3
+  },
+  "walk": {
+   "f": [
+    "idle1",
+    "idle2"
+   ],
+   "fps": 3,
+   "loop": true
+  },
+  "windup": {
+   "f": [
+    "windup"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "stomp": {
+   "f": [
+    "attack"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "sweep": {
+   "f": [
+    "follow"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "curl": {
+   "f": [
+    "special"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "roll": {
+   "f": [
+    "special"
+   ],
+   "fps": 8,
+   "loop": true
+  },
+  "raise": {
+   "f": [
+    "windup"
+   ],
+   "fps": 8,
+   "loop": false
+  }
+ }
+}

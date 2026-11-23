@@ -1,0 +1,77 @@
+{
+ "atlas": "b_keeper",
+ "sources": {
+  "D10_poses": "art_src/D10_poses"
+ },
+ "grids": {
+  "D10_poses": [
+   4,
+   2
+  ]
+ },
+ "cells": {
+  "D10_poses": [
+   "idle1",
+   "idle2",
+   "windup",
+   "attack",
+   "follow",
+   "special",
+   "hurt",
+   "dead"
+  ]
+ },
+ "scale": {
+  "D10_poses": [
+   "idle1",
+   215
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "idle1",
+    "idle2"
+   ],
+   "fps": 2,
+   "loop": true
+  },
+  "hurt": {
+   "f": [
+    "hurt"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "death": {
+   "f": [
+    "hurt",
+    "dead"
+   ],
+   "fps": 3
+  },
+  "glow": {
+   "f": [
+    "special"
+   ],
+   "fps": 8,
+   "loop": true
+  },
+  "down": {
+   "f": [
+    "attack"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "raise": {
+   "f": [
+    "windup"
+   ],
+   "fps": 8,
+   "loop": false
+  }
+ },
+ "anchorY": "center"
+}

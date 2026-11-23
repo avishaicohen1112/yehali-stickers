@@ -1,0 +1,83 @@
+{
+ "atlas": "b_paperking",
+ "sources": {
+  "D11_poses": "art_src/D11_poses"
+ },
+ "grids": {
+  "D11_poses": [
+   4,
+   2
+  ]
+ },
+ "cells": {
+  "D11_poses": [
+   "idle1",
+   "idle2",
+   "windup",
+   "attack",
+   "follow",
+   "special",
+   "hurt",
+   "dead"
+  ]
+ },
+ "scale": {
+  "D11_poses": [
+   "idle1",
+   170
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "idle1",
+    "idle2"
+   ],
+   "fps": 2,
+   "loop": true
+  },
+  "hurt": {
+   "f": [
+    "hurt"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "death": {
+   "f": [
+    "hurt",
+    "dead"
+   ],
+   "fps": 3
+  },
+  "ready": {
+   "f": [
+    "windup"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "dash": {
+   "f": [
+    "attack"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "cast": {
+   "f": [
+    "special"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "raise": {
+   "f": [
+    "windup"
+   ],
+   "fps": 8,
+   "loop": false
+  }
+ }
+}

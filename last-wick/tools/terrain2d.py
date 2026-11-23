@@ -82,10 +82,22 @@ def three_slice(img, w_target):
         n = min(mid.shape[1], w_target - cap - x); out[:, x:x + n] = mid[:, :n]; x += n
     return out
 
+def shape(r):
+    """Organic solid mask S, inside distance dd, grid g (same as terrain3d.shape, without Blender)."""
+    seed = int(hashlib.md5(r.id.encode()).hexdigest()[:6], 16)
+    g = T2.grid_of(r); H, W = g.shape[0] * T2.T, g.shape[1] * T2.T
+    solid = np.kron((g == '#').astype(np.uint8), np.ones((T2.T, T2.T), np.uint8))
+    d_in = cv2.distanceTransform(solid, cv2.DIST_L2, 5); d_out = cv2.distanceTransform(1 - solid, cv2.DIST_L2, 5)
+    sdf = cv2.GaussianBlur(d_in - d_out, (0, 0), 6)
+    sdf = sdf + (T2.fbm(H, W, 90, 4, seed) - 0.5) * 16 + (T2.fbm(H, W, 22, 3, seed + 1) - 0.5) * 6
+    S = (sdf > 0).astype(np.uint8)
+    S = cv2.morphologyEx(S, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+    dd = cv2.distanceTransform(S, cv2.DIST_L2, 5)
+    return g, S, dd, sdf, seed, W, H
+
 def paint(r):
     K = kit(r.area); seed = int(hashlib.md5(r.id.encode()).hexdigest()[:6], 16)
-    import terrain3d as T3  # reuse the organic mask
-    g, S, dd, sdf, _, W, H = T3.shape(r)
+    g, S, dd, sdf, _, W, H = shape(r)
     img = np.zeros((H, W, 4), np.float32)
     rock = K['rock']; rh, rw = rock.shape[:2]
     reps = (H // rh + 2, W // rw + 2)

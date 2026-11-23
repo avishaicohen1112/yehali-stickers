@@ -1,0 +1,92 @@
+{
+ "atlas": "b_captain",
+ "sources": {
+  "D09_poses": "art_src/D09_poses"
+ },
+ "grids": {
+  "D09_poses": [
+   4,
+   2
+  ]
+ },
+ "cells": {
+  "D09_poses": [
+   "idle1",
+   "idle2",
+   "windup",
+   "attack",
+   "follow",
+   "special",
+   "hurt",
+   "dead"
+  ]
+ },
+ "scale": {
+  "D09_poses": [
+   "idle1",
+   150
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "idle1",
+    "idle2"
+   ],
+   "fps": 2,
+   "loop": true
+  },
+  "hurt": {
+   "f": [
+    "hurt"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "death": {
+   "f": [
+    "hurt",
+    "dead"
+   ],
+   "fps": 3
+  },
+  "walk": {
+   "f": [
+    "idle1",
+    "idle2"
+   ],
+   "fps": 3,
+   "loop": true
+  },
+  "ready": {
+   "f": [
+    "windup"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "slash": {
+   "f": [
+    "attack",
+    "follow"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "cannon": {
+   "f": [
+    "special"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "raise": {
+   "f": [
+    "windup"
+   ],
+   "fps": 8,
+   "loop": false
+  }
+ }
+}

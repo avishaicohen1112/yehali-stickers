@@ -28,6 +28,11 @@
      - מתכונים קיימים: `wick` (A02+A03; שמות התאים לפי סדר השורות בתדריך), וכל 18 האויבים `e_*` (C-A..C-E, שורה=אויב: rest, move1, move2, attack).
      - שגיאה: מקורות נשמרים ב־`last-wick/art_src/<ID>.<ext>` (A02.png, C-A.png...). בגיבור: אנימציה שחסרה באטלס נופלת לקרובה (glide→fall, slashup→slash, death→hurt...).
      - הגיבור: נשימה עדינה (sy) ב־idle לאטלס v2, `glide`/`djump` מחוברים למצבי הפיזיקה.
+     - גם מתכונים לבוסים `b_*` (גיליון 4×2: idle1 idle2 windup attack follow special hurt dead → האנימציות שכל בוס משתמש בהן בקוד). `tools/sheet2atlas.py` = כינוי ל־posesheet.
+   - **`tools/area.py <אות>`** (בנוי ונבדק על תמונות דמה): X1..X8 של אזור → `assets/scn/<area>/` (far/sil/mid/front + אלמנטים מונפשים לפי סוג: hang/float/drift/spin/pendulum/wave), רשומה ב־`assets/scenes.json`, ערכת קרקע `assets/art/<area>/` (X6 נחתך ל־4 רצועות לפי פסים ריקים), מרקם `rock.png` (ריצוף דו־כיווני), אביזרים `assets/props/<area>_*.webp` + `sets.json`. `--rooms` מריץ גם `terrain2d.py` לחדרי האזור ו־`place_props.py`. שמות האלמנטים/אביזרים לכל אזור בטבלת `AREAS` בראש הקובץ. `--list` להצגה.
+   - **אזהרה**: האביזרים התלת־ממדיים הישנים הוסרו בכוונה מהחדרים. `place_props.py` שונה כך שהוא מציב **רק** אביזרים מצוירים (`sets.json`) ולא נוגע באזורים אחרים — אל תחזיר את SETS הישנים.
+   - `terrain2d.py` כבר לא תלוי בבלנדר (פונקציית `shape` הועתקה אליו).
+   - שמות קבצים ב־`art_src/`: ר' `art_src/README.md`.
    - `tools/rigtool.py` + `js/puppet.js` — ריג חלקים (cutout) עם קפיצים לבד/צעיף ועיוות רשת (chain). לבוסים: אפשר גם לחתוך חלקים מאיור מלא.
    - `js/scenery.js` — רקעים בשכבות (`assets/scenes.json` → `window.SCENES`): שכבות עם parallax, tile, ערפל נע, קרני אור, אלמנטים מונפשים (sway/bob/flicker/chain), ושכבות קדמיות (`front:true`).
    - `tools/terrain2d.py` — צובע קרקע לכל חדר מערכת קרקע: `assets/art/<area>/rock.png, trim_top.png, trim_bottom.png, plat.png, spikes.png` (+ `kit.json`). להריץ לכל החדרים כשהערכה מגיעה.

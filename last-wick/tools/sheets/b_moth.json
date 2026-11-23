@@ -1,0 +1,77 @@
+{
+ "atlas": "b_moth",
+ "sources": {
+  "D02_poses": "art_src/D02_poses"
+ },
+ "grids": {
+  "D02_poses": [
+   4,
+   2
+  ]
+ },
+ "cells": {
+  "D02_poses": [
+   "idle1",
+   "idle2",
+   "windup",
+   "attack",
+   "follow",
+   "special",
+   "hurt",
+   "dead"
+  ]
+ },
+ "scale": {
+  "D02_poses": [
+   "idle1",
+   274
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "idle1",
+    "idle2"
+   ],
+   "fps": 5,
+   "loop": true
+  },
+  "hurt": {
+   "f": [
+    "hurt"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "death": {
+   "f": [
+    "hurt",
+    "dead"
+   ],
+   "fps": 3
+  },
+  "windup": {
+   "f": [
+    "windup"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "dive": {
+   "f": [
+    "attack"
+   ],
+   "fps": 8,
+   "loop": true
+  },
+  "dust": {
+   "f": [
+    "special"
+   ],
+   "fps": 8,
+   "loop": true
+  }
+ },
+ "anchorY": "center"
+}

@@ -1,0 +1,84 @@
+{
+ "atlas": "b_clockmaker",
+ "sources": {
+  "D12_poses": "art_src/D12_poses"
+ },
+ "grids": {
+  "D12_poses": [
+   4,
+   2
+  ]
+ },
+ "cells": {
+  "D12_poses": [
+   "idle1",
+   "idle2",
+   "windup",
+   "attack",
+   "follow",
+   "special",
+   "hurt",
+   "dead"
+  ]
+ },
+ "scale": {
+  "D12_poses": [
+   "idle1",
+   180
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "idle1",
+    "idle2"
+   ],
+   "fps": 2,
+   "loop": true
+  },
+  "hurt": {
+   "f": [
+    "hurt"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "death": {
+   "f": [
+    "hurt",
+    "dead"
+   ],
+   "fps": 3
+  },
+  "ready": {
+   "f": [
+    "windup"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "strike": {
+   "f": [
+    "attack",
+    "follow"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "cast": {
+   "f": [
+    "special"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "raise": {
+   "f": [
+    "windup"
+   ],
+   "fps": 8,
+   "loop": false
+  }
+ }
+}

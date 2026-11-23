@@ -1,0 +1,90 @@
+{
+ "atlas": "b_vesper",
+ "sources": {
+  "D04_poses": "art_src/D04_poses"
+ },
+ "grids": {
+  "D04_poses": [
+   4,
+   2
+  ]
+ },
+ "cells": {
+  "D04_poses": [
+   "idle1",
+   "idle2",
+   "windup",
+   "attack",
+   "follow",
+   "special",
+   "hurt",
+   "dead"
+  ]
+ },
+ "scale": {
+  "D04_poses": [
+   "idle1",
+   152
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "idle1",
+    "idle2"
+   ],
+   "fps": 2,
+   "loop": true
+  },
+  "hurt": {
+   "f": [
+    "hurt"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "death": {
+   "f": [
+    "hurt",
+    "dead"
+   ],
+   "fps": 3
+  },
+  "ready": {
+   "f": [
+    "windup"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "lunge": {
+   "f": [
+    "attack"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "plunge": {
+   "f": [
+    "follow"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "throw": {
+   "f": [
+    "special"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "recover": {
+   "f": [
+    "idle1"
+   ],
+   "fps": 8,
+   "loop": false
+  }
+ }
+}

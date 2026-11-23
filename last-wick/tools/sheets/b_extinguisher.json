@@ -1,0 +1,91 @@
+{
+ "atlas": "b_extinguisher",
+ "sources": {
+  "D05_poses": "art_src/D05_poses"
+ },
+ "grids": {
+  "D05_poses": [
+   4,
+   2
+  ]
+ },
+ "cells": {
+  "D05_poses": [
+   "idle1",
+   "idle2",
+   "windup",
+   "attack",
+   "follow",
+   "special",
+   "hurt",
+   "dead"
+  ]
+ },
+ "scale": {
+  "D05_poses": [
+   "idle1",
+   440
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "idle1",
+    "idle2"
+   ],
+   "fps": 2,
+   "loop": true
+  },
+  "hurt": {
+   "f": [
+    "hurt"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "death": {
+   "f": [
+    "hurt",
+    "dead"
+   ],
+   "fps": 3
+  },
+  "raise": {
+   "f": [
+    "windup"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "slam": {
+   "f": [
+    "attack"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "down": {
+   "f": [
+    "follow"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "cast": {
+   "f": [
+    "special"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "breath": {
+   "f": [
+    "special"
+   ],
+   "fps": 8,
+   "loop": true
+  }
+ },
+ "anchorY": "center"
+}
