@@ -1,0 +1,61 @@
+{
+ "atlas": "e_clockwisp",
+ "sources": {
+  "C-E": "art_src/C-E"
+ },
+ "grid": [
+  4,
+  4
+ ],
+ "cells": {
+  "C-E": [
+   null,
+   null,
+   null,
+   null,
+   "rest",
+   "move1",
+   "move2",
+   "attack",
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ]
+ },
+ "scale": {
+  "C-E": [
+   "rest",
+   60
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "rest",
+    "move1",
+    "move2",
+    "move1"
+   ],
+   "fps": 5,
+   "loop": true
+  },
+  "windup": {
+   "f": [
+    "attack"
+   ]
+  },
+  "attack": {
+   "f": [
+    "attack"
+   ],
+   "loop": true
+  }
+ },
+ "anchorY": "center"
+}

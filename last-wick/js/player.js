@@ -16,7 +16,7 @@ G.Player = (function () {
       this.focusHold = 0; this.focusT = 0; this.focusing = false; this.castT = 0;
       this.anim = 'idle'; this.animT = 0; this.landT = 0; this.dead = false; this.deadT = 0; this.sitting = false;
       this.safe = { x: this.x, y: this.y }; this.safeT = 0; this.stepT = 0; this.recoilT = 0; this.flameT = 0;
-      this.hazardT = 0;
+      this.hazardT = 0; this.djumpT = 0; this.runPhase = 0;
       this.pup = window.RIGS && window.RIGS.wick ? new G.Puppet.Puppet('wick') : null;
     }
     get cx() { return this.x + this.w / 2; } get cy() { return this.y + this.h / 2; }
@@ -25,7 +25,7 @@ G.Player = (function () {
     setAnim(a) { if (this.anim !== a) { this.anim = a; this.animT = 0; } }
     update(dt, room) {
       const I = G.Input, S = G.state, A = S.abil;
-      this.animT += dt; this.flameT += dt;
+      this.animT += dt; this.flameT += dt; if (this.anim === 'run') this.runPhase += dt * Math.abs(this.vx);
       if (this.dead) { this.deadT += dt; this.vx *= 0.9; this.vy = Math.min(this.vy + C.GRAV * dt, C.MAXFALL); room.moveY(this, this.vy * dt); this.setAnim('death'); return; }
       if (this.hazardT > 0) { this.hazardT -= dt; if (this.hazardT <= 0) { this.x = this.safe.x; this.y = this.safe.y; this.vx = this.vy = 0; this.inv = Math.max(this.inv, 0.8); G.Main.fadeIn(0.3); } return; }
       if (this.sitting) {
@@ -35,7 +35,7 @@ G.Player = (function () {
       }
       this.inv = Math.max(0, this.inv - dt); this.lock = Math.max(0, this.lock - dt); this.hurtT = Math.max(0, this.hurtT - dt);
       this.dashCd = Math.max(0, this.dashCd - dt); this.atkCd = Math.max(0, this.atkCd - dt); this.castT = Math.max(0, this.castT - dt);
-      this.wallJumpT = Math.max(0, this.wallJumpT - dt); this.landT = Math.max(0, this.landT - dt); this.recoilT = Math.max(0, this.recoilT - dt);
+      this.wallJumpT = Math.max(0, this.wallJumpT - dt); this.landT = Math.max(0, this.landT - dt); this.djumpT = Math.max(0, this.djumpT - dt); this.recoilT = Math.max(0, this.recoilT - dt);
       const L = I.h('left'), R = I.h('right'), U = I.h('up'), D = I.h('down');
       let mx = (R ? 1 : 0) - (L ? 1 : 0);
       if (this.lock > 0) mx = 0;
@@ -104,7 +104,7 @@ G.Player = (function () {
             this.vy = -C.WJ_VY; this.vx = -this.wall * C.WJ_VX; this.facing = -this.wall; this.wallJumpT = 0.16; this.buffer = 0; this.cut = false;
             this.wall = 0; G.Sound.sfx('walljump');
           } else if (A.djump && !this.djumped) {
-            this.vy = -C.DJUMP; this.djumped = true; this.buffer = 0; this.cut = false; G.Sound.sfx('djump');
+            this.vy = -C.DJUMP; this.djumped = true; this.djumpT = 0.3; this.buffer = 0; this.cut = false; G.Sound.sfx('djump');
             for (let i = 0; i < 2; i++) for (let k = 0; k < 7; k++) G.FX.spawn({ x: this.cx + (i ? 1 : -1) * rand(8, 40), y: this.cy + rand(0, 30), vx: (i ? 1 : -1) * rand(60, 200), vy: rand(60, 220), life: 0.5, size: rand(2, 3.5), kind: 'mote', ph: rand(6), a: 1, c: [230, 235, 255], add: true });
           }
         }
@@ -228,9 +228,11 @@ G.Player = (function () {
       else if (this.castT > 0) a = 'cast';
       else if (this.atkT > 0) a = this.atkDir === 'up' ? 'slashup' : this.atkDir === 'down' ? 'slashdown' : 'slash';
       else if (this.focusing) a = 'focus';
-      else if (!this.ground) a = this.wall && this.vy > 0 ? 'wall' : this.vy < 0 ? 'jump' : 'fall';
+      else if (!this.ground) a = this.wall && this.vy > 0 ? 'wall' : this.gliding ? 'glide' : this.djumpT > 0 && this.vy < 0 ? 'djump' : this.vy < 0 ? 'jump' : 'fall';
       else if (this.landT > 0) a = 'land';
       else a = Math.abs(this.vx) > 30 ? 'run' : 'idle';
+      // poses that only the painted (v2) atlas has fall back to the nearest older one
+      if (!G.Sprite.has('wick', a)) a = ({ glide: 'fall', djump: 'jump', lookup: 'idle', slashup: 'slash', slashdown: 'slash', wall: 'fall', cast: 'focus', sit: 'idle', death: 'hurt' })[a] || a;
       this.setAnim(a);
     }
     draw(ctx) {
@@ -244,17 +246,22 @@ G.Player = (function () {
         this.pup.draw(ctx, fx, fy, { flip, alpha: blink ? 0.45 : 1, flash: this.hurtT > 0.2 ? 0.8 : 0 });
         return;
       }
-      const fi = G.Sprite.frameOf('wick', this.anim, this.animT);
+      const meta = G.Sprite.meta('wick');
+      const an = meta && meta.anims[this.anim];
+      // run cadence follows real speed (feet don't skate when slowing down)
+      let fi;
+      if (an && an.speed && this.anim === 'run') fi = Math.floor(this.runPhase * an.speed) % an.n;
+      else fi = G.Sprite.frameOf('wick', this.anim, this.animT);
+      // painted sheets have few idle poses: add a soft breath around the feet
+      const sy = meta && meta.v === 2 && this.anim === 'idle' ? 1 + Math.sin(this.flameT * 1.9) * 0.012 : 1;
       const blink = this.inv > 0 && !this.dead && Math.floor(this.inv * 14) % 2 === 0;
       const fx = this.cx, fy = this.feet + 1;
       const flip = (this.anim === 'wall' ? -this.wall : this.facing) < 0;
       // flame tip
-      const meta = G.Sprite.meta('wick');
-      const an = meta && meta.anims[this.anim];
-      const tip = an && an.tip ? G.Sprite.point('wick', an.tip[fi], fx, fy, { flip }) : { x: fx, y: this.y };
+      const tip = an && an.tip ? G.Sprite.point('wick', an.tip[fi], fx, fy, { flip, anim: this.anim, fi, sy }) : { x: fx, y: this.y };
       this.tip = tip;
       if (this.hazardT > 0) return;
-      G.Sprite.draw(ctx, 'wick', this.anim, fi, fx, fy, { flip, alpha: blink ? 0.45 : 1, flash: this.hurtT > 0.2 ? 0.8 : 0 });
+      G.Sprite.draw(ctx, 'wick', this.anim, fi, fx, fy, { flip, sy, alpha: blink ? 0.45 : 1, flash: this.hurtT > 0.2 ? 0.8 : 0 });
     }
     drawFlame(ctx, t) {
       if (!this.tip || this.hazardT > 0) return;

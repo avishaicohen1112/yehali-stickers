@@ -1,0 +1,64 @@
+{
+ "atlas": "e_acolyte",
+ "sources": {
+  "C-B": "art_src/C-B"
+ },
+ "grid": [
+  4,
+  4
+ ],
+ "cells": {
+  "C-B": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   "rest",
+   "move1",
+   "move2",
+   "attack",
+   null,
+   null,
+   null,
+   null
+  ]
+ },
+ "scale": {
+  "C-B": [
+   "rest",
+   100
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "rest"
+   ],
+   "loop": true
+  },
+  "walk": {
+   "f": [
+    "move1",
+    "move2"
+   ],
+   "fps": 5,
+   "loop": true
+  },
+  "windup": {
+   "f": [
+    "rest"
+   ]
+  },
+  "attack": {
+   "f": [
+    "attack"
+   ],
+   "loop": true
+  }
+ }
+}

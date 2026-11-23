@@ -1,0 +1,61 @@
+{
+ "atlas": "e_mothling",
+ "sources": {
+  "C-A": "art_src/C-A"
+ },
+ "grid": [
+  4,
+  4
+ ],
+ "cells": {
+  "C-A": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   "rest",
+   "move1",
+   "move2",
+   "attack"
+  ]
+ },
+ "scale": {
+  "C-A": [
+   "rest",
+   48
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "fly": {
+   "f": [
+    "rest",
+    "move1",
+    "move2",
+    "move1"
+   ],
+   "fps": 12,
+   "loop": true
+  },
+  "windup": {
+   "f": [
+    "rest"
+   ]
+  },
+  "attack": {
+   "f": [
+    "attack"
+   ],
+   "loop": true
+  }
+ },
+ "anchorY": "center"
+}

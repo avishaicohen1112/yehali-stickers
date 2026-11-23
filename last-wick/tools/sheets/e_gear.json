@@ -1,0 +1,64 @@
+{
+ "atlas": "e_gear",
+ "sources": {
+  "C-E": "art_src/C-E"
+ },
+ "grid": [
+  4,
+  4
+ ],
+ "cells": {
+  "C-E": [
+   "rest",
+   "move1",
+   "move2",
+   "attack",
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ]
+ },
+ "scale": {
+  "C-E": [
+   "rest",
+   70
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "rest"
+   ],
+   "loop": true
+  },
+  "walk": {
+   "f": [
+    "move1",
+    "move2"
+   ],
+   "fps": 5,
+   "loop": true
+  },
+  "windup": {
+   "f": [
+    "rest"
+   ]
+  },
+  "attack": {
+   "f": [
+    "attack"
+   ],
+   "loop": true
+  }
+ }
+}

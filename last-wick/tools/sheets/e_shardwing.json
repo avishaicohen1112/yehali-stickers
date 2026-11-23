@@ -1,0 +1,61 @@
+{
+ "atlas": "e_shardwing",
+ "sources": {
+  "C-C": "art_src/C-C"
+ },
+ "grid": [
+  4,
+  4
+ ],
+ "cells": {
+  "C-C": [
+   "rest",
+   "move1",
+   "move2",
+   "attack",
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ]
+ },
+ "scale": {
+  "C-C": [
+   "rest",
+   40
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "fly": {
+   "f": [
+    "rest",
+    "move1",
+    "move2",
+    "move1"
+   ],
+   "fps": 12,
+   "loop": true
+  },
+  "windup": {
+   "f": [
+    "rest"
+   ]
+  },
+  "attack": {
+   "f": [
+    "attack"
+   ],
+   "loop": true
+  }
+ },
+ "anchorY": "center"
+}

@@ -1,0 +1,60 @@
+{
+ "atlas": "e_sporecap",
+ "sources": {
+  "C-B": "art_src/C-B"
+ },
+ "grid": [
+  4,
+  4
+ ],
+ "cells": {
+  "C-B": [
+   "rest",
+   "move1",
+   "move2",
+   "attack",
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ]
+ },
+ "scale": {
+  "C-B": [
+   "rest",
+   60
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "rest",
+    "move1",
+    "move2",
+    "move1"
+   ],
+   "fps": 5,
+   "loop": true
+  },
+  "windup": {
+   "f": [
+    "attack"
+   ]
+  },
+  "attack": {
+   "f": [
+    "attack"
+   ],
+   "loop": true
+  }
+ }
+}

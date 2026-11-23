@@ -1,0 +1,64 @@
+{
+ "atlas": "e_papersoldier",
+ "sources": {
+  "C-D": "art_src/C-D"
+ },
+ "grid": [
+  4,
+  4
+ ],
+ "cells": {
+  "C-D": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   "rest",
+   "move1",
+   "move2",
+   "attack"
+  ]
+ },
+ "scale": {
+  "C-D": [
+   "rest",
+   104
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "rest"
+   ],
+   "loop": true
+  },
+  "walk": {
+   "f": [
+    "move1",
+    "move2"
+   ],
+   "fps": 5,
+   "loop": true
+  },
+  "windup": {
+   "f": [
+    "rest"
+   ]
+  },
+  "attack": {
+   "f": [
+    "attack"
+   ],
+   "loop": true
+  }
+ }
+}

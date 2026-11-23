@@ -1,0 +1,61 @@
+{
+ "atlas": "e_crane",
+ "sources": {
+  "C-D": "art_src/C-D"
+ },
+ "grid": [
+  4,
+  4
+ ],
+ "cells": {
+  "C-D": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   "rest",
+   "move1",
+   "move2",
+   "attack",
+   null,
+   null,
+   null,
+   null
+  ]
+ },
+ "scale": {
+  "C-D": [
+   "rest",
+   48
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "fly": {
+   "f": [
+    "rest",
+    "move1",
+    "move2",
+    "move1"
+   ],
+   "fps": 12,
+   "loop": true
+  },
+  "windup": {
+   "f": [
+    "rest"
+   ]
+  },
+  "attack": {
+   "f": [
+    "attack"
+   ],
+   "loop": true
+  }
+ },
+ "anchorY": "center"
+}

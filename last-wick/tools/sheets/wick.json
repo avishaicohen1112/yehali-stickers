@@ -1,0 +1,189 @@
+{
+ "atlas": "wick",
+ "sources": {
+  "A02": "art_src/A02",
+  "A03": "art_src/A03"
+ },
+ "grid": [
+  4,
+  4
+ ],
+ "cells": {
+  "A02": [
+   "idle0",
+   "idle1",
+   "hurt",
+   "focus",
+   "run0",
+   "run1",
+   "run2",
+   "run3",
+   "jump",
+   "fall",
+   "land",
+   "dash",
+   "slash0",
+   "slash1",
+   "slash2",
+   "slash3"
+  ],
+  "A03": [
+   "slashup0",
+   "slashup1",
+   "slashdown0",
+   "slashdown1",
+   "cling",
+   "wallslide",
+   "glide",
+   "djump",
+   "cast0",
+   "cast1",
+   "sit",
+   "lookup",
+   "death0",
+   "death1",
+   "death2",
+   "rise"
+  ]
+ },
+ "scale": {
+  "A02": [
+   "idle0",
+   108
+  ],
+  "A03": [
+   "lookup",
+   108
+  ]
+ },
+ "unitPx": 100,
+ "tip": true,
+ "anims": {
+  "idle": {
+   "f": [
+    "idle0",
+    "idle1"
+   ],
+   "fps": 2.5,
+   "loop": true
+  },
+  "run": {
+   "f": [
+    "run0",
+    "run1",
+    "run2",
+    "run3"
+   ],
+   "fps": 12,
+   "loop": true,
+   "speed": 0.05
+  },
+  "jump": {
+   "f": [
+    "jump"
+   ]
+  },
+  "fall": {
+   "f": [
+    "fall"
+   ],
+   "loop": true
+  },
+  "land": {
+   "f": [
+    "land"
+   ]
+  },
+  "dash": {
+   "f": [
+    "dash"
+   ]
+  },
+  "hurt": {
+   "f": [
+    "hurt"
+   ]
+  },
+  "focus": {
+   "f": [
+    "focus"
+   ],
+   "loop": true
+  },
+  "slash": {
+   "f": [
+    "slash0",
+    "slash1",
+    "slash2",
+    "slash3"
+   ],
+   "fps": 14
+  },
+  "slashup": {
+   "f": [
+    "slashup0",
+    "slashup1"
+   ],
+   "fps": 10
+  },
+  "slashdown": {
+   "f": [
+    "slashdown0",
+    "slashdown1"
+   ],
+   "fps": 10
+  },
+  "wall": {
+   "f": [
+    "wallslide"
+   ],
+   "loop": true
+  },
+  "cling": {
+   "f": [
+    "cling"
+   ]
+  },
+  "glide": {
+   "f": [
+    "glide"
+   ],
+   "loop": true
+  },
+  "djump": {
+   "f": [
+    "djump"
+   ]
+  },
+  "cast": {
+   "f": [
+    "cast0",
+    "cast1"
+   ],
+   "fps": 7
+  },
+  "sit": {
+   "f": [
+    "sit"
+   ]
+  },
+  "lookup": {
+   "f": [
+    "lookup"
+   ]
+  },
+  "death": {
+   "f": [
+    "death0",
+    "death1",
+    "death2"
+   ],
+   "fps": 4
+  },
+  "rise": {
+   "f": [
+    "rise"
+   ]
+  }
+ }
+}

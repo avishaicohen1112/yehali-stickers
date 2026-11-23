@@ -1,0 +1,64 @@
+{
+ "atlas": "e_husk",
+ "sources": {
+  "C-A": "art_src/C-A"
+ },
+ "grid": [
+  4,
+  4
+ ],
+ "cells": {
+  "C-A": [
+   null,
+   null,
+   null,
+   null,
+   "rest",
+   "move1",
+   "move2",
+   "attack",
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ]
+ },
+ "scale": {
+  "C-A": [
+   "rest",
+   118
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "rest"
+   ],
+   "loop": true
+  },
+  "walk": {
+   "f": [
+    "move1",
+    "move2"
+   ],
+   "fps": 5,
+   "loop": true
+  },
+  "windup": {
+   "f": [
+    "rest"
+   ]
+  },
+  "attack": {
+   "f": [
+    "attack"
+   ],
+   "loop": true
+  }
+ }
+}

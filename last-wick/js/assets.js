@@ -34,8 +34,10 @@ G.Sprite = (function () {
     o = o || {};
     const m = meta(atlas), im = G.Assets.get(atlas); if (!m || !im) return false;
     const a = m.anims[anim] || m.anims[Object.keys(m.anims)[0]];
-    const f = a.f[clamp(fi, 0, a.n - 1)];
-    const [cw, ch] = m.cell; const [ox, oy] = m.origin;
+    const i = clamp(fi, 0, a.n - 1), f = a.f[i];
+    // v2 atlases (tools/posesheet.py): f=[x,y,w,h] + per-frame anchor a.o[i]; v1: uniform cell + m.origin
+    const cw = f.length > 2 ? f[2] : m.cell[0], ch = f.length > 2 ? f[3] : m.cell[1];
+    const [ox, oy] = a.o ? a.o[i] : m.origin;
     const s = (o.ppu || 50) / m.unitPx * (o.scale || 1);
     ctx.save();
     ctx.translate(x, y);
@@ -56,11 +58,15 @@ G.Sprite = (function () {
     return true;
   }
   // point in frame (pixel coords in cell) -> world coords
+  // o.anim + o.fi select the per-frame anchor of v2 atlases
   function point(atlas, p, x, y, o) {
     o = o || {}; const m = meta(atlas); if (!m || !p) return { x, y };
     const s = (o.ppu || 50) / m.unitPx * (o.scale || 1);
-    const dx = (p[0] - m.origin[0]) * s, dy = (p[1] - m.origin[1]) * s;
+    const a = o.anim && m.anims[o.anim];
+    const org = a && a.o ? a.o[clamp(o.fi || 0, 0, a.n - 1)] : m.origin;
+    const dx = (p[0] - org[0]) * s, dy = (p[1] - org[1]) * s * (o.sy || 1);
     return { x: x + (o.flip ? -dx : dx), y: y + dy };
   }
-  return { draw, frameOf, animDur, meta, point };
+  function has(atlas, anim) { const m = meta(atlas); return !!(m && m.anims[anim]); }
+  return { draw, frameOf, animDur, meta, point, has };
 })();
