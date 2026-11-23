@@ -229,8 +229,10 @@ G.Render = (function () {
   function drawNPC(c, o, t) {
     const at = 'n_' + o.id;
     if (G.Sprite.meta(at)) {
-      const fi = G.Sprite.frameOf(at, 'idle', t + o.x * 0.01);
-      G.Sprite.draw(c, at, 'idle', fi, o.x, o.y + 1, { flip: G.Main.player.cx < o.x, ppu: window.ATLAS[at].ppu || 50 });
+      const fi = G.Sprite.frameOf(at, 'idle', t + o.x * 0.01), m = window.ATLAS[at];
+      // painted NPCs come as one pose: give them a slow breath around the feet
+      const sy = m.v === 2 && m.anims.idle.n === 1 ? 1 + Math.sin(t * 1.6 + o.x * 0.01) * 0.014 : 1;
+      G.Sprite.draw(c, at, 'idle', fi, o.x, o.y + 1, { flip: G.Main.player.cx < o.x, ppu: m.ppu || 50, sy });
     } else { c.fillStyle = '#1a1520'; c.beginPath(); c.ellipse(o.x, o.y - 45, 30, 45, 0, 0, 7); c.fill(); c.fillStyle = '#e8dcc8'; c.beginPath(); c.arc(o.x, o.y - 95, 20, 0, 7); c.fill(); }
     if (G.Objects.nearest() === o) G.UI.prompt(c, o.x, o.y - 175, G.T('talk'));
   }

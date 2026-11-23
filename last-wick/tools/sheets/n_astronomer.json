@@ -1,0 +1,34 @@
+{
+ "atlas": "n_astronomer",
+ "sources": {
+  "B05": "art_src/B05"
+ },
+ "grids": {
+  "B05": [
+   3,
+   1
+  ]
+ },
+ "cells": {
+  "B05": [
+   "full",
+   null,
+   null
+  ]
+ },
+ "scale": {
+  "B05": [
+   "full",
+   125
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "full"
+   ],
+   "loop": true
+  }
+ }
+}

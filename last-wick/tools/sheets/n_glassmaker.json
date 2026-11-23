@@ -1,0 +1,34 @@
+{
+ "atlas": "n_glassmaker",
+ "sources": {
+  "B04": "art_src/B04"
+ },
+ "grids": {
+  "B04": [
+   3,
+   1
+  ]
+ },
+ "cells": {
+  "B04": [
+   "full",
+   null,
+   null
+  ]
+ },
+ "scale": {
+  "B04": [
+   "full",
+   105
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "full"
+   ],
+   "loop": true
+  }
+ }
+}
