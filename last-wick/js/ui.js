@@ -95,11 +95,17 @@ G.UI = (function () {
   function tallowPing() { tallowShow = 2; }
   // ------------- cards -------------
   function areaCard(area) { const a = G.TEXT.areas[area]; card = { kind: 'area', l1: a[0], l2: a[1], t: 0, dur: 4.2 }; }
+  function worldCard(w) { const W = window.WORLD.worlds[w]; card = { kind: 'world', l1: W.name, l2: W.en, t: 0, dur: 5.5 }; }
   function bossCard(kind) { const b = G.TEXT.bosses[kind]; card = { kind: 'boss', l1: b[0], l2: b[1], t: 0, dur: 3.6 }; }
   function drawCard(c, dt) {
     if (!card) return; card.t += dt; const k = card.t / card.dur; if (k >= 1) { card = null; return; }
     const a = k < 0.2 ? k / 0.2 : k > 0.75 ? (1 - k) / 0.25 : 1; const VW = R().VW, VH = R().VH;
-    if (card.kind === 'area') {
+    if (card.kind === 'world') {
+      c.fillStyle = `rgba(0,0,0,${0.35 * a})`; c.fillRect(0, VH * 0.18, VW, VH * 0.26);
+      text(c, card.l2, VW / 2, VH * 0.24, { size: 22, en: true, a: a * 0.8, spacing: 12 });
+      text(c, card.l1, VW / 2, VH * 0.31, { size: 92, w: 900, a, blur: 30 });
+      ornament(c, VW / 2, VH * 0.31 + 62, 620, a);
+    } else if (card.kind === 'area') {
       ornament(c, VW / 2, VH * 0.27 + 46, 420, a);
       text(c, card.l1, VW / 2, VH * 0.27 - 8, { size: 64, w: 700, a, blur: 20 });
       text(c, card.l2, VW / 2, VH * 0.27 + 80, { size: 20, en: true, a: a * 0.8, spacing: 6 });
@@ -228,17 +234,18 @@ G.UI = (function () {
     const VW = R().VW, VH = R().VH, S = G.state, W = window.WORLD;
     c.fillStyle = 'rgba(6,5,8,0.92)'; c.fillRect(0, 0, VW, VH);
     let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
-    for (const id in W.rooms) { const r = W.rooms[id]; x0 = Math.min(x0, r.gx); y0 = Math.min(y0, r.gy); x1 = Math.max(x1, r.gx + r.w); y1 = Math.max(y1, r.gy + r.h); }
+    const curW = G.Main.room ? G.Main.room.world : 'lumen';
+    for (const id in W.rooms) { const r = W.rooms[id]; if (r.world !== curW) continue; x0 = Math.min(x0, r.gx); y0 = Math.min(y0, r.gy); x1 = Math.max(x1, r.gx + r.w); y1 = Math.max(y1, r.gy + r.h); }
     const sc = Math.min((VW - 160) / (x1 - x0), (VH - 200) / (y1 - y0));
     const ox = (VW - (x1 - x0) * sc) / 2 - x0 * sc, oy = 120 + (VH - 200 - (y1 - y0) * sc) / 2 - y0 * sc;
-    text(c, G.T('mapt'), VW / 2, 60, { size: 46, w: 700 }); ornament(c, VW / 2, 98, 260);
-    const AC = { crypts: '#c8956a', gardens: '#7fd1b0', nave: '#7f9ee0', spire: '#c4a0f0', hearth: '#e07050' };
+    text(c, W.worlds[curW].name, VW / 2, 60, { size: 46, w: 700 }); ornament(c, VW / 2, 98, 260);
+    const AC = { crypts: '#c8956a', gardens: '#7fd1b0', nave: '#7f9ee0', spire: '#c4a0f0', hearth: '#e07050', shore: '#ff9a5a', galleon: '#a898e0', lighthouse: '#ffc070', paper: '#efe2c8', clock: '#e0c070', core: '#ffb060' };
     for (const id in W.rooms) {
-      if (!S.visited[id]) continue; const r = W.rooms[id];
+      if (!S.visited[id]) continue; const r = W.rooms[id]; if (r.world !== curW) continue;
       c.save(); c.translate(ox + r.gx * sc, oy + r.gy * sc);
       c.fillStyle = 'rgba(30,26,30,0.9)'; c.fillRect(0, 0, r.w * sc, r.h * sc);
       c.fillStyle = AC[r.area];
-      for (let y = 0; y < r.h; y++) for (let x = 0; x < r.w; x++) { const ch = r.rows[y][x]; if (ch !== '#') { c.globalAlpha = ch === '~' ? 0.3 : 0.55; c.fillRect(x * sc, y * sc, sc + 0.3, sc + 0.3); } }
+      for (let y = 0; y < r.h; y++) for (let x = 0; x < r.w; x++) { const ch = r.rows[y][x]; if (ch !== '#' && ch !== 'x') { c.globalAlpha = ch === '~' ? 0.3 : 0.55; c.fillRect(x * sc, y * sc, sc + 0.3, sc + 0.3); } }
       c.globalAlpha = 1; c.strokeStyle = AC[r.area]; c.lineWidth = 1.5; c.strokeRect(0, 0, r.w * sc, r.h * sc);
       for (const e of r.ents) { if (e.t === 'bench') { c.fillStyle = '#ffd08a'; c.beginPath(); c.arc(e.x * sc, (e.y - 1) * sc, 5, 0, 7); c.fill(); } if (e.t === 'boss' && !S.bosses[e.kind]) { c.fillStyle = '#ff5040'; c.font = `bold ${Math.max(12, sc * 3)}px serif`; c.fillText('✕', e.x * sc - 6, (e.y - 2) * sc); } }
       c.restore();
@@ -251,6 +258,6 @@ G.UI = (function () {
     const VW = R().VW, VH = R().VH;
     toasts.forEach((t, i) => { const a = Math.min(1, t.t * 4, (t.dur - t.t) * 2); text(c, t.s, VW / 2, VH * 0.86 - i * 40, { size: 28, a, c: '#f2e2c8' }); });
   }
-  return { clearTaps: () => { taps = []; }, hud, prompt, toast, tallowPing, areaCard, bossCard, drawCard, talk, lore, ability, openShop, pause, map, update, drawModal, drawToasts, handleTap, tapRegion, text, ornament, panel, wrap,
+  return { clearTaps: () => { taps = []; }, hud, prompt, toast, tallowPing, areaCard, worldCard, bossCard, drawCard, talk, lore, ability, openShop, pause, map, update, drawModal, drawToasts, handleTap, tapRegion, text, ornament, panel, wrap,
     get modal() { return modal; }, set modal(v) { modal = v; }, get card() { return card; }, HE, EN };
 })();

@@ -6,7 +6,9 @@
  *
  *   Sound.init()                 create / resume the AudioContext (call on a user gesture)
  *   Sound.music(name)            crossfade to a looping track ('title', 'crypts', 'gardens',
- *                                'nave', 'spire', 'hearth', 'boss', 'boss_final', 'victory'),
+ *                                'nave', 'spire', 'hearth', 'boss', 'boss_final', 'victory',
+ *                                World 2: 'shore', 'galleon', 'lighthouse', 'boss_sea',
+ *                                World 3: 'paper', 'clock', 'core', 'boss_dream'),
  *                                null / '' fades out
  *   Sound.sfx(name, opts)        one-shot, opts = {vol, pitch, pan}
  *   Sound.setVolumes(m, s)       0..1 each
@@ -455,6 +457,100 @@
     Z(dest, t, { ft: 'lowpass', ff: 200, a: 0.004, d: 0.1, vol: vel * 0.35, kind: 'm' });
   }
 
+  // ---- World 2 / World 3 timbres
+
+  // distant horn call: saw + triangle, scooped onset, slow bloom, late vibrato
+  function vHorn(dest, t, m, dur, vel) {
+    if (busy()) return;
+    var f = mtof(m), a = Math.min(0.5, dur * 0.35), r = Math.min(1.2, dur * 0.5), end = t + dur + 0.05;
+    var o1 = O('sawtooth', f), o2 = O('triangle', f), vib = O('sine', rnd(4.2, 5)), vg = G(0);
+    var lp = F('lowpass', f * 1.2, 0.9), g = G(0);
+    o1.detune.value = -4; o2.detune.value = 4;
+    vib.connect(vg); vg.connect(o1.detune); vg.connect(o2.detune);
+    vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(7, t + dur * 0.7);
+    o1.frequency.setValueAtTime(f * 0.95, t); o1.frequency.exponentialRampToValueAtTime(f, t + 0.18);
+    o2.frequency.setValueAtTime(f * 0.95, t); o2.frequency.exponentialRampToValueAtTime(f, t + 0.18);
+    lp.frequency.setValueAtTime(f * 1.2, t);
+    lp.frequency.exponentialRampToValueAtTime(Math.min(f * 3.2, 3000), t + a);
+    lp.frequency.exponentialRampToValueAtTime(Math.max(f * 1.4, 120), t + dur);
+    o1.connect(lp); o2.connect(lp); lp.connect(g); g.connect(dest);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vel * 0.2, t + a);
+    g.gain.linearRampToValueAtTime(vel * 0.15, t + dur - r);
+    g.gain.linearRampToValueAtTime(0, t + dur);
+    startStop([o1, o2, vib], t, end);
+    reg(o1, [o1, o2, vib, vg, lp, g], 'm');
+  }
+
+  // squeezebox / harmonium reed: musette-detuned saw + square per note, nasal formant, bellows tremolo
+  function vReed(dest, t, ms, dur, o) {
+    var a = Math.min(o.a || 0.3, dur * 0.45), r = Math.min(o.r || 0.5, dur * 0.5);
+    var hp = F('highpass', 180, 0.6), pk = F('peaking', 1150, 1.6), lp = F('lowpass', o.cut || 2000, 0.7);
+    var trem = G(1), g = G(0), tl = O('sine', o.trem || rnd(4.6, 5.6)), tg = G(o.depth == null ? 0.18 : o.depth);
+    pk.gain.value = 7;
+    tl.connect(tg); tg.connect(trem.gain);
+    hp.connect(pk); pk.connect(lp); lp.connect(trem); trem.connect(g); g.connect(dest);
+    var oscs = [tl], list = [hp, pk, lp, trem, g, tl, tg], det = o.det == null ? 13 : o.det;
+    for (var i = 0; i < ms.length; i++) {
+      var f = mtof(ms[i]), s1 = O('sawtooth', f), s2 = O('square', f), sg = G(0.45);
+      s1.detune.value = -det + rnd(-2, 2); s2.detune.value = det + rnd(-2, 2);
+      s1.connect(hp); s2.connect(sg); sg.connect(hp);
+      oscs.push(s1, s2); list.push(s1, s2, sg);
+    }
+    var peak = (o.vol || 0.05) / Math.sqrt(ms.length * 2);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(peak, t + a);
+    g.gain.linearRampToValueAtTime(peak * 0.8, t + dur - r);
+    g.gain.linearRampToValueAtTime(0, t + dur);
+    startStop(oscs, t, t + dur + 0.05);
+    reg(oscs[1], list, 'm');
+  }
+
+  // celesta: pure hammered sine with a quick bright 4th partial
+  function vCelesta(dest, t, m, vel) {
+    if (busy()) return;
+    var f = mtof(m), dec = clamp(2.6 - (m - 72) * 0.05, 0.8, 2.6), end = t + dec + 0.05;
+    var o1 = O('sine', f), o2 = O('sine', f * 4.0), o3 = O('triangle', f * 2.0);
+    var g1 = G(0), g2 = G(0), g3 = G(0), out = G(vel * 0.3);
+    o2.detune.value = rnd(-5, 5);
+    o1.connect(g1); o2.connect(g2); o3.connect(g3);
+    g1.connect(out); g2.connect(out); g3.connect(out); out.connect(dest);
+    adsr(g1.gain, t, 0.002, 1, 0, dec);
+    adsr(g2.gain, t, 0.001, 0.22, 0, 0.12);
+    adsr(g3.gain, t, 0.002, 0.18, 0, dec * 0.3);
+    startStop([o1, o2, o3], t, end);
+    reg(o1, [o1, o2, o3, g1, g2, g3, out], 'm');
+  }
+
+  // clockwork tick: a tiny resonant click plus a pitched "tink"
+  function vTick(dest, t, vel, f) {
+    Z(dest, t, { ft: 'bandpass', ff: f * 1.8, fq: 3, a: 0.0005, d: 0.012, vol: vel * 0.6, kind: 'm' });
+    T(dest, t, { type: 'triangle', f: f, a: 0.0008, d: 0.03, vol: vel * 0.25, kind: 'm' });
+  }
+
+  // surf: noise blooming through a lowpass that opens and closes, foam hiss on top
+  function vSurf(dest, t, rise, fall, vel) {
+    Z(dest, t, { ft: 'lowpass', ff: 160, fp: [[rise, 700 + vel * 1100], [rise + fall, 140]], fq: 0.6,
+      a: rise, d: fall, vol: vel * 0.2, kind: 'm' });
+    Z(dest, t + rise * 0.4, { ft: 'bandpass', ff: 2200, fp: [[rise * 0.6, 4200], [rise * 0.6 + fall * 0.8, 1500]], fq: 0.5,
+      a: rise * 0.6, d: fall * 0.8, vol: vel * 0.035, kind: 'm' });
+  }
+
+  // wooden creak: a slow click train (very low saw) ringing through a narrow drifting band
+  function vCreak(dest, t, vel) {
+    var f = rnd(12, 24), ff = rnd(450, 950), dur = rnd(0.5, 1.2);
+    T(dest, t, { type: 'sawtooth', f: f, f2: f * rnd(1.3, 2.2), sw: dur, ft: 'bandpass', ff: ff, ff2: ff * rnd(0.8, 1.3),
+      fq: 9, a: dur * 0.4, h: dur * 0.2, d: dur * 0.4, vol: vel, kind: 'm' });
+  }
+
+  // a "distant" send for a track: lowpassed, mostly reverb, a little dry
+  function far(tr, cut, dry) {
+    var lp = F('lowpass', cut, 0.5), d = G(dry);
+    lp.connect(tr.verb); lp.connect(d); d.connect(tr.in);
+    tr.pn.push(lp, d);
+    return lp;
+  }
+
   // persistent noise bed (lives for the track's lifetime)
   function bed(tr, o) {
     var src = ctx.createBufferSource();
@@ -489,6 +585,7 @@
 
   var AEOL = [0, 2, 3, 5, 7, 8, 10], DOR = [0, 2, 3, 5, 7, 9, 10], LYD = [0, 2, 4, 6, 7, 9, 11];
   var PHRY = [0, 1, 3, 5, 7, 8, 10], HARM = [0, 2, 3, 5, 7, 8, 11], MAJ = [0, 2, 4, 5, 7, 9, 11];
+  var WT = [0, 2, 4, 6, 8, 10], PHRYD = [0, 1, 4, 5, 7, 8, 10];
 
   function Track(name, def) {
     var t0 = ctx.currentTime + 0.08;
@@ -642,6 +739,34 @@
     for (var i = 0; i < src.length; i++) arr[src[i][0]] = [src[i][1], src[i][2]];
     return arr;
   })();
+
+  // Galleon shanty fragment: [step, degree, lengthInSteps] over 8 bars of 3/4 eighths (G minor).
+  var SHANTY = (function () {
+    var src = [
+      [0, 11, 3], [3, 10, 1], [4, 9, 2],
+      [6, 8, 2], [8, 7, 2], [10, 8, 2],
+      [12, 9, 3], [15, 10, 1], [16, 11, 2],
+      [18, 8, 6],
+      [24, 11, 3], [27, 10, 1], [28, 9, 2],
+      [30, 8, 2], [32, 7, 2], [34, 6, 2],
+      [36, 7, 3], [39, 8, 1], [40, 9, 2],
+      [42, 7, 6]
+    ];
+    var arr = [];
+    for (var i = 0; i < src.length; i++) arr[src[i][0]] = [src[i][1], src[i][2]];
+    return arr;
+  })();
+
+  // Ash Shore horn calls: [stepOffset, degree, lengthInSteps]
+  var HORN_CALLS = [
+    [[0, 7, 3], [3, 11, 6]],
+    [[0, 11, 3], [3, 10, 2], [5, 7, 7]],
+    [[0, 9, 4], [4, 7, 8]],
+    [[0, 4, 2], [2, 7, 2], [4, 6, 6]]
+  ];
+
+  // Lighthouse beacon: the same four notes, forever (Bb, Cb, Bb, F)
+  var BEACON = [14, 15, 14, 11];
 
   function intensity(bar, cycleLen) {
     var c = bar % cycleLen;
@@ -878,6 +1003,349 @@
           }
           if (I === -1) vBowed(tr.in, t, tr.deg(c), bd * 2, 0.5, 2);
         }
+        if (I >= 2) tr.mel.step(t, s);
+      }
+    },
+
+    // ===================================================== World 2: Ember Sea
+    // ---------------------------------------------------------------- shore
+    // F dorian, very slow. Surf swells every 6-9 s, low drone, far horn calls, sparse harp.
+    shore: {
+      bpm: 50, spb: 2, bpb: 4, bpc: 2, root: 41, scale: DOR, vol: 0.95, wet: 0.55, seed: 101, fadeIn: 3,
+      progs: [[0, 6, 3, 0], [0, 2, 6, 4], [0, 3, 2, 6], [0, 6, 2, 3]],
+      setup: function (tr) {
+        tr.far = far(tr, 1300, 0.3);
+        tr.mel = new Melody(tr, {
+          lo: 11, hi: 18, len: 16, density: 0.2, vel: 0.5,
+          voice: function (t, m, v) { vPluck(tr.in, t, m, v * 0.8, 2.6, 3); }
+        });
+        drone(tr, { freqs: [mtof(29), mtof(36) * 1.003, mtof(41) * 0.998], type: 'triangle', cut: 240, q: 0.8, vol: 0.1, lr: 0.035, ld: 90 });
+        bed(tr, { brown: 1, ft: 'lowpass', ff: 320, fq: 0.5, vol: 0.06, lr: 0.03, ld: 140 });
+        bed(tr, { ff: 900, fq: 0.5, vol: 0.01, lr: 0.11, ld: 500 });
+        tr.waveAt = tr.t0 + 1.2; tr.call = null;
+      },
+      step: function (tr, t, s, bar, sib, chg) {
+        var c = tr.chordDeg, bd = tr.barDur, sd = tr.stepDur, i;
+        if (chg) {
+          vPad(tr.in, t, tr.chord(0, 3), bd * 2.3, { type: 'sawtooth', cut: 520, vol: 0.065, a: bd * 0.7, r: bd, det: 9, lfo: 0.07 });
+          vBowed(tr.in, t, tr.deg(c) - 12, bd * 2.1, 0.4, 1.8);
+          if (tr.rng() < 0.4) {
+            for (i = 0; i < 4; i++) vPluck(tr.in, t + bd * 0.5 + i * 0.17, tr.deg(c + 2 * i) + 12, 0.16, 2.4, 3);
+          }
+        }
+        // the surf
+        if (t >= tr.waveAt) {
+          vSurf(tr.in, t, 2 + tr.rng() * 1.6, 3 + tr.rng() * 2, 0.6 + tr.rng() * 0.4);
+          tr.waveAt = t + 6 + tr.rng() * 3;
+        }
+        // horn calls across the water, sometimes answered an octave down
+        var b8 = bar % 8, call;
+        if (sib === 0 && b8 === 3 && tr.rng() < 0.75) tr.call = HORN_CALLS[Math.floor(tr.rng() * HORN_CALLS.length)];
+        if (sib === 0 && tr.call && (b8 === 3 || (b8 === 5 && tr.rng() < 0.45))) {
+          call = tr.call;
+          for (i = 0; i < call.length; i++) {
+            vHorn(tr.far, t + call[i][0] * sd, tr.deg(call[i][1]) - (b8 === 5 ? 12 : 0), call[i][2] * sd, b8 === 5 ? 0.4 : 0.6);
+          }
+          if (b8 === 5) tr.call = null;
+        }
+        if (b8 !== 3) tr.mel.step(t, s);
+        // embers drifting up off the sea
+        if (tr.rng() < 0.06) crackle(tr.in, t, 0.4, 2, 0.035, 'm');
+      }
+    },
+
+    // -------------------------------------------------------------- galleon
+    // G minor, lilting 3/4. Shanty fragment on a detuned music box over a squeezebox, creaking timbers.
+    galleon: {
+      bpm: 88, spb: 2, bpb: 3, bpc: 2, root: 43, scale: AEOL, vol: 0.9, wet: 0.5, seed: 112,
+      progs: [[0, 4, 6, 0], [0, 4, 0, 4], [0, 5, 4, 0], [0, 6, 4, 0], [0, 3, 4, 0]],
+      pick: function (tr, cyc) {
+        return cyc % 2 === 0 ? tr.def.progs[0] : tr.def.progs[1 + Math.floor(tr.rng() * 4)];
+      },
+      setup: function (tr) {
+        tr.box = function (t, m, v) {
+          vMusicBox(tr.in, t, m + (tr.rng() - 0.5) * 0.3, v);
+          if (tr.rng() < 0.35) vMusicBox(tr.verb, t + 0.012, m + 0.2, v * 0.45);
+        };
+        tr.mel = new Melody(tr, {
+          lo: 7, hi: 13, len: 12, density: 0.36, vel: 0.5,
+          voice: function (t, m, v) { tr.box(t, m + 12, v); }
+        });
+        bed(tr, { brown: 1, ft: 'lowpass', ff: 220, fq: 0.6, vol: 0.09, lr: 0.045, ld: 90 });
+        tr.creakAt = tr.t0 + 2; tr.half = false;
+      },
+      step: function (tr, t, s, bar, sib, chg) {
+        var c = tr.chordDeg, bd = tr.barDur, sd = tr.stepDur;
+        if (chg) {
+          vReed(tr.in, t, tr.chord(0, 3), bd * 2.05, { vol: 0.07, a: bd * 0.5, r: bd * 0.6, cut: 1700 });
+          if (tr.rng() < 0.3) vChoir(tr.verb, t + bd * 0.5, tr.chord(1, 2), bd * 1.8, { vol: 0.05, a: bd * 0.7, r: bd * 0.8 });
+        }
+        // oom-pah-pah: bass on 1, soft reed chords on 2 and 3
+        if (sib === 0) vPluck(tr.in, t, tr.deg(c), 0.42, 1.6, 2.2);
+        if (sib === 2 || (sib === 4 && tr.rng() < 0.7)) {
+          vReed(tr.in, t, tr.chord(1, 3), sd * 1.4, { vol: 0.035, a: 0.03, r: 0.12, cut: 2200, depth: 0.05 });
+        }
+        // the shanty on even cycles (sometimes only its first half), a drifting tune otherwise
+        var local = s % (tr.spBar * 8);
+        if (local === 0) tr.half = tr.rng() < 0.4;
+        if (tr.cycle % 2 === 0) {
+          var nn = SHANTY[local];
+          if (nn && !(tr.half && local >= tr.spBar * 4)) tr.box(t, tr.deg(nn[0]) + 12, 0.55);
+        } else {
+          tr.mel.step(t, local);
+        }
+        // creaking timbers, a groaning hull
+        if (t >= tr.creakAt) {
+          vCreak(tr.in, t, 0.5);
+          if (tr.rng() < 0.4) vCreak(tr.in, t + 0.3 + tr.rng() * 0.5, 0.35);
+          tr.creakAt = t + 2.5 + tr.rng() * 4;
+        }
+        if (bar % 4 === 2 && sib === 0 && tr.rng() < 0.5) {
+          T(tr.in, t, { type: 'sawtooth', f: 38, f2: 33, ft: 'lowpass', ff: 140, fq: 2, a: 1.2, h: 0.4, d: 1.4, vol: 0.06, kind: 'm' });
+        }
+      }
+    },
+
+    // ----------------------------------------------------------- lighthouse
+    // Bb phrygian. Heartbeat on every beat, tension rising over 24 bars then breaking; the beacon motif on bells.
+    lighthouse: {
+      bpm: 66, spb: 2, bpb: 4, bpc: 2, root: 46, scale: PHRY, vol: 0.9, wet: 0.5, seed: 123,
+      progs: [[0, 1, 0, 6], [0, 5, 1, 0], [0, 6, 5, 1], [0, 1, 5, 6]],
+      setup: function (tr) {
+        tr.mel = new Melody(tr, {
+          lo: 11, hi: 17, len: 16, density: 0.22, vel: 0.5,
+          voice: function (t, m, v, dur) { vBowed(tr.in, t, m, Math.max(0.5, dur * 0.95), v * 0.5, 3); }
+        });
+        drone(tr, { freqs: [mtof(34), mtof(41) * 1.003], type: 'sawtooth', cut: 160, q: 1.2, vol: 0.07, lr: 0.05, ld: 60 });
+        bed(tr, { brown: 1, ft: 'lowpass', ff: 260, vol: 0.05, lr: 0.06 });
+      },
+      step: function (tr, t, s, bar, sib, chg) {
+        var c = tr.chordDeg, bd = tr.barDur, cyc = bar % 24, ten = cyc / 21, calm = cyc >= 22;
+        if (sib % 2 === 0 && !calm) vHeart(tr.in, t, (sib === 0 ? 0.42 : 0.3) + ten * 0.22);
+        if (chg) {
+          vPad(tr.in, t, tr.chord(0, 3), bd * 2.3, { type: 'sawtooth', cut: 450 + Math.min(ten, 1) * 2200, vol: 0.05 + Math.min(ten, 1) * 0.03,
+            a: bd * 0.6, r: bd * 0.8, det: 8 + ten * 10, lfo: 0.1 + ten * 0.4 });
+          vBowed(tr.in, t, tr.deg(c) - 12, bd * 2.1, 0.4, 2);
+          if (ten > 0.5 && !calm) vBowed(tr.in, t, tr.deg(c + 7) + 12, bd * 2.1, 0.2 + ten * 0.2, 4);
+          if (ten > 0.75 && !calm) vBrass(tr.in, t + bd, tr.deg(c) + 12, bd * 1.1, 0.35);
+          if (cyc === 22) vChoir(tr.in, t, tr.chord(1, 3), bd * 2.2, { vol: 0.09, a: bd * 0.5, r: bd });
+        }
+        // the beacon
+        if (bar % 2 === 0 && sib % 2 === 0) {
+          var bm = tr.deg(BEACON[sib >> 1]);
+          vBell(tr.in, t, bm, 0.45, 3.5);
+          if (ten > 0.4) vGlass(tr.verb, t + 0.01, bm + 12, 0.05);
+        }
+        // the beam sweeping past
+        if (bar % 2 === 1 && sib === 0) {
+          Z(tr.verb, t, { ft: 'bandpass', ff: 300, fp: [[1.6, 2600], [3.6, 300]], fq: 1.2, a: 1.6, d: 2, vol: 0.05, kind: 'm' });
+        }
+        if (tr.rng() < 0.03 + ten * 0.05) vBell(tr.verb, t, tr.deg(c + [0, 2, 4][Math.floor(tr.rng() * 3)]) + 24, 0.2, 2.5);
+        if (ten > 0.8 && !calm && sib === 6) vTimp(tr.in, t, tr.deg(c) + 12, 0.3);
+        if (ten > 0.25 && !calm && bar % 2 === 1) tr.mel.step(t, s);
+        if (tr.rng() < 0.25) crackle(tr.in, t, tr.stepDur, 1, 0.04, 'm');
+      }
+    },
+
+    // =================================================== World 3: Dreaming Wick
+    // ---------------------------------------------------------------- paper
+    // D lydian. Pizzicato, celesta, soft rustling, page turns.
+    paper: {
+      bpm: 76, spb: 2, bpb: 4, bpc: 2, root: 50, scale: LYD, vol: 1.15, wet: 0.5, seed: 134,
+      progs: [[0, 1, 5, 1], [0, 4, 1, 0], [0, 2, 1, 5], [0, 1, 0, 6]],
+      setup: function (tr) {
+        tr.mel = new Melody(tr, {
+          lo: 14, hi: 21, len: 16, density: 0.3, vel: 0.5,
+          voice: function (t, m, v) { vCelesta(tr.in, t, m + 12, v * 0.9); }
+        });
+        bed(tr, { ff: 5200, fq: 0.8, vol: 0.008, lr: 0.13, ld: 2200 });
+      },
+      step: function (tr, t, s, bar, sib, chg) {
+        var c = tr.chordDeg, bd = tr.barDur, i;
+        var PZ = [0, 4, 2, 4, 7, 4, 2, 4];
+        if (chg) {
+          var notes = tr.chord(0, 3); notes.push(tr.deg(c + 6));
+          vPad(tr.in, t, notes, bd * 2.3, { type: 'triangle', cut: 1500, vol: 0.045, a: bd * 0.7, r: bd, det: 5, lfo: 0.09 });
+          vPluck(tr.in, t, tr.deg(c) - 12, 0.38, 0.9, 2.2);
+        }
+        if (sib === 4) vPluck(tr.in, t, tr.deg(c + 4) - 12, 0.26, 0.7, 2.2);
+        if (tr.rng() < (sib % 2 === 0 ? 0.6 : 0.3)) vPluck(tr.in, t, tr.deg(c + PZ[sib]), 0.2, 0.35, 2.8);
+        if (bar % 4 === 3 && sib === 4 && tr.rng() < 0.6) {
+          var R = [0, 2, 4, 7];
+          for (i = 0; i < R.length; i++) vCelesta(tr.verb, t + i * 0.09, tr.deg(c + R[i]) + 24, 0.2);
+        }
+        if (bar % 8 >= 1) tr.mel.step(t, s);
+        // rustling leaves, the odd page turning
+        if (tr.rng() < 0.3) {
+          Z(tr.in, t + tr.rng() * tr.stepDur, { ft: 'bandpass', ff: rnd(2500, 7500), fq: 1.5, a: 0.008, d: rnd(0.03, 0.1), vol: rnd(0.01, 0.03), kind: 'm' });
+        }
+        if (bar % 8 === 7 && sib === 2) {
+          Z(tr.in, t, { ft: 'bandpass', ff: 900, fp: [[0.25, 5200], [0.6, 2000]], fq: 0.9, a: 0.25, d: 0.35, vol: 0.045, kind: 'm' });
+        }
+      }
+    },
+
+    // ---------------------------------------------------------------- clock
+    // B whole-tone. Tick-tock on quarters, a second gear in threes, music-box arpeggios, organ; the clock stalls every 8 bars.
+    clock: {
+      bpm: 92, spb: 4, bpb: 4, bpc: 2, root: 47, scale: WT, vol: 0.9, wet: 0.45, seed: 145,
+      progs: [[0, 1, 0, 5], [0, 2, 1, 5], [0, 5, 4, 1], [0, 3, 2, 1]],
+      setup: function (tr) {
+        tr.mel = new Melody(tr, {
+          lo: 12, hi: 18, len: 32, density: 0.12, vel: 0.5,
+          voice: function (t, m, v) { vBell(tr.in, t, m, v * 0.7, 2.2); }
+        });
+        drone(tr, { freqs: [mtof(35), mtof(35) * 1.004], type: 'sawtooth', cut: 150, vol: 0.05, lr: 0.05, ld: 50 });
+        bed(tr, { brown: 1, ft: 'lowpass', ff: 240, vol: 0.04 });
+      },
+      step: function (tr, t, s, bar, sib, chg) {
+        var c = tr.chordDeg, bd = tr.barDur, stall = bar % 8 === 7 && sib >= 8;
+        var ARP = [0, 2, 4, 6, 8, 6, 4, 2];
+        if (!stall) {
+          if (sib % 4 === 0) vTick(tr.in, t, sib % 8 === 0 ? 0.5 : 0.38, sib % 8 === 0 ? 2600 : 1900);
+          else if (tr.rng() < 0.45) vTick(tr.in, t, 0.1, 4200);
+          if (s % 3 === 0) vTick(tr.in, t + 0.004, 0.16, 3300);
+          if (s % 10 === 0) {
+            T(tr.in, t, { type: 'triangle', f: 420, f2: 380, a: 0.001, d: 0.07, vol: 0.12, kind: 'm' });
+            Z(tr.in, t, { ft: 'bandpass', ff: 700, fq: 2, a: 0.001, d: 0.03, vol: 0.12, kind: 'm' });
+          }
+          if (sib % 2 === 0 && bar % 8 < 6) {
+            var k = sib >> 1, d = c + ARP[bar % 2 ? 7 - k : k];
+            vMusicBox(tr.in, t, tr.deg(d) + 24 + Math.sin(s * 0.05) * 0.12, 0.24);
+          }
+        }
+        if (chg) {
+          vOrgan(tr.in, t, tr.chord(1, 3), bd * 2.05, 0.045, 0.6);
+          vOrgan(tr.in, t, [tr.deg(c)], bd * 2.05, 0.05, 0.4);
+        }
+        if (bar % 8 === 0 && sib === 0) vBell(tr.verb, t, tr.deg(3), 0.35, 6, true);
+        if (bar % 8 >= 2) tr.mel.step(t, s);
+      }
+    },
+
+    // ----------------------------------------------------------------- core
+    // Eb major, very slow. Choir, organ, sub swells; layers enter over ~2 minutes, then breathe in a long arc.
+    core: {
+      bpm: 40, spb: 1, bpb: 4, bpc: 2, root: 39, scale: MAJ, vol: 0.9, wet: 0.6, seed: 156, fadeIn: 4,
+      progs: [[0, 5, 3, 4], [0, 3, 5, 4], [5, 3, 0, 4], [0, 4, 5, 3], [3, 0, 4, 0]],
+      setup: function (tr) {
+        tr.mel = new Melody(tr, {
+          lo: 7, hi: 13, len: 8, density: 0.4, vel: 0.5,
+          voice: function (t, m, v, dur) {
+            vHorn(tr.in, t, m, Math.max(1, dur * 0.95), v * 0.8);
+            if (tr.lvl >= 4) vBowed(tr.in, t, m + 12, Math.max(1, dur * 0.95), v * 0.35, 3.5);
+          }
+        });
+        drone(tr, { freqs: [mtof(27), mtof(34) * 1.002, mtof(39)], type: 'sine', cut: 300, vol: 0.12, lr: 0.03, ld: 60 });
+        bed(tr, { brown: 1, ft: 'lowpass', ff: 200, vol: 0.06, lr: 0.03, ld: 60 });
+        tr.lvl = 0;
+      },
+      step: function (tr, t, s, bar, sib, chg) {
+        var c = tr.chordDeg, bd = tr.barDur, L;
+        if (bar < 20) L = Math.floor(bar / 4);
+        else { var k = (bar - 20) % 24; L = k < 12 ? 4 : k < 18 ? 3 : k < 22 ? 2 : 3; }
+        tr.lvl = L;
+        if (chg) {
+          T(tr.in, t, { f: mtof(tr.deg(c) - 12), a: bd * 0.8, h: bd * 0.4, d: bd * 0.9, vol: 0.2 + L * 0.03, kind: 'm' });
+          vOrgan(tr.in, t, [tr.deg(c)], bd * 2.05, 0.07, 1.5);
+          if (L >= 1) vChoir(tr.in, t, tr.chord(1, 3), bd * 2.3, { vol: 0.12 + L * 0.01, a: bd * 0.6, r: bd * 0.8 });
+          if (L >= 2) vOrgan(tr.in, t + bd, tr.chord(1, 3), bd * 1.05, 0.035, 1.5);
+          if (L >= 3) vBowed(tr.in, t, tr.deg(c + 7) + 12, bd * 2.1, 0.3, 3.5);
+          if (L >= 4) {
+            vChoir(tr.in, t + bd * 0.25, tr.chord(2, 3), bd * 2, { vol: 0.06, a: bd * 0.6, r: bd * 0.8 });
+            vTimp(tr.in, t, tr.deg(c) + 12, 0.35);
+          }
+        }
+        if (sib === 0 && (L >= 4 || bar % 8 === 0)) vBell(tr.verb, t, tr.deg(0) + (L >= 4 ? 24 : 12), L >= 4 ? 0.25 : 0.35, 6, true);
+        if (L >= 2 && bar % 8 >= 1) tr.mel.step(t, s);
+      }
+    },
+
+    // ------------------------------------------------------------- boss_sea
+    // B minor, driving 6/8. Rocking low-string ostinato, timpani, low brass, breaking waves.
+    boss_sea: {
+      bpm: 100, spb: 3, bpb: 2, bpc: 2, root: 35, scale: AEOL, vol: 0.8, wet: 0.28, seed: 167,
+      progs: [[0, 5, 6, 0], [0, 3, 5, 6], [0, 6, 5, 4], [0, 5, 3, 4]],
+      setup: function (tr) {
+        tr.mel = new Melody(tr, {
+          lo: 14, hi: 21, len: 12, density: 0.5, vel: 0.5,
+          voice: function (t, m, v, dur) { vBowed(tr.in, t, m, Math.max(0.2, dur * 0.95), v * 0.55, 4); }
+        });
+        bed(tr, { brown: 1, ft: 'lowpass', ff: 180, vol: 0.07, lr: 0.11, ld: 120 });
+      },
+      step: function (tr, t, s, bar, sib, chg) {
+        var c = tr.chordDeg, bd = tr.barDur, I = intensity(bar, 32), cyc = bar % 32;
+        var OST = [0, 2, 1, 3, 1, 2], CT = [0, 2, 4, 7];
+        if (I >= 0) {
+          var m = tr.deg(c + CT[OST[sib]]) + 12, acc = sib % 3 === 0;
+          vPluck(tr.in, t, m, acc ? 0.34 : 0.2, 0.26, acc ? 6 : 4.5);
+          if (acc) vPluck(tr.in, t, tr.deg(c), 0.3, 0.4, 3);
+          if (I >= 3) vPluck(tr.in, t + tr.stepDur / 2, m + 12, 0.08, 0.12, 6);
+        }
+        if (sib === 0) vTimp(tr.in, t, tr.deg(c) + 12, I >= 0 ? 0.65 : 0.5);
+        if (sib === 3) vTimp(tr.in, t, tr.deg(c + 4), 0.42);
+        if (I >= 2 && sib === 5) vTimp(tr.in, t, tr.deg(c) + 12, 0.3);
+        if (I >= 2 && sib === 0 && bar % 2 === 0) vBoom(tr.in, t, 0.45);
+        if ((cyc === 29 || cyc === 31) && sib >= 3) {
+          vTimp(tr.in, t, tr.deg(0) + 12, 0.3 + (sib - 3) * 0.08);
+          vTimp(tr.in, t + tr.stepDur / 2, tr.deg(0) + 12, 0.3 + (sib - 3) * 0.08);
+        }
+        if (chg) {
+          vBowed(tr.in, t, tr.deg(c), bd * 2, 0.5, 2);
+          if (I >= 1 || I === -1) {
+            vBrass(tr.in, t, tr.deg(c) + 12, bd * 2, 0.5);
+            vBrass(tr.in, t, tr.deg(c + 2) + 12, bd * 2, 0.3);
+            if (I >= 2) vBrass(tr.in, t, tr.deg(c), bd * 2, 0.3);
+          }
+        }
+        if (I >= 3 && bar % 2 === 1 && sib === 3) {
+          vBrass(tr.in, t, tr.deg(c) + 12, 0.55, 0.4);
+          vBrass(tr.in, t, tr.deg(c + 4) + 12, 0.55, 0.3);
+        }
+        if (I >= 1 && cyc % 4 === 3 && sib === 0) vSurf(tr.in, t, bd * 0.9, 1.6, 0.8);
+        if (I >= 2) tr.mel.step(t, s);
+      }
+    },
+
+    // ----------------------------------------------------------- boss_dream
+    // E phrygian-dominant, 7/8 alternating 2+2+3 / 3+2+2. bpm counts eighths; steps are sixteenths.
+    // Clockwork ticks, plucked ostinato, timpani on the groups, choir stabs.
+    boss_dream: {
+      bpm: 300, spb: 2, bpb: 7, bpc: 2, root: 40, scale: PHRYD, vol: 0.8, wet: 0.3, seed: 178,
+      progs: [[0, 1, 0, 6], [0, 5, 1, 0], [0, 3, 1, 6], [0, 1, 5, 4]],
+      setup: function (tr) {
+        tr.mel = new Melody(tr, {
+          lo: 14, hi: 21, len: 28, density: 0.32, vel: 0.5,
+          voice: function (t, m, v, dur) { vBowed(tr.in, t, m, Math.max(0.15, dur * 0.95), v * 0.55, 4); }
+        });
+        bed(tr, { brown: 1, ft: 'lowpass', ff: 170, vol: 0.05, lr: 0.09 });
+      },
+      step: function (tr, t, s, bar, sib, chg) {
+        var c = tr.chordDeg, bd = tr.barDur, I = intensity(bar, 32), cyc = bar % 32;
+        var grp = bar % 2 === 0 ? [0, 4, 8] : [0, 6, 10];
+        var gi = grp.indexOf(sib), acc = gi >= 0, even = sib % 2 === 0;
+        vTick(tr.in, t, acc ? 0.4 : (even ? 0.2 : 0.1), acc ? 2400 : (even ? 3000 : 4200));
+        if (even && I >= 0) {
+          var g = sib >= grp[2] ? 2 : sib >= grp[1] ? 1 : 0, pos = (sib - grp[g]) >> 1;
+          var m = tr.deg(c + [0, 4, 1][pos] + (g === 1 && pos === 0 ? 2 : 0)) + 12;
+          vPluck(tr.in, t, m, acc ? 0.32 : 0.2, 0.2, acc ? 7 : 5);
+          if (I >= 1 && acc) vMusicBox(tr.in, t, m + 24, 0.18);
+          if (I >= 3) vPluck(tr.in, t + tr.stepDur, m + 12, 0.08, 0.12, 6);
+        }
+        if (acc) vTimp(tr.in, t, tr.deg(c) + 12, gi === 0 ? 0.6 : 0.4);
+        if (I >= 1 && sib === 0) vBoom(tr.in, t, 0.45);
+        if (I >= 2 && sib === grp[2]) vSnare(tr.in, t, 0.3);
+        if ((cyc === 29 || cyc === 31) && sib >= 8 && even) vTimp(tr.in, t, tr.deg(0) + 12, 0.3 + (sib - 8) * 0.04);
+        if (I >= 1 && acc && (gi > 0 || I >= 3)) vChoir(tr.in, t, tr.chord(1, 3), 0.32, { vol: 0.12, a: 0.015, r: 0.14 });
+        if (chg) {
+          vBowed(tr.in, t, tr.deg(c), bd * 2, 0.45, 2);
+          if (I >= 1 || I === -1) {
+            vBrass(tr.in, t, tr.deg(c) + 12, bd * 2, 0.42);
+            vBrass(tr.in, t, tr.deg(c + 4) + 12, bd * 2, 0.28);
+          }
+          if (I === -1) vChoir(tr.in, t, tr.chord(1, 3), bd * 2, { vol: 0.12, a: 0.5, r: 0.8 });
+        }
+        if (bar % 8 === 4 && sib === 0) vBell(tr.verb, t, tr.deg(c) + 24, 0.25, 3);
         if (I >= 2) tr.mel.step(t, s);
       }
     },

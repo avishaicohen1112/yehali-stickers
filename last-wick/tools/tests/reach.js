@@ -18,7 +18,7 @@ const { chromium } = require('playwright');
       const P = new G.Player.Player(x, feet); P.ground = true; P.inv = 0;
       for (const k of KEYS) I.held[k] = false; I.endFrame();
       let f = 0, left = false;
-      while (f < 200) {
+      while (f < 260) {
         const d = act.dir; I.held.left = d < 0 && f < act.dirF; I.held.right = d > 0 && f < act.dirF;
         if (act.flip && f >= act.flip) { I.held.left = d > 0; I.held.right = d < 0; }
         // press handling
@@ -44,6 +44,9 @@ const { chromium } = require('playwright');
       if (abil.djump) for (const j2 of [14, 24]) acts.push({ dir, dirF: 60, jump: 1, jumpHold: 40, j2, j2Hold: 40 });
       if (abil.dash) for (const dsh of [12, 24]) acts.push({ dir, dirF: 60, jump: 1, jumpHold: 40, dash: dsh });
       if (abil.dash && abil.djump) acts.push({ dir, dirF: 70, jump: 1, jumpHold: 40, j2: 22, j2Hold: 40, dash: 12 });
+      if (abil.glide) for (const df of [60, 230]) acts.push({ dir, dirF: df, jump: 1, jumpHold: 240 });
+      if (abil.glide && abil.djump) acts.push({ dir, dirF: 240, jump: 1, jumpHold: 240, j2: 24, j2Hold: 240 });
+      if (abil.glide && abil.dash) acts.push({ dir, dirF: 240, jump: 1, jumpHold: 240, dash: 30 });
       if (abil.wall) for (const j2 of [16, 26]) acts.push({ dir, dirF: 120, jump: 1, jumpHold: 40, j2, j2Hold: 30, flip: j2 + 9, j3: j2 + 22 });
     }
     acts.push({ dir: 0, dirF: 0, jump: 1, jumpHold: 40 });

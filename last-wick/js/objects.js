@@ -10,7 +10,7 @@ G.Objects = (function () {
   function updateProjs(dt, room, player) {
     for (let i = projs.length - 1; i >= 0; i--) {
       const p = projs[i]; p.t += dt;
-      p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+      if (!p.hold) { p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; } else if (p.vx || p.vy) p.hold = false;
       if (p.update) p.update(p, dt);
       let kill = p.t > p.life;
       if (!p.ghost && room.solidAt(p.x, p.y)) kill = true;
@@ -98,12 +98,13 @@ G.Objects = (function () {
       else if (e.t === 'lore') add({ type: 'lore', text: e.text, x, y, w: 90 });
       else if (e.t === 'pickup') { const id = e.id || e.kind; if (!S.picked[id]) add({ type: 'pickup', kind: e.kind, id, x, y: y - 50, t: 0 }); }
       else if (e.t === 'brazier') add({ type: 'brazier', x, y });
-      else if (e.t === 'gate') add({ type: 'gate', id: e.id, tx: e.x, ty: e.y - e.h, h: e.h, closed: false, k: 0 });
-      else if (e.t === 'seal') add({ type: 'seal', id: e.id, tx: e.x, ty: e.y === 0 ? 0 : e.y, w: e.w, closeOnBoss: e.closeOnBoss, closed: false, k: 0 });
+      else if (e.t === 'gate') add({ type: 'gate', id: e.id, tx: e.x, ty: e.y - e.h, h: e.h, req: e.req, closed: false, k: 0 });
+      else if (e.t === 'seal') add({ type: 'seal', id: e.id, tx: e.x, ty: e.y === 0 ? 0 : e.y, w: e.w, closeOnBoss: e.closeOnBoss, req: e.req || 'vesper', closed: false, k: 0 });
+      else if (e.t === 'portal') add({ type: 'portal', id: e.id, x, y, w: 140, to: e.to, tx: e.tx, ty: e.ty, req: e.req, t: 0 });
     }
     if (S.cinder && S.cinder.room === room.id) add({ type: 'cinder', x: S.cinder.x, y: S.cinder.y, t: 0 });
     // seals: s4 sealed until vesper defeated
-    for (const o of list) if (o.type === 'seal' && !o.closeOnBoss) setSeal(room, o, !S.bosses.vesper);
+    for (const o of list) { if (o.type === 'seal' && !o.closeOnBoss) setSeal(room, o, !S.bosses[o.req]); if (o.type === 'gate' && o.req) { setGate(room, o, !S.bosses[o.req]); o.k = o.closed ? 1 : 0; } }
   }
   function setGate(room, g, closed) {
     g.closed = closed;
@@ -115,7 +116,7 @@ G.Objects = (function () {
   }
   function lockArena(room, closed) {
     for (const o of list) {
-      if (o.type === 'gate') setGate(room, o, closed);
+      if (o.type === 'gate') setGate(room, o, closed || (o.req ? !G.state.bosses[o.req] : false));
       if (o.type === 'seal' && o.closeOnBoss) setSeal(room, o, closed);
     }
     if (closed) G.Sound.sfx('door');
@@ -128,7 +129,8 @@ G.Objects = (function () {
     for (const o of list) {
       o.t = (o.t || 0) + dt;
       if (o.type === 'gate') o.k = approach(o.k, o.closed ? 1 : 0, dt * 4);
-      if (o.type === 'bench' || o.type === 'npc' || o.type === 'lore') {
+      if (o.type === 'portal') { const open = !o.req || S.bosses[o.req]; o.open = open; if (open) { G.FX.light(o.x, o.y - 90, 380, [200, 170, 255], 1); if (Math.random() < dt * 30) G.FX.spawn({ x: o.x + rand(-50, 50), y: o.y - rand(20, 170), vx: 0, vy: rand(-60, -20), life: 1.4, size: rand(1.5, 3), kind: 'mote', ph: rand(6), a: 1, c: [215, 190, 255], add: true }); } }
+      if (o.type === 'bench' || o.type === 'npc' || o.type === 'lore' || o.type === 'portal') {
         const d = Math.abs(p.cx - o.x); if (d < o.w * 0.6 && Math.abs(p.feet - o.y) < 60 && d < nd) { nd = d; nearest = o; }
       }
       if (o.type === 'bench') G.FX.light(o.x, o.y - 70, 420, [255, 170, 90], 1);
@@ -152,6 +154,7 @@ G.Objects = (function () {
     if (o.type === 'bench') G.Main.sitBench(o);
     else if (o.type === 'npc') G.UI.talk(o);
     else if (o.type === 'lore') G.UI.lore(o.text);
+    else if (o.type === 'portal') { if (o.open) G.Main.portalTo(o.to, o.tx, o.ty); else { G.UI.toast(G.T('portal_sealed')); G.Sound.sfx('clank'); } }
   }
   function hit(hb, p) { return false; }
   function drawBack(ctx, t) {
@@ -162,6 +165,7 @@ G.Objects = (function () {
       else if (o.type === 'brazier') G.Render.drawBrazier(ctx, o, t, G.Main.flames());
       else if (o.type === 'gate') G.Render.drawGate(ctx, o, t);
       else if (o.type === 'seal') G.Render.drawSeal(ctx, o, t);
+      else if (o.type === 'portal') G.Render.drawPortal(ctx, o, t);
     }
   }
   function drawFront(ctx, t) {

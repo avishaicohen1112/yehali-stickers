@@ -69,6 +69,7 @@ G.Player = (function () {
       }
       if (this.dashT > 0) {
         this.dashT -= dt; this.vx = this.facing * C.DASH_V; this.vy = 0;
+        if (A.shadow) { this.inv = Math.max(this.inv, 0.06); if (Math.random() < 0.9) G.FX.spawn({ x: this.cx - this.facing * rand(0, 30), y: this.cy + rand(-30, 30), vx: -this.facing * rand(20, 120), vy: rand(-30, 30), life: 0.5, size: rand(8, 16), kind: 'smoke', c: [20, 10, 30], a: 0.6 }); }
         if (Math.random() < 0.8) G.FX.spawn({ x: this.cx - this.facing * 20, y: this.cy + rand(-30, 30), vx: -this.facing * 60, vy: rand(-20, 20), life: 0.3, size: 2, kind: 'ember', c: [255, 170, 90], add: true });
         if (this.dashT <= 0) this.vx = this.facing * C.RUN * 0.8;
       } else {
@@ -80,6 +81,8 @@ G.Player = (function () {
         // ---- gravity
         const grav = C.GRAV * (this.vy > 0 ? C.FALL_MULT : 1);
         this.vy = Math.min(this.vy + grav * dt, C.MAXFALL);
+        this.gliding = A.glide && !this.ground && this.vy > 0 && I.h('jump') && this.wallJumpT <= 0 && !this.wall;
+        if (this.gliding) { this.vy = Math.min(this.vy, 150); if (Math.random() < dt * 14) G.FX.spawn({ x: this.cx + rand(-24, 24), y: this.y + 10, vx: rand(-20, 20), vy: -30, life: 0.7, size: 2, kind: 'mote', ph: rand(6), a: 0.8, c: [255, 200, 140], add: true }); }
         // wall slide
         this.wall = 0;
         if (A.wall && !this.ground && this.lock <= 0) {
@@ -123,10 +126,14 @@ G.Player = (function () {
       // ---- integrate
       const wasGround = this.ground;
       const dropThrough = D && I.p('jump') && false;
+      room.shadowPass = this.dashT > 0 && A.shadow;
       const hx = room.moveX(this, this.vx * dt);
       if (hx && this.dashT > 0) { this.dashT = 0; }
       if (hx) this.vx = 0;
       const hy = room.moveY(this, this.vy * dt, dropThrough);
+      // never end a shadow dash inside a shadow gate: keep dashing through
+      if (room.shadowPass && room.touches(this, 'x', 2)) { this.dashT = Math.max(this.dashT, 0.03); }
+      room.shadowPass = false;
       if (hy > 0) { this.vy = 0; } else if (hy < 0) { this.vy = Math.max(this.vy, 60); }
       this.ground = hy > 0 || (this.vy >= 0 && room.onGroundAt(this));
       if (this.ground) { this.coyote = C.COYOTE; this.djumped = false; this.airDashed = false; }

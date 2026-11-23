@@ -18,7 +18,7 @@ G.World = (function () {
       }
       return this.rows[ty][tx];
     }
-    solid(tx, ty) { return this.tile(tx, ty) === '#'; }
+    solid(tx, ty) { const c = this.tile(tx, ty); return c === '#' || (c === 'x' && !this.shadowPass); }
     solidAt(x, y) { return this.solid(Math.floor(x / TILE), Math.floor(y / TILE)); }
     // move body horizontally, returns side hit (-1,0,1)
     moveX(b, dx) {
@@ -47,7 +47,7 @@ G.World = (function () {
           const ty = Math.floor((b.y + b.h) / TILE);
           for (let tx = x0; tx <= x1; tx++) {
             const c = this.tile(tx, ty);
-            if (c === '#' || (c === '=' && !dropThrough && prevBottom <= ty * TILE + 0.5)) { b.y = ty * TILE - b.h; hit = 1; break; }
+            if (c === '#' || (c === 'x' && !this.shadowPass) || (c === '=' && !dropThrough && prevBottom <= ty * TILE + 0.5)) { b.y = ty * TILE - b.h; hit = 1; break; }
           }
         } else if (sdy < 0) {
           const ty = Math.floor(b.y / TILE);
@@ -74,7 +74,7 @@ G.World = (function () {
     onGroundAt(b) {
       const ty = Math.floor((b.y + b.h + 2) / TILE);
       for (let tx = Math.floor((b.x + 1) / TILE); tx <= Math.floor((b.x + b.w - 1) / TILE); tx++) {
-        const c = this.tile(tx, ty); if (c === '#' || (c === '=' && b.y + b.h <= ty * TILE + 1)) return true;
+        const c = this.tile(tx, ty); if (c === '#' || c === 'x' || (c === '=' && b.y + b.h <= ty * TILE + 1)) return true;
       }
       return false;
     }
@@ -99,8 +99,8 @@ G.World = (function () {
     hazardAhead(b, dir) { const x = dir > 0 ? b.x + b.w + 6 : b.x - 6; const c = this.tile(Math.floor(x / TILE), Math.floor((b.y + b.h + 4) / TILE)); const c2 = this.tile(Math.floor(x / TILE), Math.floor((b.y + b.h - 4) / TILE)); return c === '^' || c === '~' || c2 === '^'; }
   }
   // find room containing global tile point
-  function roomAt(gx, gy) {
-    for (const id in W.rooms) { const r = W.rooms[id]; if (gx >= r.gx && gx < r.gx + r.w && gy >= r.gy && gy < r.gy + r.h) return id; }
+  function roomAt(gx, gy, world) {
+    for (const id in W.rooms) { const r = W.rooms[id]; if (world && r.world !== world) continue; if (gx >= r.gx && gx < r.gx + r.w && gy >= r.gy && gy < r.gy + r.h) return id; }
     return null;
   }
   return { Room, roomAt, data: W };

@@ -9,7 +9,7 @@ G.Main = (function () {
 
   function freshState() {
     return { room: 'c1', benchRoom: 'c1', benchX: 6 * TILE, benchY: 15 * TILE, hp: 5, hpMax: 5, soul: 0, soulMax: 99, tallow: 0, needle: 1, spellMul: 1,
-      abil: { dash: false, djump: false, wall: false, spell: false }, bosses: {}, picked: {}, visited: {}, talked: {}, shop: {}, cinder: null,
+      abil: { dash: false, djump: false, wall: false, spell: false, glide: false, shadow: false }, bosses: {}, picked: {}, visited: {}, talked: {}, shop: {}, cinder: null,
       deaths: 0, time: 0, lastArea: null, muted: false, started: false };
   }
   G.state = freshState();
@@ -50,8 +50,9 @@ G.Main = (function () {
     if (keepVel) { player.vx = vx; player.vy = vy; }
     Rn.camUpdate(0, room, player, true);
     // area card + music
-    if (G.state.lastArea !== room.area) { G.UI.areaCard(room.area); G.state.lastArea = room.area; }
-    if (!boss || !boss.active) G.Sound.music(room.area);
+    if (G.state.lastWorld !== room.world) { G.UI.worldCard(room.world); G.state.lastWorld = room.world; G.state.lastArea = room.area; }
+    else if (G.state.lastArea !== room.area) { G.UI.areaCard(room.area); G.state.lastArea = room.area; }
+    if (!boss || !boss.active) G.Sound.music(musicFor(room.area));
     bossT = 0;
   }
   function checkTransition() {
@@ -62,7 +63,7 @@ G.Main = (function () {
     else if (p.y + p.h * 0.3 < 0) { gx = room.gx + p.cx / TILE; gy = room.gy - 0.5; dir = 'N'; }
     else if (p.y + p.h * 0.5 > room.ph) { gx = room.gx + p.cx / TILE; gy = room.gy + room.h + 0.5; dir = 'S'; }
     if (dir === null) return;
-    const id = G.World.roomAt(Math.floor(gx), Math.floor(gy));
+    const id = G.World.roomAt(Math.floor(gx), Math.floor(gy), room.world);
     if (!id) { // clamp back
       p.x = clamp(p.x, 0, room.pw - p.w); if (p.y > room.ph) { p.y = room.ph - p.h - 10; p.vy = -400; } return; }
     const R2 = window.WORLD.rooms[id];
@@ -76,11 +77,18 @@ G.Main = (function () {
   function doTransition() {
     const tr = trans; const vx = player.vx, vy = player.vy;
     enterRoom(tr.id, tr.x, tr.y, true);
+    if (tr.dir === 'P') { player.vx = 0; player.vy = 0; save(); }
     if (tr.dir === 'N') { player.vy = Math.min(vy, -1050); }
     if (tr.dir === 'E' || tr.dir === 'W') { player.vy = Math.min(player.vy, 0); }
     trans = null; fade.target = 0; fade.speed = 4;
   }
 
+  const MUSIC_FALLBACK = { shore: 'nave', galleon: 'crypts', lighthouse: 'spire', paper: 'gardens', clock: 'spire', core: 'hearth' };
+  function musicFor(area) { const want = (window.WORLD.areas[area] || {}).music || area; const have = G.Sound.tracks ? G.Sound.tracks() : null; return have && have.indexOf(want) < 0 ? (MUSIC_FALLBACK[area] || 'crypts') : want; }
+  function portalTo(id, tx, ty) {
+    if (trans) return; G.Sound.sfx('ability', { vol: 0.6 }); G.FX.flash('#e8d8ff', 0.6, 0.8);
+    trans = { id, x: tx * TILE, y: ty * TILE, dir: 'P', t: 0 }; fade.target = 1; fade.speed = 2.5;
+  }
   // ---------- gameplay hooks ----------
   function hitPlayer(box, fromX) { if (!player.dead && overlap(box, player.hitbox())) player.damage(1, fromX); }
   function addEnemy(e) { enemies.push(e); }
@@ -94,6 +102,8 @@ G.Main = (function () {
     if (kind === 'djump') S.abil.djump = true;
     if (kind === 'wall') S.abil.wall = true;
     if (kind === 'moon') S.needle += 0.5;
+    if (kind === 'glide') S.abil.glide = true;
+    if (kind === 'shadow') S.abil.shadow = true;
     if (kind === 'spellup') { S.spellMul = Math.max(S.spellMul || 1, 1.8); S.abil.spell = true; }
     G.FX.flash('#fff2d8', 0.6, 0.8); G.FX.burst(player.cx, player.cy, 40, { speed: 500, life: 1, size: 3, c: [255, 220, 160], kind: 'ember' });
     G.UI.ability(kind, () => save());
@@ -128,8 +138,9 @@ G.Main = (function () {
       boss.rewarded = true; const S = G.state; S.bosses[boss.kind] = true;
       G.Objects.lockArena(room, false);
       enemies = enemies.filter(e => e !== boss);
-      if (boss.kind === 'extinguisher') { setMode('ending'); G.Sound.music('victory'); save(); return; }
-      const reward = { knight: 'dash', moth: 'djump', angler: 'wall', vesper: 'moon', choir: 'heart', colossus: 'spellup' }[boss.kind];
+      if (boss.kind === 'firstflame') { setMode('ending'); G.Sound.music('victory'); save(); return; }
+      const reward = { knight: 'dash', moth: 'djump', angler: 'wall', vesper: 'moon', choir: 'heart', colossus: 'spellup', extinguisher: 'hearthlit', leviathan: 'glide', captain: 'shadow', keeper: 'heart', paperking: 'vessel', clockmaker: 'heart' }[boss.kind];
+      for (const k in room.over) delete room.over[k]; G.Objects.build(room);
       if (boss.kind === 'vesper') G.Objects.openSeals(room);
       G.UI.toast(G.T('boss_defeated'), 3);
       grant(reward); G.Sound.music(room.area);
@@ -141,12 +152,12 @@ G.Main = (function () {
   function newGame() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { } G.state = freshState(); G.state.muted = G.Sound.muted; setMode('intro'); introI = 0; G.Sound.music('title'); }
   function continueGame() { load(); if (G.state.muted !== G.Sound.muted) G.Sound.toggleMute(); startPlay(G.state.benchRoom, G.state.benchX, G.state.benchY, true); }
   function startPlay(id, x, y, sit) {
-    G.state.lastArea = null; enterRoom(id, x, y); player.sitting = !!sit; setMode('play'); fade.a = 1; fade.target = 0; fade.speed = 0.8; G.state.started = true; save();
+    G.state.lastArea = null; G.state.lastWorld = null; enterRoom(id, x, y); player.sitting = !!sit; setMode('play'); fade.a = 1; fade.target = 0; fade.speed = 0.8; G.state.started = true; save();
   }
   function toTitle() { save(); setMode('title'); G.Sound.music('title'); fade.a = 1; fade.target = 0; }
   function debugStart() {
     const S = G.state;
-    if (params.get('abil') === 'all') { S.abil = { dash: true, djump: true, wall: true, spell: true }; S.soul = 99; }
+    if (params.get('abil') === 'all') { S.abil = { dash: true, djump: true, wall: true, spell: true, glide: true, shadow: true }; S.soul = 99; }
     if (params.get('boss') === 'dead') for (const k of ['knight', 'moth', 'angler', 'vesper']) S.bosses[k] = true;
     const id = params.get('room'); const r = window.WORLD.rooms[id];
     let x = (+params.get('x') || r.w / 2) * TILE, y = (+params.get('y') || 0) * TILE;
@@ -214,7 +225,7 @@ G.Main = (function () {
       bossT += dt; const inX = player.cx > 4 * TILE && player.cx < room.pw - 4 * TILE;
       if (inX && player.ground && bossT > 0.3) startBoss();
     }
-    if (boss && boss.active && !boss.dead) G.Main.bossCam = { x: lerp(player.cx, boss.cx, 0.25) };
+    if (boss && boss.active && !boss.dead && boss.cx > 0) G.Main.bossCam = { x: lerp(player.cx, boss.cx, 0.25) };
     else G.Main.bossCam = null;
     bossAftermath(dt);
     G.FX.update(dt); Rn.ambient(dt, room);
@@ -355,7 +366,7 @@ G.Main = (function () {
     enemies: () => enemies, addEnemy, hitPlayer, grant, sitBench, onPlayerDeath, onBossDeath, save, flames, toTitle,
     fadeOut(s) { fade.target = 1; fade.speed = 1 / s; }, fadeIn(s) { fade.target = 0; fade.speed = 1 / s; },
     get player() { return player; }, get room() { return room; }, get boss() { return boss; }, get mode() { return mode; },
-    bossCam: null, boot, enterRoom, setMode, frozen: false, step(n) { for (let i = 0; i < n; i++) update(1 / 60); }, get enemiesList() { return enemies; }
+    bossCam: null, portalTo, musicFor, boot, enterRoom, setMode, frozen: false, step(n) { for (let i = 0; i < n; i++) update(1 / 60); }, get enemiesList() { return enemies; }
   };
   return api;
 })();

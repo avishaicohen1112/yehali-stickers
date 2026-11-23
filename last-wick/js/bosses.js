@@ -427,8 +427,260 @@ G.Bosses = (function () {
       draw: (cx, pr, t) => { G.FX.glow(cx, pr.x, y - 30, 80, c, 0.9); cx.save(); cx.globalCompositeOperation = 'lighter'; const g = cx.createLinearGradient(0, y, 0, y - 80); g.addColorStop(0, rgba(c, 0.9)); g.addColorStop(1, rgba(c, 0)); cx.fillStyle = g; cx.beginPath(); cx.moveTo(pr.x - 30, y); cx.quadraticCurveTo(pr.x - 10 * sign(pr.vx), y - 90 - Math.sin(t * 30) * 10, pr.x + 30 * sign(pr.vx), y); cx.fill(); cx.restore(); } });
   }
 
+
+  // ---------- shared helpers for the new worlds ----------
+  class BossPart { // a hittable sub-body that forwards damage to its boss
+    constructor(boss, w, h, o = {}) { this.boss = boss; this.w = w; this.h = h; this.x = -999; this.y = -999; this.isPart = true; this.dead = false; this.flash = 0; this.hittable = o.hittable !== false; this.noSoul = false; this.deadT = 0; }
+    get cx() { return this.x + this.w / 2; } get cy() { return this.y + this.h / 2; }
+    hurtbox() { return this.boss.dead || !this.boss.active || !this.hittable || this.hidden ? null : { x: this.x, y: this.y, w: this.w, h: this.h }; }
+    hurt(d, dx, dy) { if (!this.hittable) return false; this.flash = 1; return this.boss.hurt(d, dx, dy); }
+    update(dt) { this.flash = Math.max(0, this.flash - dt * 5); if (this.boss.dead) { this.dead = true; this.deadT += dt; } }
+    draw() {}
+  }
+  function fireball(x, y, vx, vy, o = {}) { return G.Objects.spawnProj(Object.assign({ x, y, vx, vy, r: 15, life: 4, dmg: 1, c: [255, 140, 60], light: [255, 130, 50, 120] }, o)); }
+  function ringShot(x, y, n, sp, off = 0, o = {}) { for (let i = 0; i < n; i++) { const a = off + i / n * Math.PI * 2; fireball(x, y, Math.cos(a) * sp, Math.sin(a) * sp, o); } }
+  function drawGlowBody(ctx, x, y, r, c, a = 1) { G.FX.glow(ctx, x, y, r * 2.2, c, 0.5 * a); ctx.save(); ctx.globalAlpha = a; const g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r); g.addColorStop(0, '#fff6e0'); g.addColorStop(0.4, rgba(c, 1)); g.addColorStop(1, rgba([c[0] * 0.3, c[1] * 0.3, c[2] * 0.3], 1)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.restore(); }
+
+  // ================= W2-1. WAX LEVIATHAN =================
+  class Leviathan extends Boss {
+    constructor(tx, ty) { super('leviathan', tx, ty, { w: 120, h: 100, maxHp: 46, glowC: [255, 150, 70], phases: [0.5] });
+      this.segs = Array.from({ length: 11 }, (_, i) => new BossPart(this, i === 0 ? 120 : 90 - i * 4, i === 0 ? 100 : 80 - i * 4)); this.trail = []; this.hidden = true; this.sea = 15 * TILE; this.spawned = false; this.x = 22 * TILE; this.y = this.sea + 200; }
+    hurtbox() { return null; } hitboxes() { return []; }
+    update(dt, room, p) {
+      this.common(dt); if (!this.spawned) { this.spawned = true; for (const s of this.segs) G.Main.addEnemy(s); }
+      for (const s of this.segs) s.update(dt);
+      if (this.dead) { this.deathFX(dt); this.y += 120 * dt; this.place(); return; }
+      if (!this.active) { this.place(); return; }
+      const sp = this.phase > 1 ? 1.3 : 1;
+      switch (this.state) {
+        case 'wait': this.set('under'); break;
+        case 'under': this.y = this.sea + 260; if (this.st > (this.phase > 1 ? 0.7 : 1.2)) { const n = pick(['arc', 'arc', 'rise', 'lunge']); this.set(n + '_w'); this.side = p.cx < 22 * TILE ? -1 : 1; } break;
+        case 'arc_w': this.bubbles(this.side < 0 ? 28 * TILE : 16 * TILE); if (this.st > 0.8 / sp) { this.set('arc'); this.x = this.side < 0 ? 28 * TILE : 16 * TILE; this.y = this.sea + 40; this.vx = (this.side < 0 ? -420 : 420) * sp; this.vy = -1350; G.Sound.sfx('splash'); G.Sound.sfx('boss_roar', { vol: 0.5, pitch: 0.8 }); } break;
+        case 'arc': this.vy += 1500 * dt; this.x += this.vx * dt; this.y += this.vy * dt; if (Math.random() < 0.4) G.FX.spawn({ x: this.x, y: this.y + 40, vx: rand(-60, 60), vy: rand(-40, 60), life: 0.8, size: rand(2, 4), kind: 'ember', c: [255, 150, 60], add: true });
+          if (this.y > this.sea + 260 && this.st > 0.6) { this.set(this.phase > 1 && Math.random() < 0.5 ? 'arc_w' : 'under'); G.Sound.sfx('splash'); } break;
+        case 'rise_w': this.bubbles(clamp(p.cx, 15 * TILE, 29 * TILE)); this.rx = clamp(p.cx, 15 * TILE, 29 * TILE); if (this.st > 0.9) { this.set('rise'); G.Sound.sfx('splash'); } break;
+        case 'rise': { const k = Math.min(1, this.st / 0.4); this.x = this.rx + Math.sin(this.st * 3) * 40; this.y = lerp(this.sea + 200, this.sea - 330, ease.out(k));
+          if (this.st > 0.6 && Math.floor(this.st / (0.55 / sp)) !== Math.floor((this.st - dt) / (0.55 / sp)) && this.st < 2.6) { G.Sound.sfx('cast', { pitch: 0.6 }); for (let i = -1; i <= 1; i++) fireball(this.x, this.y, (p.cx - this.x) * 0.7 + i * 180, -700, { g: 1300 }); }
+          if (this.st > 3.2) { this.y += 600 * dt; } if (this.st > 3.8) this.set('under'); break; }
+        case 'lunge_w': this.bubbles(this.side < 0 ? 31 * TILE : 13 * TILE); if (this.st > 0.9 / sp) { this.set('lunge'); this.x = this.side < 0 ? 31 * TILE : 13 * TILE; this.y = this.sea - 60; this.vx = (this.side < 0 ? 1 : -1) * 900 * sp; G.Sound.sfx('boss_roar', { pitch: 0.7, vol: 0.6 }); } break;
+        case 'lunge': this.x += this.vx * dt; this.y = this.sea - 60 + Math.sin(this.st * 9) * 20; if (this.x < -2 * TILE || this.x > 46 * TILE) this.set('under'); break;
+      }
+      this.trail.unshift([this.x, this.y]); if (this.trail.length > 90) this.trail.pop();
+      this.place();
+      for (const s of this.segs) if (!s.hidden) G.Main.hitPlayer({ x: s.x + 12, y: s.y + 12, w: s.w - 24, h: s.h - 24 }, s.cx);
+      G.FX.light(this.x, this.y, 420, [255, 140, 60], 1);
+    }
+    bubbles(x) { if (Math.random() < 0.6) G.FX.spawn({ x: x + rand(-80, 80), y: this.sea + 10, vx: 0, vy: rand(-240, -100), life: 0.6, size: rand(2, 5), kind: 'ember', c: [255, 170, 80], add: true }); }
+    place() { this.segs.forEach((s, i) => { const tr = this.trail[Math.min(this.trail.length - 1, i * 6)] || [this.x, this.y]; s.x = tr[0] - s.w / 2; s.y = tr[1] - s.h / 2; s.hidden = s.y > this.sea + 30; }); this.cxv = this.segs[0].cx; }
+    get cx() { return this.x; } get cy() { return this.y; }
+    draw(ctx, t) {
+      for (let i = this.segs.length - 1; i >= 0; i--) { const s = this.segs[i]; if (s.hidden) continue;
+        const r = s.w / 2; drawGlowBody(ctx, s.cx, s.cy, r * 0.95, i === 0 ? [255, 190, 110] : [240, 170, 100], this.dead ? Math.max(0, 1 - this.deadT * 0.5) : 1);
+        if (s.flash > 0.2) { ctx.globalAlpha = s.flash; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s.cx, s.cy, r, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
+        if (i === 0) { const d = this.vx >= 0 ? 1 : -1; ctx.fillStyle = '#1a0804'; ctx.beginPath(); ctx.ellipse(s.cx + d * r * 0.45, s.cy - r * 0.2, 10, 14, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#ffdd88'; ctx.beginPath(); ctx.arc(s.cx + d * r * 0.5, s.cy - r * 0.25, 4, 0, 7); ctx.fill(); }
+      }
+    }
+  }
+
+  // ================= W2-2. CAPTAIN SMOLDER =================
+  class Captain extends Boss {
+    constructor(tx, ty) { super('captain', tx, ty, { w: 64, h: 140, maxHp: 44, glowC: [190, 160, 255], phases: [0.5] }); }
+    update(dt, room, p) {
+      this.common(dt); if (this.dead) { this.deathFX(dt); this.gravity(dt, room); this.setAnim('death'); return; }
+      if (!this.active) { this.setAnim('idle'); this.gravity(dt, room); this.faceP(p); return; }
+      const sp = this.phase > 1 ? 1.25 : 1; this.hits = [];
+      switch (this.state) {
+        case 'wait': this.set('idle'); break;
+        case 'idle': this.setAnim('walk'); this.faceP(p); this.vx = this.facing * 120 * sp; if (this.st > (this.phase > 1 ? 0.5 : 0.9)) { const o = ['slash', 'slash', 'cannon', 'anchor']; if (G.Main.enemies().filter(e => e.kind === 'ghostsailor' && !e.dead).length < 2) o.push('crew'); if (this.phase > 1) o.push('smoke', 'smoke'); let n = pick(o); if (n === this.lastAtk) n = pick(o); this.lastAtk = n; this.set(n + '_w'); this.vx = 0; } break;
+        case 'slash_w': this.setAnim('ready'); this.faceP(p); if (this.st > 0.4 / sp) { this.set('slash'); this.k = 0; } break;
+        case 'slash': this.setAnim('slash'); { const ph = Math.floor(this.st / 0.3);
+            if (ph !== this.k && ph < (this.phase > 1 ? 3 : 2)) { this.k = ph; this.faceP(p); this.vx = this.facing * 700; G.Sound.sfx('slash', { pitch: 0.75 }); G.FX.slash(this.cx + this.facing * 70, this.cy, 'side', this.facing, { big: 1.7, dur: 0.18, c: [200, 180, 255] }); }
+            this.vx = approach(this.vx, 0, 2600 * dt); if (this.st % 0.3 < 0.15) this.hits.push({ x: this.facing > 0 ? this.cx : this.cx - 160, y: this.y + 20, w: 160, h: 100 });
+            if (this.st > (this.phase > 1 ? 1.0 : 0.7)) this.set('idle'); } break;
+        case 'cannon_w': this.setAnim('cannon'); this.vx = 0; this.faceP(p); if (this.st > 0.6) { this.set('cannon'); this.k = 0; } break;
+        case 'cannon': if (this.st > this.k * 0.45 && this.k < 3) { this.k++; G.Sound.sfx('explode'); G.FX.shake(8, 0.2); G.FX.burst(this.cx + this.facing * 50, this.cy, 14, { speed: 300, life: 0.4, size: 8, c: [60, 50, 70], kind: 'smoke', add: false });
+            fireball(this.cx + this.facing * 50, this.cy, this.facing * 520, -200, { g: 1100, r: 20, c: [120, 110, 140], light: [200, 180, 255, 100], update: (pr) => { if (pr.vy > 0 && room.solidAt(pr.x, pr.y + 20)) { pr.vy = -Math.abs(pr.vy) * 0.6; } }, ghost: false }); }
+          if (this.st > 1.7) this.set('idle'); break;
+        case 'anchor_w': this.setAnim('raise'); if (this.st > 0.5) { this.set('anchor'); for (let i = 0; i < 4 + this.phase; i++) { const x = clamp(p.cx + (i - 2) * 190 + rand(-40, 40), 2 * TILE, 37 * TILE); this.anchor(x, i * 0.25); } } break;
+        case 'anchor': if (this.st > 1.8) this.set('idle'); break;
+        case 'crew_w': this.setAnim('raise'); if (this.st > 0.7) { this.set('idle'); for (const d of [-1, 1]) { const e = new G.Enemies.Enemy('ghostsailor', (this.cx + d * 260) / TILE, 14); G.Main.addEnemy(e); G.FX.burst(e.cx, e.cy, 20, { speed: 200, life: 0.6, size: 10, c: [120, 100, 160], kind: 'smoke', a: 0.4 }); } } break;
+        case 'smoke_w': this.setAnim('ready'); this.alpha = Math.max(0, 1 - this.st * 3); if (this.st > 0.4) { this.x = clamp(p.cx - p.facing * 120 - this.w / 2, TILE * 2, 37 * TILE - this.w); this.set('smoke'); G.Sound.sfx('dash', { pitch: 0.6 }); } break;
+        case 'smoke': this.alpha = Math.min(1, this.st * 4); this.faceP(p); if (this.st > 0.35) { this.set('slash'); this.k = -1; } break;
+      }
+      room.moveX(this, this.vx * dt); this.gravity(dt, room);
+      for (const h of this.hits) G.Main.hitPlayer(h, this.cx);
+      G.Main.hitPlayer({ x: this.x + 10, y: this.y + 20, w: this.w - 20, h: this.h - 20 }, this.cx);
+      G.FX.light(this.cx, this.y + 30, 300, [190, 160, 255], 1);
+    }
+    anchor(x, delay) {
+      G.Objects.spawnProj({ x, y: TILE, vx: 0, vy: 0, r: 26, life: 3, dmg: 1, ghost: true, c: [130, 120, 150],
+        update: (pr, dt) => { if (pr.t < delay + 0.5) { pr.vy = 0; pr.y = TILE; } else pr.vy += 2400 * dt; if (pr.y > 13.5 * TILE) { pr.y = 13.5 * TILE; pr.vy = 0; if (!pr.hitG) { pr.hitG = 1; G.Sound.sfx('boss_slam', { vol: 0.5 }); G.FX.shake(6, 0.15); } } },
+        draw: (c, pr) => { if (pr.t < delay + 0.5) { c.strokeStyle = 'rgba(200,180,255,0.35)'; c.setLineDash([6, 8]); c.beginPath(); c.moveTo(x, TILE); c.lineTo(x, 14 * TILE); c.stroke(); c.setLineDash([]); }
+          c.strokeStyle = '#3a3448'; c.lineWidth = 4; c.beginPath(); c.moveTo(x, 0); c.lineTo(x, pr.y - 20); c.stroke();
+          c.fillStyle = '#4a4258'; c.beginPath(); c.moveTo(x - 4, pr.y - 26); c.lineTo(x + 4, pr.y - 26); c.lineTo(x + 4, pr.y + 10); c.quadraticCurveTo(x + 26, pr.y + 8, x + 30, pr.y - 8); c.lineTo(x + 24, pr.y + 22); c.quadraticCurveTo(x, pr.y + 30, x - 24, pr.y + 22); c.lineTo(x - 30, pr.y - 8); c.quadraticCurveTo(x - 26, pr.y + 8, x - 4, pr.y + 10); c.closePath(); c.fill(); } });
+    }
+    draw(ctx, t) { if (!this.sprite(ctx)) { this.blob(ctx, '#2a2438'); G.FX.glow(ctx, this.cx, this.y + 30, 50, [190, 160, 255], 0.5 * this.alpha); } }
+  }
+
+  // ================= W2-3. LIGHTHOUSE KEEPER =================
+  class Keeper extends Boss {
+    constructor(tx, ty) { super('keeper', tx, ty, { w: 120, h: 200, maxHp: 50, glowC: [255, 220, 140], phases: [0.5] }); this.y = 2 * TILE; this.hy = this.y; this.ang = Math.PI / 2; this.beamOn = 0; }
+    update(dt, room, p) {
+      this.common(dt); if (this.dead) { this.deathFX(dt); this.beamOn = 0; this.vy = (this.vy || 0) + 900 * dt; this.y = Math.min(this.y + this.vy * dt, 16 * TILE - this.h); this.setAnim('death'); return; }
+      if (!this.active) { this.setAnim('idle'); this.y = this.hy + Math.sin(this.t) * 10; return; }
+      const sp = this.phase > 1 ? 1.3 : 1; this.dark = this.phase > 1 ? 0.25 : 0.1;
+      switch (this.state) {
+        case 'wait': this.set('float'); break;
+        case 'float': this.setAnim('idle'); this.x = lerp(this.x, clamp(p.cx - this.w / 2, 4 * TILE, 34 * TILE), dt * 0.8); this.y = lerp(this.y, this.hy + Math.sin(this.t) * 20, dt * 2);
+          if (this.st > 1.2) { const n = pick(['beam', 'beam', 'bombs', 'descend']); this.set(n + '_w'); } break;
+        case 'beam_w': this.setAnim('glow'); this.beamOn = Math.min(0.3, this.st); this.ang = Math.PI * 0.9; if (this.st > 0.9) { this.set('beam'); G.Sound.sfx('cast', { pitch: 0.5 }); this.dir = p.cx > this.cx ? -1 : 1; this.ang = this.dir < 0 ? Math.PI * 0.95 : Math.PI * 0.05; } break;
+        case 'beam': this.beamOn = 1;
+          { const d = this.dir; this.ang = d < 0 ? Math.PI * 0.95 - this.st * 0.95 * sp : Math.PI * 0.05 + this.st * 0.95 * sp; }
+          this.beamHit(room, p); if (this.st > Math.PI * 0.9 / (0.95 * sp)) { this.beamOn = 0; this.set(this.phase > 1 && Math.random() < 0.5 ? 'beam_w' : 'float'); } break;
+        case 'bombs_w': this.setAnim('raise'); if (this.st > 0.5) { this.set('bombs'); for (let i = 0; i < 3 + this.phase; i++) { const tx = clamp(p.cx + (i - 1.5) * 170, 2 * TILE, 37 * TILE); const T = 0.9; fireball(this.cx, this.cy, (tx - this.cx) / T, -500, { g: (2 * (16 * TILE - this.cy + 500 * T)) / (T * T), r: 16, c: [255, 210, 120], onDie: 1, update: (pr) => { if (pr.y > 15.6 * TILE) { pr.t = 99; this.firePool(pr.x); } } }); } } break;
+        case 'bombs': if (this.st > 1.2) this.set('float'); break;
+        case 'descend_w': this.setAnim('raise'); if (this.st > 0.4) { this.set('descend'); this.vy = 0; } break;
+        case 'descend': this.vy = (this.vy || 0) + 2600 * dt; this.y += this.vy * dt; if (this.y + this.h >= 16 * TILE) { this.y = 16 * TILE - this.h; this.set('down'); G.Sound.sfx('boss_slam'); G.FX.shake(18, 0.4); for (const d of [-1, 1]) wave(room, this.cx + d * 70, 16 * TILE, d, 600 * sp, [255, 210, 120]); } break;
+        case 'down': this.setAnim('down'); if (this.st > 1.6 / sp) { this.set('up'); } break;
+        case 'up': this.y = lerp(this.y, this.hy, dt * 3); if (Math.abs(this.y - this.hy) < 6) this.set('float'); break;
+      }
+      G.Main.hitPlayer({ x: this.x + 20, y: this.y + 20, w: this.w - 40, h: this.h - 30 }, this.cx);
+      G.FX.light(this.cx, this.y + 40, 420 + this.beamOn * 300, [255, 220, 150], 1);
+    }
+    beamHit(room, p) {
+      const ox = this.cx, oy = this.y + 40, dx = p.cx - ox, dy = p.cy - oy, a = Math.atan2(dy, dx);
+      let da = Math.abs(((a - this.ang) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+      if (da < 0.07 + 30 / Math.max(80, Math.hypot(dx, dy)) && room.los(ox, oy, p.cx, p.cy)) p.damage(1, ox);
+    }
+    firePool(x) { G.Sound.sfx('explode', { vol: 0.6 }); G.Objects.spawnProj({ x, y: 15.6 * TILE, vx: 0, vy: 0, r: 40, life: 2.2, dmg: 1, ghost: true, pierce: true, c: [255, 160, 60],
+      draw: (c, pr) => { const k = 1 - pr.t / 2.2; G.FX.glow(c, x, 15.6 * TILE, 70, [255, 150, 50], 0.7 * k); c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = `rgba(255,170,70,${0.6 * k})`; c.beginPath(); c.ellipse(x, 15.8 * TILE, 46, 12 + Math.sin(pr.t * 20) * 3, 0, 0, 7); c.fill(); c.restore(); } }); }
+    draw(ctx, t) {
+      if (this.beamOn > 0) { const ox = this.cx, oy = this.y + 40, L = 2200; ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.translate(ox, oy); ctx.rotate(this.ang);
+        const g = ctx.createLinearGradient(0, 0, L, 0); g.addColorStop(0, `rgba(255,240,200,${0.8 * this.beamOn})`); g.addColorStop(1, 'rgba(255,220,150,0)'); ctx.fillStyle = g;
+        ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(L, -90 * this.beamOn); ctx.lineTo(L, 90 * this.beamOn); ctx.lineTo(0, 6); ctx.closePath(); ctx.fill(); ctx.restore(); }
+      if (!this.sprite(ctx)) { this.blob(ctx, '#2c2418'); drawGlowBody(ctx, this.cx, this.y + 40, 34, [255, 220, 140]); }
+    }
+  }
+
+  // ================= W3-1. PAPER KING =================
+  class PaperKing extends Boss {
+    constructor(tx, ty) { super('paperking', tx, ty, { w: 80, h: 160, maxHp: 50, glowC: [255, 240, 220], phases: [0.5] }); this.copies = []; }
+    update(dt, room, p) {
+      this.common(dt); if (this.dead) { this.deathFX(dt); this.gravity(dt, room); this.setAnim('death'); this.copies = []; return; }
+      if (!this.active) { this.setAnim('idle'); this.gravity(dt, room); this.faceP(p); return; }
+      const sp = this.phase > 1 ? 1.25 : 1; this.hits = [];
+      switch (this.state) {
+        case 'wait': this.set('idle'); break;
+        case 'idle': this.setAnim('idle'); this.faceP(p); this.vx = approach(this.vx, 0, 1500 * dt); if (this.st > (this.phase > 1 ? 0.5 : 0.9)) { const o = ['cranes', 'blade', 'blade', 'rain']; if (this.phase > 1) o.push('split', 'split'); let n = pick(o); if (n === this.lastAtk) n = pick(o); this.lastAtk = n; this.set(n + '_w'); } break;
+        case 'cranes_w': this.setAnim('cast'); if (this.st > 0.5) { this.set('cranes'); G.Sound.sfx('swoop', { pitch: 1.4 }); for (let i = 0; i < 4 + this.phase; i++) { const a = -Math.PI / 2 + (i - 2) * 0.5; G.Objects.spawnProj({ x: this.cx, y: this.y + 30, vx: Math.cos(a) * 260, vy: Math.sin(a) * 260, r: 14, life: 5, dmg: 1, c: [255, 245, 225],
+              update: (pr, dt2) => { if (pr.t > 0.6) { const P = G.Main.player, aa = Math.atan2(P.cy - pr.y, P.cx - pr.x), s = 300; pr.vx = approach(pr.vx, Math.cos(aa) * s, 500 * dt2); pr.vy = approach(pr.vy, Math.sin(aa) * s, 500 * dt2); } },
+              draw: (c, pr) => { const a2 = Math.atan2(pr.vy, pr.vx); c.save(); c.translate(pr.x, pr.y); c.rotate(a2); c.fillStyle = '#f4ecdc'; c.beginPath(); c.moveTo(16, 0); c.lineTo(-10, -12 - Math.sin(pr.t * 18) * 6); c.lineTo(-4, 0); c.lineTo(-10, 12 + Math.sin(pr.t * 18) * 6); c.closePath(); c.fill(); c.strokeStyle = '#8a7a66'; c.lineWidth = 1; c.stroke(); c.restore(); } }); } } break;
+        case 'cranes': if (this.st > 1.0) this.set('idle'); break;
+        case 'blade_w': this.setAnim('ready'); this.faceP(p); if (this.st > 0.45 / sp) { this.set('blade'); this.vx = this.facing * 1250 * sp; G.Sound.sfx('slash', { pitch: 1.2 }); } break;
+        case 'blade': this.setAnim('dash'); this.hits.push({ x: this.x - 30, y: this.y + 40, w: this.w + 60, h: this.h - 60 }); if (Math.random() < 0.8) G.FX.spawn({ x: this.cx, y: this.cy + rand(-40, 40), vx: -this.vx * 0.1, vy: rand(-40, 40), life: 0.5, size: 3, kind: 'shard', c: [245, 235, 215], rot: rand(6), add: false });
+          if (this.st > 0.4 || room.wallAhead(this, this.facing)) { this.vx = 0; this.set('idle'); } break;
+        case 'rain_w': this.setAnim('cast'); if (this.st > 0.6) { this.set('rain'); this.k = 0; } break;
+        case 'rain': if (this.st > this.k * 0.12 && this.st < 2) { this.k++; fireball(rand(2, 38) * TILE, TILE, 0, 0, { g: 900, r: 12, c: [250, 240, 220], light: null, draw: (c, pr) => { c.save(); c.translate(pr.x, pr.y); c.rotate(pr.t * 12); c.fillStyle = '#efe5d2'; for (let i = 0; i < 4; i++) { c.rotate(Math.PI / 2); c.beginPath(); c.moveTo(0, 0); c.lineTo(14, -4); c.lineTo(4, 0); c.fill(); } c.restore(); } }); } if (this.st > 2.3) this.set('idle'); break;
+        case 'split_w': this.setAnim('cast'); this.alpha = Math.max(0.2, 1 - this.st * 2); if (this.st > 0.5) { this.set('split'); const xs = [8, 20, 32].map(v => v * TILE).sort(() => Math.random() - 0.5); this.x = xs[0] - this.w / 2; this.copies = [xs[1], xs[2]].map(x => ({ x, hp: 1, t: 0 })); this.alpha = 1; G.Sound.sfx('swoop'); } break;
+        case 'split': this.copies.forEach(c => { c.t += dt; }); if (this.st > 0.9) { this.set('blade_w'); this.copies.forEach(c => { c.lunge = true; c.vx = Math.sign(p.cx - c.x) * 1100; }); } break;
+      }
+      for (const c of this.copies) { if (c.lunge) { c.x += c.vx * dt; G.Main.hitPlayer({ x: c.x - 40, y: this.y + 40, w: 80, h: this.h - 60 }, c.x); if (c.x < 0 || c.x > 40 * TILE) c.dead = true; } }
+      this.copies = this.copies.filter(c => !c.dead && (c.t || 0) < 3);
+      room.moveX(this, this.vx * dt); this.gravity(dt, room);
+      for (const h of this.hits) G.Main.hitPlayer(h, this.cx);
+      G.FX.light(this.cx, this.y + 40, 320, [255, 240, 220], 0.8);
+    }
+    draw(ctx, t) {
+      for (const c of this.copies) { ctx.save(); ctx.globalAlpha = 0.55; if (!this.sprite(ctx, { x: c.x, alpha: 0.6 })) { ctx.fillStyle = '#d8ccb4'; ctx.fillRect(c.x - 35, this.y, 70, this.h); } ctx.restore(); }
+      if (!this.sprite(ctx, { shake: this.state.endsWith('_w') ? Math.sin(t * 60) * 2 : 0 })) { this.blob(ctx, '#e8dcc4'); }
+    }
+  }
+
+  // ================= W3-2. THE CLOCKMAKER =================
+  class Clockmaker extends Boss {
+    constructor(tx, ty) { super('clockmaker', tx, ty, { w: 80, h: 170, maxHp: 54, glowC: [255, 215, 140], phases: [0.5] }); this.pend = null; this.frozen = 0; }
+    update(dt, room, p) {
+      this.common(dt); if (this.dead) { this.deathFX(dt); this.gravity(dt, room); this.setAnim('death'); this.pend = null; return; }
+      if (!this.active) { this.setAnim('idle'); this.gravity(dt, room); this.faceP(p); return; }
+      const sp = this.phase > 1 ? 1.25 : 1; this.hits = [];
+      switch (this.state) {
+        case 'wait': this.set('idle'); break;
+        case 'idle': this.setAnim('idle'); this.faceP(p); if (this.st > (this.phase > 1 ? 0.6 : 1.0)) { const o = ['gears', 'needles', 'blink']; if (!this.pend) o.push('pendulum'); let n = pick(o); if (n === this.lastAtk) n = pick(o); this.lastAtk = n; this.set(n + '_w'); } break;
+        case 'pendulum_w': this.setAnim('cast'); if (this.st > 0.6) { this.pend = { t: 0, dur: 5 + this.phase }; this.set('idle'); G.Sound.sfx('door'); } break;
+        case 'gears_w': this.setAnim('cast'); if (this.st > 0.5) { this.set('idle'); for (const d of [-1, 1]) for (let k = 0; k < this.phase; k++) G.Objects.spawnProj({ x: this.cx + d * 60, y: 15.4 * TILE, vx: d * (420 + k * 160) * sp, vy: 0, r: 28, life: 4, dmg: 1, ghost: true, c: [220, 180, 110],
+              update: (pr) => { if (room.solidAt(pr.x + Math.sign(pr.vx) * 32, pr.y)) pr.vx *= -1; },
+              draw: (c, pr) => { c.save(); c.translate(pr.x, pr.y); c.rotate(pr.t * pr.vx / 28); c.fillStyle = '#8a6a30'; c.beginPath(); for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, r = i % 2 ? 22 : 30; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); } c.closePath(); c.fill(); c.fillStyle = '#2a1e10'; c.beginPath(); c.arc(0, 0, 8, 0, 7); c.fill(); c.restore(); } }); } break;
+        case 'needles_w': this.setAnim('cast'); if (this.st > 0.4) { this.set('needles'); this.ring = []; for (let i = 0; i < 12 + this.phase * 2; i++) { const a = i / (12 + this.phase * 2) * Math.PI * 2, pr = fireball(p.cx + Math.cos(a) * 260, p.cy + Math.sin(a) * 260, 0, 0, { r: 10, life: 4, c: [255, 220, 150], ghost: true }); pr.hold = true; this.ring.push(pr); } G.Sound.sfx('shard'); } break;
+        case 'needles': if (this.st > 1.0 && this.ring) { G.Sound.sfx('cast', { pitch: 1.3 }); for (const pr of this.ring) { const a = Math.atan2(p.cy - pr.y, p.cx - pr.x); pr.vx = Math.cos(a) * 520 * sp; pr.vy = Math.sin(a) * 520 * sp; } this.ring = null; } if (this.st > 1.6) this.set('idle'); break;
+        case 'blink_w': this.setAnim('ready'); this.alpha = Math.max(0, 1 - this.st * 3); if (this.st > 0.35) { this.x = clamp(p.cx + (Math.random() < 0.5 ? -1 : 1) * 150 - this.w / 2, 2 * TILE, 37 * TILE - this.w); this.faceP(p); this.set('blink'); } break;
+        case 'blink': this.alpha = Math.min(1, this.st * 4); this.setAnim('strike'); if (this.st > 0.35 && this.st < 0.55) this.hits.push({ x: this.facing > 0 ? this.cx : this.cx - 190, y: this.y + 20, w: 190, h: 120 }); if (Math.abs(this.st - 0.35) < dt) { G.Sound.sfx('slash', { pitch: 0.9 }); G.FX.slash(this.cx + this.facing * 80, this.cy - 10, 'side', this.facing, { big: 2, c: [255, 220, 150] }); } if (this.st > 0.9) this.set('idle'); break;
+      }
+      if (this.pend) { this.pend.t += dt; const P = this.pend, L = 12 * TILE, ax = 20 * TILE, ay = 0, a = Math.sin(P.t * 1.6 * sp) * 1.05; P.bx = ax + Math.sin(a) * L; P.by = ay + Math.cos(a) * L; P.a = a;
+        G.Main.hitPlayer({ x: P.bx - 60, y: P.by - 30, w: 120, h: 60 }, P.bx); if (P.t > P.dur) this.pend = null; }
+      room.moveX(this, (this.vx || 0) * dt); this.gravity(dt, room);
+      for (const h of this.hits) G.Main.hitPlayer(h, this.cx);
+      G.FX.light(this.cx, this.y + 30, 320, [255, 215, 140], 0.9);
+    }
+    draw(ctx, t) {
+      if (this.pend) { const P = this.pend; if (P.bx !== undefined) { ctx.strokeStyle = '#5a4420'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(20 * TILE, 0); ctx.lineTo(P.bx, P.by); ctx.stroke();
+        ctx.save(); ctx.translate(P.bx, P.by); ctx.rotate(-P.a); ctx.fillStyle = '#b08a40'; ctx.beginPath(); ctx.moveTo(-70, -10); ctx.quadraticCurveTo(0, 50, 70, -10); ctx.lineTo(60, -24); ctx.quadraticCurveTo(0, 20, -60, -24); ctx.closePath(); ctx.fill(); ctx.restore(); G.FX.glow(ctx, P.bx, P.by, 90, [255, 210, 120], 0.4); } }
+      if (!this.sprite(ctx)) { this.blob(ctx, '#3a2c18'); drawGlowBody(ctx, this.cx, this.y + 30, 26, [255, 215, 140]); }
+    }
+  }
+
+  // ================= W3-3. THE FIRST FLAME (final) =================
+  class FirstFlame extends Boss {
+    constructor(tx, ty) { super('firstflame', tx, ty, { w: 90, h: 90, maxHp: 90, glowC: [255, 190, 90], phases: [0.66, 0.33] }); this.y = 6 * TILE; this.hy = this.y; this.form = 'wisp'; }
+    onPhase(ph) { this.form = ph === 2 ? 'mirror' : 'sun'; this.set('shift'); G.FX.flash('#ffe0a0', 0.8, 1); G.Objects.clearProjs(); }
+    hurtbox() { if (this.dead || !this.active || this.state === 'shift') return null; if (this.form === 'sun') return this.state === 'core' ? { x: this.cx - 60, y: this.cy - 60, w: 120, h: 120 } : { x: this.cx - 50, y: this.cy - 50, w: 100, h: 100 }; return { x: this.x, y: this.y, w: this.w, h: this.h }; }
+    update(dt, room, p) {
+      this.common(dt); this.dark = this.form === 'sun' ? 0.2 : 0;
+      if (this.dead) { this.deathFX(dt); this.setAnim('death'); return; }
+      if (!this.active) { this.y = this.hy + Math.sin(this.t) * 14; return; }
+      const sp = 1 + (this.phase - 1) * 0.15;
+      if (this.state === 'shift') { this.vx = 0; this.vy = 0; if (this.form === 'mirror') { this.w = 34; this.h = 84; this.y = lerp(this.y, 24 * TILE - this.h, dt * 3); } else { this.w = 220; this.h = 220; this.x = lerp(this.x, 25 * TILE - 110, dt * 2); this.y = lerp(this.y, 3 * TILE, dt * 2); } if (this.st > 1.6) this.set('idle'); return; }
+      if (this.form === 'wisp') {
+        switch (this.state) {
+          case 'wait': case 'idle': { const tx = p.cx + Math.sin(this.t * 0.8) * 300 - this.w / 2, ty = Math.max(3 * TILE, p.cy - 260) + Math.sin(this.t * 1.7) * 70; this.x = lerp(this.x, tx, dt * 1.6); this.y = lerp(this.y, ty, dt * 1.6);
+            if (this.st > 1.0) this.set(pick(['spiral', 'dive', 'spiral', 'meteor'])); break; }
+          case 'spiral': if (Math.floor(this.st / 0.12) !== Math.floor((this.st - dt) / 0.12)) { const a = this.st * 3.2; for (let k = 0; k < 2; k++) fireball(this.cx, this.cy, Math.cos(a + k * Math.PI) * 300, Math.sin(a + k * Math.PI) * 300, { r: 12 }); } if (this.st > 2.2) this.set('idle'); break;
+          case 'dive': if (this.st < 0.5) { this.tgt = { x: p.cx, y: p.cy }; this.y -= 60 * dt; } else { const a = Math.atan2(this.tgt.y - this.cy, this.tgt.x - this.cx); this.x += Math.cos(a) * 1100 * dt; this.y += Math.sin(a) * 1100 * dt; G.Main.hitPlayer(this.hurtbox(), this.cx); } if (this.st > 1.1) this.set('idle'); break;
+          case 'meteor': if (this.st > 0.3 && this.st < 2 && Math.random() < 0.25) fireball(rand(2, 48) * TILE, 0, rand(-60, 60), 300, { g: 600, r: 18 }); if (this.st > 2.4) this.set('idle'); break;
+        }
+        G.Main.hitPlayer({ x: this.x + 15, y: this.y + 15, w: this.w - 30, h: this.h - 30 }, this.cx);
+      } else if (this.form === 'mirror') {
+        // a flame-copy of Wick: mirrors the player's dash-slashes
+        this.vy = Math.min((this.vy || 0) + 2500 * dt, 1000); const g = room.moveY(this, this.vy * dt); if (g > 0) this.vy = 0; this.ground = room.onGroundAt(this);
+        switch (this.state) {
+          case 'idle': this.faceP(p); this.vx = approach(this.vx || 0, this.facing * 260, 2000 * dt); if (this.st > 0.5) this.set(pick(['dashslash', 'jumpslash', 'bolt'])); break;
+          case 'dashslash': if (this.st < 0.25) { this.faceP(p); this.vx = 0; } else if (this.st < 0.45) { this.vx = this.facing * 1050; if (!this.sl) { this.sl = 1; G.Sound.sfx('dash'); } G.Main.hitPlayer(this.hurtbox(), this.cx); } else { this.vx = approach(this.vx, 0, 3000 * dt); if (!this.sl2) { this.sl2 = 1; G.FX.slash(this.cx + this.facing * 50, this.cy, 'side', this.facing, { c: [255, 180, 90] }); G.Main.hitPlayer({ x: this.facing > 0 ? this.cx : this.cx - 110, y: this.y, w: 110, h: 84 }, this.cx); } if (this.st > 0.8) { this.sl = this.sl2 = 0; this.set('idle'); } } break;
+          case 'jumpslash': if (this.st < dt * 1.5) { this.vy = -1000; this.faceP(p); this.vx = this.facing * 380; } if (this.vy > 0 && !this.sl) { this.sl = 1; G.FX.slash(this.cx, this.cy + 50, 'down', this.facing, { c: [255, 180, 90] }); } if (this.sl) G.Main.hitPlayer({ x: this.cx - 50, y: this.cy, w: 100, h: 110 }, this.cx); if (this.ground && this.st > 0.3) { this.sl = 0; this.set('idle'); } break;
+          case 'bolt': if (this.st < dt * 1.5) { this.faceP(p); G.Sound.sfx('cast'); fireball(this.cx + this.facing * 30, this.cy - 10, this.facing * 900, 0, { r: 20, c: [255, 160, 60] }); } if (this.st > 0.6) this.set('idle'); break;
+        }
+        room.moveX(this, (this.vx || 0) * dt);
+      } else { // sun
+        switch (this.state) {
+          case 'idle': this.x = lerp(this.x, 25 * TILE - this.w / 2 + Math.sin(this.t * 0.5) * 300, dt); this.y = lerp(this.y, 3 * TILE, dt * 2); if (this.st > 0.8) this.set(pick(['rings', 'rings', 'rain', 'core'])); break;
+          case 'rings': if (Math.floor(this.st / 0.45) !== Math.floor((this.st - dt) / 0.45)) ringShot(this.cx, this.cy, 16, 240 * sp, this.st, { r: 13 }); if (this.st > 2.6) this.set('idle'); break;
+          case 'rain': if (Math.random() < 0.35) fireball(rand(2, 48) * TILE, 0, 0, 260, { g: 700, r: 16 }); if (this.st > 2.5) this.set('idle'); break;
+          case 'core': this.y = lerp(this.y, 15 * TILE, dt * 2.5); if (this.st > 2.6) this.set('idle'); break;
+        }
+        G.Main.hitPlayer({ x: this.cx - 70, y: this.cy - 70, w: 140, h: 140 }, this.cx);
+      }
+      G.FX.light(this.cx, this.cy, this.form === 'sun' ? 900 : 420, [255, 180, 90], 1);
+      if (Math.random() < 0.6) G.FX.spawn({ x: this.cx + rand(-this.w / 2, this.w / 2), y: this.cy + rand(-this.h / 3, this.h / 3), vx: rand(-30, 30), vy: rand(-140, -60), life: 0.8, size: rand(2, 4), kind: 'ember', c: [255, 190, 90], add: true });
+    }
+    get cx() { return this.x + this.w / 2; } get cy() { return this.y + this.h / 2; }
+    draw(ctx, t) {
+      const a = this.dead ? Math.max(0, 1 - this.deadT * 0.5) : 1;
+      if (this.form === 'mirror') { const fl = this.facing < 0; if (G.Sprite.meta('wick')) { const an = this.state === 'dashslash' && this.st > 0.25 ? 'dash' : !this.ground ? 'jump' : Math.abs(this.vx || 0) > 30 ? 'run' : 'idle'; G.Sprite.draw(ctx, 'wick', an, G.Sprite.frameOf('wick', an, this.t), this.cx, this.y + this.h, { flip: fl, alpha: 0.85 * a, tint: [255, 150, 50, 0.75], flash: this.flash }); } G.FX.flame(ctx, this.cx, this.y + 4, 7, t, { glow: 1.5 }); return; }
+      if (this.form === 'sun') { const r = this.state === 'core' ? 70 : 110; G.FX.glow(ctx, this.cx, this.cy, r * 4, [255, 150, 60], 0.6 * a); G.FX.flame(ctx, this.cx, this.cy + r * 0.8, r / 5, t, { glow: 2 }); drawGlowBody(ctx, this.cx, this.cy, r * 0.6, [255, 200, 110], a); if (this.flash > 0.2) G.FX.glow(ctx, this.cx, this.cy, r * 1.5, [255, 255, 255], this.flash); return; }
+      G.FX.flame(ctx, this.cx, this.cy + 40, 12, t, { glow: 1.6 }); drawGlowBody(ctx, this.cx, this.cy, 26, [255, 210, 130], a); if (this.flash > 0.2) G.FX.glow(ctx, this.cx, this.cy, 80, [255, 255, 255], this.flash);
+    }
+  }
+
   function create(kind, tx, ty) {
-    const C = { knight: Knight, moth: Moth, angler: Angler, vesper: Vesper, extinguisher: Extinguisher, choir: Choir, colossus: Colossus }[kind];
+    const C = { knight: Knight, moth: Moth, angler: Angler, vesper: Vesper, extinguisher: Extinguisher, choir: Choir, colossus: Colossus, leviathan: Leviathan, captain: Captain, keeper: Keeper, paperking: PaperKing, clockmaker: Clockmaker, firstflame: FirstFlame }[kind];
     return C ? new C(tx, ty) : null;
   }
   return { create, wave };

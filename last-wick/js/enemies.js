@@ -11,6 +11,14 @@ G.Enemies = (function () {
     acolyte: { w: 46, h: 96, hp: 7, tallow: 8, type: 'lunger', speed: 80, light: [255, 200, 120, 220], ppu: 50 },
     sentinel: { w: 56, h: 100, hp: 6, tallow: 8, type: 'gunner', speed: 0, light: [220, 170, 255, 200], ppu: 50 },
     shardwing: { w: 44, h: 40, hp: 3, tallow: 5, type: 'flyer', speed: 250, light: [230, 190, 255, 160], ppu: 50 },
+    crab: { w: 56, h: 40, hp: 3, tallow: 4, type: 'walker', speed: 95, light: [255, 140, 60, 120], ppu: 50 },
+    gull: { w: 60, h: 44, hp: 3, tallow: 4, type: 'diver', speed: 130, light: [255, 170, 110, 120], ppu: 50 },
+    cinder: { w: 38, h: 38, hp: 2, tallow: 3, type: 'flyer', speed: 200, light: [255, 120, 40, 200], ppu: 50 },
+    ghostsailor: { w: 48, h: 96, hp: 7, tallow: 9, type: 'lunger', speed: 85, light: [180, 160, 255, 200], ppu: 50 },
+    crane: { w: 56, h: 44, hp: 3, tallow: 5, type: 'diver', speed: 140, light: [255, 245, 225, 120], ppu: 50 },
+    papersoldier: { w: 46, h: 96, hp: 6, tallow: 8, type: 'lunger', speed: 90, light: [255, 235, 200, 140], ppu: 50 },
+    gear: { w: 64, h: 64, hp: 8, tallow: 9, type: 'charger', speed: 70, light: [255, 210, 130, 140], ppu: 50 },
+    clockwisp: { w: 50, h: 56, hp: 4, tallow: 6, type: 'floater', speed: 70, light: [255, 215, 140, 220], ppu: 50 },
     wraith: { w: 60, h: 90, hp: 8, tallow: 12, type: 'blinker', speed: 0, light: [255, 90, 60, 200], ppu: 50 },
   };
   class Enemy {

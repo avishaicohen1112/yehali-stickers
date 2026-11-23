@@ -11,6 +11,12 @@ G.Render = (function () {
     gardens: { amb: [3, 10, 12], dark: 0.34, sky: ['#04100f', '#0d2a26', '#030807'], fog: [60, 160, 140], rock: '#040807', mote: { c: [150, 255, 210], kind: 'mote', n: 46, vy: -8 } },
     nave: { amb: [3, 5, 14], dark: 0.46, sky: ['#04060f', '#0c1630', '#020309'], fog: [60, 90, 170], rock: '#04050b', mote: { c: [140, 180, 255], kind: 'mote', n: 30, vy: -20 } },
     spire: { amb: [8, 5, 14], dark: 0.34, sky: ['#0c0814', '#2a1a3c', '#07050b'], fog: [160, 120, 220], rock: '#08060c', mote: { c: [230, 200, 255], kind: 'mote', n: 36, vy: 6 } },
+    shore: { amb: [12, 6, 4], dark: 0.38, sky: ['#1a0c08', '#4a1c0c', '#0c0504'], fog: [255, 120, 60], rock: '#0a0605', mote: { c: [255, 140, 60], kind: 'ember', n: 50, vy: -40 } },
+    galleon: { amb: [6, 6, 10], dark: 0.5, sky: ['#08070c', '#1c1626', '#040306'], fog: [150, 130, 200], rock: '#06050a', mote: { c: [190, 170, 255], kind: 'mote', n: 26, vy: -12 } },
+    lighthouse: { amb: [10, 6, 4], dark: 0.4, sky: ['#140a06', '#3a1c0a', '#070403'], fog: [255, 190, 110], rock: '#090605', mote: { c: [255, 200, 120], kind: 'ember', n: 34, vy: -30 } },
+    paper: { amb: [10, 9, 8], dark: 0.3, sky: ['#151210', '#3a3228', '#0c0a08'], fog: [240, 225, 200], rock: '#0d0b09', mote: { c: [255, 245, 225], kind: 'mote', n: 30, vy: 10 } },
+    clock: { amb: [8, 7, 4], dark: 0.4, sky: ['#100c05', '#2e2410', '#080602'], fog: [230, 190, 110], rock: '#0a0805', mote: { c: [255, 215, 140], kind: 'mote', n: 26, vy: -6 } },
+    core: { amb: [12, 6, 2], dark: 0.3, sky: ['#1a0a02', '#5a2a08', '#0a0401'], fog: [255, 170, 80], rock: '#0c0603', mote: { c: [255, 200, 120], kind: 'ember', n: 60, vy: -60 } },
     hearth: { amb: [10, 4, 4], dark: 0.42, sky: ['#0c0606', '#2a0e08', '#050202'], fog: [200, 70, 30], rock: '#070404', mote: { c: [255, 110, 50], kind: 'ember', n: 40, vy: -50 } },
   };
   let vignette = null, holeSprite = null;
@@ -154,9 +160,23 @@ G.Render = (function () {
   function drawWater(room, t) {
     const x0 = Math.floor(cam.x / TILE), y0 = Math.floor(cam.y / TILE);
     for (let ty = y0; ty <= y0 + VH / TILE + 1; ty++) for (let tx = x0; tx <= x0 + VW / TILE + 1; tx++) {
-      const c = room.tile(tx, ty); if (c !== '~' && c !== 'w') continue;
+      const c = room.tile(tx, ty); if (c !== '~' && c !== 'w' && c !== 'x') continue;
       const top = room.tile(tx, ty - 1) !== c;
       const X = tx * TILE - cam.x, Y = ty * TILE - cam.y;
+      if (c === 'x') { // shadow gate: swirling void wall
+        ctx.save(); const ph = t * 2 + tx * 1.3 + ty * 0.7;
+        const g = ctx.createLinearGradient(X, 0, X + TILE, 0); g.addColorStop(0, 'rgba(20,8,35,0.2)'); g.addColorStop(0.5, 'rgba(10,4,20,0.95)'); g.addColorStop(1, 'rgba(20,8,35,0.2)');
+        ctx.fillStyle = g; ctx.fillRect(X, Y, TILE, TILE + 1);
+        for (let k = 0; k < 3; k++) { ctx.fillStyle = `rgba(150,90,255,${0.25 + 0.2 * Math.sin(ph + k * 2)})`; ctx.beginPath(); ctx.arc(X + TILE / 2 + Math.sin(ph + k) * 14, Y + ((t * 40 + k * 17 + ty * 13) % TILE), 3 + k, 0, 7); ctx.fill(); }
+        ctx.restore(); G.FX.glow(ctx, X + TILE / 2, Y + TILE / 2, 50, [150, 90, 255], 0.15); continue;
+      }
+      const W2 = window.WORLD.rooms[room.id].world === 'sea';
+      if (c === '~' && W2) { // burning ember-sea
+        ctx.fillStyle = top ? 'rgba(60,12,4,0.95)' : 'rgba(30,6,2,0.98)'; ctx.fillRect(X, Y + (top ? 10 : 0), TILE + 1, TILE + 1 - (top ? 10 : 0));
+        if (top) { const w = Math.sin(t * 1.6 + tx * 0.7) * 3; ctx.fillStyle = 'rgba(255,150,60,0.8)'; ctx.fillRect(X, Y + 8 + w, TILE + 1, 3);
+          G.FX.glow(ctx, X + TILE / 2, Y + 14, 60, [255, 110, 40], 0.22); if (Math.random() < 0.02) G.FX.spawn({ x: tx * TILE + rand(0, TILE), y: ty * TILE + 8, vx: rand(-20, 20), vy: rand(-140, -60), life: 1.2, size: 2, kind: 'ember', c: [255, 150, 60], add: true }); }
+        continue;
+      }
       if (c === '~') {
         ctx.fillStyle = top ? 'rgba(4,8,22,0.92)' : 'rgba(2,4,12,0.97)'; ctx.fillRect(X, Y + (top ? 10 : 0), TILE + 1, TILE + 1 - (top ? 10 : 0));
         if (top) { const w = Math.sin(t * 2 + tx * 0.8) * 2;
@@ -249,6 +269,18 @@ G.Render = (function () {
     for (let i = 0; i < o.w * 2; i++) { const sx = x + i * TILE / 2; c.beginPath(); c.moveTo(sx, y + TILE); c.lineTo(sx + TILE / 4, y - 10 + Math.sin(i * 1.7) * 6); c.lineTo(sx + TILE / 2, y + TILE); c.fill(); }
     c.restore(); G.FX.light(x + o.w * TILE / 2, y + 25, 200, [190, 150, 255], 0.8);
   }
+  function drawPortal(c, o, t) {
+    const x = o.x, y = o.y - 100, open = o.open;
+    if (drawPropAt('portal', o.x, o.y + 4, 1, false, 1)) { } else {
+      c.save(); c.fillStyle = 'rgba(20,16,24,0.95)'; c.beginPath(); c.moveTo(x - 70, o.y); c.lineTo(x - 70, y - 30); c.quadraticCurveTo(x, y - 140, x + 70, y - 30); c.lineTo(x + 70, o.y); c.lineTo(x + 52, o.y); c.lineTo(x + 52, y - 26); c.quadraticCurveTo(x, y - 112, x - 52, y - 26); c.lineTo(x - 52, o.y); c.closePath(); c.fill(); c.restore();
+    }
+    if (open) {
+      c.save(); c.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 4; i++) { const r = 40 + i * 14 + Math.sin(t * 2 + i) * 4; c.strokeStyle = `rgba(${200 - i * 20},${170 - i * 20},255,${0.5 - i * 0.1})`; c.lineWidth = 3; c.beginPath(); c.ellipse(x, y + 20, r * 0.62, r * 1.05, 0, t * (0.5 + i * 0.2), t * (0.5 + i * 0.2) + 5); c.stroke(); }
+      c.restore(); G.FX.glow(c, x, y + 20, 160, [190, 150, 255], 0.55 + Math.sin(t * 3) * 0.1);
+    } else G.FX.glow(c, x, y + 20, 60, [120, 100, 150], 0.15);
+    if (G.Objects.nearest() === o) G.UI.prompt(c, x, y - 110, open ? G.T('enter') : G.T('portal_sealed'));
+  }
   function drawPickup(c, o, t) {
     const y = o.y + Math.sin(t * 2.2) * 8;
     G.FX.glow(c, o.x, y, 120, [255, 220, 160], 0.6 + Math.sin(t * 3) * 0.1);
@@ -270,6 +302,6 @@ G.Render = (function () {
   return {
     ctx, cv, cam, AREA, get VW() { return VW; }, VH, get scale() { return scale; }, resize,
     camUpdate, ambient, roomLights, drawFlames, drawBG, drawProps, drawTerrain, drawWater, drawLighting, drawFog,
-    drawBench, drawNPC, drawLore, drawBrazier, drawGate, drawSeal, drawPickup, drawCinder, drawPropAt
+    drawBench, drawNPC, drawLore, drawPortal, drawBrazier, drawGate, drawSeal, drawPickup, drawCinder, drawPropAt
   };
 })();
