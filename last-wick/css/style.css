@@ -1,0 +1,14 @@
+html,body{margin:0;height:100%;background:#05060a;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#game{position:fixed;inset:0;width:100vw;height:100vh;display:block;background:#05060a}
+.hidden{display:none!important}
+#touch{position:fixed;inset:0;pointer-events:none;z-index:5;direction:ltr}
+#stick{position:absolute;left:4vw;bottom:6vh;width:30vmin;height:30vmin;max-width:190px;max-height:190px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,240,220,.06),rgba(255,240,220,.02) 60%,transparent 70%);border:1px solid rgba(255,230,200,.15);pointer-events:auto}
+#knob{position:absolute;left:50%;top:50%;width:38%;height:38%;margin:-19% 0 0 -19%;border-radius:50%;background:rgba(255,235,210,.18);border:1px solid rgba(255,235,210,.3)}
+#tbtns{position:absolute;right:3vw;bottom:5vh;width:44vmin;height:34vmin;max-width:280px;max-height:220px;pointer-events:none}
+.tb{position:absolute;pointer-events:auto;border-radius:50%;border:1px solid rgba(255,230,200,.28);background:rgba(20,16,24,.35);color:rgba(255,236,214,.8);
+  font:700 22px/1 serif;width:16vmin;height:16vmin;max-width:84px;max-height:84px;-webkit-tap-highlight-color:transparent;touch-action:none}
+.tb.on{background:rgba(255,200,140,.28)}
+.t-jump{right:0;bottom:0}.t-attack{right:34%;bottom:4%}.t-dash{right:6%;bottom:52%}.t-focus{right:44%;bottom:54%}
+#ttop{position:absolute;top:2vh;left:2vw;pointer-events:none}
+#ttop .tb{position:relative;display:inline-block;width:10vmin;height:10vmin;max-width:52px;max-height:52px;font-size:16px;margin-right:6px}

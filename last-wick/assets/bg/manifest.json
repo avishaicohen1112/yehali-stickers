@@ -1,0 +1,85 @@
+{
+ "nave": {
+  "layers": [
+   {
+    "id": "far",
+    "img": "assets/bg/nave_far.webp",
+    "p": 0.12,
+    "cover": 1.12,
+    "anchor": 0.5
+   }
+  ]
+ },
+ "crypts": {
+  "layers": [
+   {
+    "id": "far",
+    "img": "assets/bg/crypts_far.webp",
+    "p": 0.12,
+    "cover": 1.12,
+    "anchor": 0.5
+   },
+   {
+    "id": "mid",
+    "img": "assets/bg/crypts_mid.webp",
+    "p": 0.4,
+    "cover": 1.0,
+    "anchor": 0.5
+   }
+  ]
+ },
+ "gardens": {
+  "layers": [
+   {
+    "id": "far",
+    "img": "assets/bg/gardens_far.webp",
+    "p": 0.12,
+    "cover": 1.12,
+    "anchor": 0.5
+   },
+   {
+    "id": "mid",
+    "img": "assets/bg/gardens_mid.webp",
+    "p": 0.4,
+    "cover": 1.0,
+    "anchor": 0.5
+   }
+  ]
+ },
+ "spire": {
+  "layers": [
+   {
+    "id": "far",
+    "img": "assets/bg/spire_far.webp",
+    "p": 0.12,
+    "cover": 1.12,
+    "anchor": 0.5
+   },
+   {
+    "id": "mid",
+    "img": "assets/bg/spire_mid.webp",
+    "p": 0.4,
+    "cover": 1.0,
+    "anchor": 0.5
+   }
+  ]
+ },
+ "hearth": {
+  "layers": [
+   {
+    "id": "far",
+    "img": "assets/bg/hearth_far.webp",
+    "p": 0.12,
+    "cover": 1.12,
+    "anchor": 0.5
+   },
+   {
+    "id": "mid",
+    "img": "assets/bg/hearth_mid.webp",
+    "p": 0.4,
+    "cover": 1.0,
+    "anchor": 0.5
+   }
+  ]
+ }
+}
