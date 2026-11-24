@@ -16,7 +16,7 @@ import world, terrain as T2
 
 ROOT = os.path.join(os.path.dirname(__file__), '..'); OUT = os.environ.get('ROOM_OUT', os.path.join(ROOT, 'assets', 'rooms')); ART = os.environ.get('ART_DIR', os.path.join(ROOT, 'assets', 'art'))
 T = T2.T
-KIT_DEFAULT = {'anchor_top': 0.45, 'anchor_bottom': 0.25, 'trim_scale': 1.0, 'rock_scale': 1.0, 'deep': [8, 7, 10], 'rim': [230, 200, 160], 'darken': 0.92}
+KIT_DEFAULT = {'anchor_top': 0.45, 'anchor_bottom': 0.25, 'trim_scale': 1.0, 'rock_scale': 1.0, 'deep': [8, 7, 10], 'rim': [230, 200, 160], 'darken': 0.92, 'tex_mul': 0.42}
 
 def load(path):
     if not os.path.exists(path): return None
@@ -103,7 +103,9 @@ def paint(r):
     reps = (H // rh + 2, W // rw + 2)
     tiled = np.tile(rock[..., :3], (reps[0], reps[1], 1))[:H, :W]
     deep = T2.smoothstep(18, 150, dd)[..., None]
-    rgb = tiled * (1 - deep * K['darken']) + np.array(K['deep'], np.float32) * deep * 0.6
+    # solid rock reads as a dark mass (texture kept only near the lit edges) so it never blends into the painted background
+    edge = 1 - T2.smoothstep(6, 60, dd)[..., None]
+    rgb = tiled * (K['tex_mul'] + (1 - K['tex_mul']) * edge * 0.6) * (1 - deep * K['darken']) + np.array(K['deep'], np.float32) * deep * 0.6
     # rim light on up-facing edges + ink outline
     gy, gx = np.gradient(cv2.GaussianBlur(S.astype(np.float32), (0, 0), 3))
     up = np.clip(gy * 6, 0, 1)[..., None]

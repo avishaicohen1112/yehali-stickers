@@ -78,8 +78,10 @@ G.Objects = (function () {
     }
   }
   function drawCoins(ctx, t) {
+    const DI = window.PROPS.item_drop && G.Assets.get('prop_item_drop'), DP = window.PROPS.item_drop;
     for (const c of coins) {
       G.FX.glow(ctx, c.x, c.y, c.r * 4, [255, 200, 120], 0.35);
+      if (DI) { const s = c.r / 9; ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(Math.sin(c.t * 3 + c.x) * 0.4); ctx.drawImage(DI, -DP.w * s / 2, -DP.h * s * 0.6, DP.w * s, DP.h * s); ctx.restore(); continue; }
       ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(Math.sin(c.t * 3 + c.x) * 0.4);
       const g = ctx.createRadialGradient(-c.r * 0.3, -c.r * 0.4, 1, 0, 0, c.r * 1.2); g.addColorStop(0, '#fffaf0'); g.addColorStop(0.5, '#f0d9b0'); g.addColorStop(1, '#a8794a');
       ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, -c.r * 1.3); ctx.bezierCurveTo(c.r, -c.r * 0.3, c.r, c.r, 0, c.r); ctx.bezierCurveTo(-c.r, c.r, -c.r, -c.r * 0.3, 0, -c.r * 1.3); ctx.fill();

@@ -278,8 +278,9 @@ G.Render = (function () {
   }
   function drawBrazier(c, o, t, n) {
     if (!drawPropAt('brazier', o.x, o.y + 4)) { c.fillStyle = '#2a2026'; c.fillRect(o.x - 110, o.y - 90, 220, 90); }
+    const BW = (window.PROPS.brazier && window.PROPS.brazier.bowls) || [[-75, -90], [-25, -90], [25, -90], [75, -90]];
     for (let i = 0; i < 4; i++) {
-      const fx = o.x - 75 + i * 50, fy = o.y - 90;
+      const fx = o.x + BW[i][0], fy = o.y + BW[i][1];
       if (i < n) G.FX.flame(c, fx, fy, 4.2, t * 1.1 + i, { glow: 1.1 });
       else { c.fillStyle = 'rgba(40,36,44,0.9)'; c.beginPath(); c.arc(fx, fy + 4, 5, 0, 7); c.fill(); }
     }
@@ -320,6 +321,8 @@ G.Render = (function () {
   function drawPickup(c, o, t) {
     const y = o.y + Math.sin(t * 2.2) * 8;
     G.FX.glow(c, o.x, y, 120, [255, 220, 160], 0.6 + Math.sin(t * 3) * 0.1);
+    const pk = { heart: 'item_heart', vessel: 'item_vessel', spell: 'item_spell', spellup: 'item_spell' }[o.kind];
+    if (pk && drawPropAt(pk, o.x, y)) return;
     c.save(); c.translate(o.x, y); c.rotate(t * 0.7);
     c.strokeStyle = 'rgba(255,240,210,0.7)'; c.lineWidth = 2;
     for (let i = 0; i < 4; i++) { c.rotate(Math.PI / 2); c.beginPath(); c.moveTo(0, 14); c.lineTo(0, 30); c.stroke(); }

@@ -83,12 +83,15 @@ G.Scenery = (function () {
       // layer height in view px; layer scrolls by parallax over room travel
       const travelX = roomX * p, travelY = roomY * py;
       const dh = L.front ? VH * (L.h || 1.0) : Math.max(VH * (L.h || 1.1), VH + travelY + 2);
-      const s = im ? dh / im.height : 1, dw = im ? im.width * s : VW;
+      // a front frame must always span the whole view (it is wider-than-tall art framing the screen edges)
+      const s = im ? (L.front ? Math.max(dh / im.height, VW * 1.02 / im.width) : dh / im.height) : 1, dw = im ? im.width * s : VW;
       const ox = L.tile ? -(cam.x * p) : -(kx * Math.max(0, dw - VW));
       const oy = L.front ? (L.y || 0) * VH - (cam.y * (p - 1)) % VH * 0 : -(ky * (dh - VH)) + (L.y || 0) * VH;
       ctx.save(); if (L.alpha !== undefined) ctx.globalAlpha = L.alpha; if (L.blend) ctx.globalCompositeOperation = L.blend;
       if (im) {
-        if (L.tile) { let x0 = ox % dw; if (x0 > 0) x0 -= dw; for (let x = x0; x < VW; x += dw) ctx.drawImage(im, x, oy, dw + 1, dh); }
+        if (L.tile) {  // mirrored tiling: every other copy is flipped, so the seams always match
+          let x0 = ox % dw; if (x0 > 0) x0 -= dw; let k = Math.round((x0 - ox) / dw);
+          for (let x = x0; x < VW; x += dw, k++) { if (k & 1) { ctx.save(); ctx.translate(x + dw, oy); ctx.scale(-1, 1); ctx.drawImage(im, 0, 0, dw + 1, dh); ctx.restore(); } else ctx.drawImage(im, x, oy, dw + 1, dh); } }
         else ctx.drawImage(im, ox, oy, dw, dh);
       }
       if (L.items) for (const it of L.items) {

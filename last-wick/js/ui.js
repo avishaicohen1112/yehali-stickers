@@ -48,14 +48,19 @@ G.UI = (function () {
     c.restore();
     const rg = c.createRadialGradient(cx - 14, cy - 16, 2, cx, cy, r); rg.addColorStop(0, 'rgba(255,255,255,0.35)'); rg.addColorStop(0.4, 'rgba(255,255,255,0.03)'); rg.addColorStop(1, 'rgba(255,255,255,0.12)');
     c.fillStyle = rg; c.beginPath(); c.arc(cx, cy, r - 4, 0, 7); c.fill();
+    const RI = window.PROPS.ui_ring && G.Assets.get('prop_ui_ring');
+    if (RI) { const s = (r * 2 + 26) / Math.max(RI.width, RI.height); c.drawImage(RI, cx - RI.width * s / 2, cy - RI.height * s / 2, RI.width * s, RI.height * s); } else {
     c.lineWidth = 4; c.strokeStyle = '#d9cbb4'; c.beginPath(); c.arc(cx, cy, r, 0, 7); c.stroke();
     c.lineWidth = 1.5; c.strokeStyle = '#1a1418'; c.beginPath(); c.arc(cx, cy, r + 3, 0, 7); c.stroke();
     // little horns of the vessel (wax drips)
-    c.fillStyle = '#d9cbb4'; for (const a of [-2.3, -0.85]) { c.beginPath(); c.ellipse(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 5, 9, a + 1.57, 0, 7); c.fill(); }
+    c.fillStyle = '#d9cbb4'; for (const a of [-2.3, -0.85]) { c.beginPath(); c.ellipse(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 5, 9, a + 1.57, 0, 7); c.fill(); } }
     if (S.soul >= 33) { G.FX.glow(c, cx, cy, r * 1.4, [255, 210, 150], 0.18 + Math.sin(t * 4) * 0.06); }
     // masks (little candles)
     for (let i = 0; i < S.hpMax; i++) {
       const mx = cx + r + 30 + i * 36, my = y0 + 30; const full = i < S.hp;
+      const MI = G.Assets.get(full ? 'prop_ui_mask' : 'prop_ui_mask_empty');
+      if (MI) { const s = 46 / MI.height; c.save(); c.translate(mx, my); if (!full) c.globalAlpha = 0.6; c.drawImage(MI, -MI.width * s / 2, -22, MI.width * s, 46); c.globalAlpha = 1;
+        if (full) G.FX.flame(c, 0, -24, 2.1, t * 1.3 + i * 0.7, { glow: 0.5 }); c.restore(); continue; }
       c.save(); c.translate(mx, my);
       c.fillStyle = full ? '#f2e8d8' : 'rgba(30,26,32,0.9)'; c.strokeStyle = full ? '#1a1418' : 'rgba(200,190,170,0.35)'; c.lineWidth = 2.5;
       c.beginPath(); c.moveTo(-11, -10); c.quadraticCurveTo(-12, 16, -9, 20); c.lineTo(9, 20); c.quadraticCurveTo(12, 16, 11, -10);
@@ -71,7 +76,9 @@ G.UI = (function () {
     tallowDisp = approach(tallowDisp, S.tallow, Math.max(1, Math.abs(S.tallow - tallowDisp)) * 0.1 + 0.5);
     tallowShow = Math.max(0, tallowShow - 1 / 60);
     const tx = cx + r + 24, ty = y0 + 74;
-    c.fillStyle = '#e8d2ae'; c.beginPath(); c.moveTo(tx, ty - 11); c.bezierCurveTo(tx + 9, ty - 3, tx + 8, ty + 8, tx, ty + 8); c.bezierCurveTo(tx - 8, ty + 8, tx - 9, ty - 3, tx, ty - 11); c.fill();
+    const DI = G.Assets.get('prop_item_drop');
+    if (DI) { const s = 26 / DI.height; c.drawImage(DI, tx - DI.width * s / 2, ty - 15, DI.width * s, 26); } else {
+    c.fillStyle = '#e8d2ae'; c.beginPath(); c.moveTo(tx, ty - 11); c.bezierCurveTo(tx + 9, ty - 3, tx + 8, ty + 8, tx, ty + 8); c.bezierCurveTo(tx - 8, ty + 8, tx - 9, ty - 3, tx, ty - 11); c.fill(); }
     text(c, String(Math.round(tallowDisp)), tx + 18, ty, { size: 24, align: 'left', en: true, c: '#efe6da', w: 700 });
     c.restore();
     // boss bar

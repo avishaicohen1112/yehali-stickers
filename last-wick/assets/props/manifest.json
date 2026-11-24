@@ -1,38 +1,64 @@
 {
  "bench": {
   "img": "assets/props/bench.webp",
-  "w": 150.0,
-  "h": 150.0,
-  "ax": 75.0,
-  "ay": 150.0,
+  "w": 141.0,
+  "h": 165.0,
+  "ax": 70.5,
+  "ay": 165.0,
   "flame": [
    [
-    -38,
-    -121
+    -44,
+    -132
    ],
    [
-    0,
-    -119
+    -32,
+    -139
    ],
    [
-    38,
-    -121
+    -11,
+    -153
+   ],
+   [
+    6,
+    -160
+   ],
+   [
+    39,
+    -137
    ]
   ]
  },
  "tablet": {
   "img": "assets/props/tablet.webp",
-  "w": 70.0,
-  "h": 100.0,
-  "ax": 35.0,
-  "ay": 100.0
+  "w": 72.0,
+  "h": 115.0,
+  "ax": 36.0,
+  "ay": 115.0
  },
  "brazier": {
   "img": "assets/props/brazier.webp",
-  "w": 260.0,
-  "h": 130.0,
-  "ax": 130.0,
-  "ay": 130.0
+  "w": 428.0,
+  "h": 150.0,
+  "ax": 214.0,
+  "ay": 150.0,
+  "bowls": [
+   [
+    -150,
+    -142
+   ],
+   [
+    -49,
+    -142
+   ],
+   [
+    50,
+    -142
+   ],
+   [
+    151,
+    -142
+   ]
+  ]
  },
  "statue": {
   "img": "assets/props/statue.webp",
@@ -697,5 +723,68 @@
   "h": 181.0,
   "ax": 78.5,
   "ay": 181.0
+ },
+ "portal": {
+  "img": "assets/props/portal.webp",
+  "w": 195.0,
+  "h": 270.0,
+  "ax": 97.5,
+  "ay": 270.0
+ },
+ "item_heart": {
+  "img": "assets/props/item_heart.webp",
+  "w": 44.5,
+  "h": 40.0,
+  "ax": 22.2,
+  "ay": 20.0
+ },
+ "item_vessel": {
+  "img": "assets/props/item_vessel.webp",
+  "w": 39.5,
+  "h": 46.0,
+  "ax": 19.8,
+  "ay": 23.0
+ },
+ "item_spell": {
+  "img": "assets/props/item_spell.webp",
+  "w": 39.0,
+  "h": 40.0,
+  "ax": 19.5,
+  "ay": 20.0
+ },
+ "item_drop": {
+  "img": "assets/props/item_drop.webp",
+  "w": 17.0,
+  "h": 26.0,
+  "ax": 8.5,
+  "ay": 13.0
+ },
+ "ui_ring": {
+  "img": "assets/props/ui_ring.webp",
+  "w": 93.0,
+  "h": 100.0,
+  "ax": 46.5,
+  "ay": 50.0
+ },
+ "ui_mask": {
+  "img": "assets/props/ui_mask.webp",
+  "w": 39.0,
+  "h": 44.0,
+  "ax": 19.5,
+  "ay": 22.0
+ },
+ "ui_mask_empty": {
+  "img": "assets/props/ui_mask_empty.webp",
+  "w": 39.0,
+  "h": 44.0,
+  "ax": 19.5,
+  "ay": 22.0
+ },
+ "ui_divider": {
+  "img": "assets/props/ui_divider.webp",
+  "w": 109.0,
+  "h": 24.0,
+  "ax": 54.5,
+  "ay": 12.0
  }
 }
