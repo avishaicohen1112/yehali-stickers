@@ -82,5 +82,31 @@ def main():
     json.dump(man, open(os.path.join(PROPS, 'manifest.json'), 'w'), indent=1)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__' and len(sys.argv) == 1:
     main()
+
+
+def pieces(sid, names, heights, center=True):
+    """split a parts sheet in reading order into props (anchored at centre unless center=False)"""
+    p = src(sid)
+    if not p: return
+    man = json.load(open(os.path.join(PROPS, 'manifest.json')))
+    a = keyed(p); boxes = split(a, 16)
+    if len(boxes) != len(names): print(f'  ! {sid}: {len(boxes)} pieces, expected {len(names)}')
+    for nm, hh, b in zip(names, heights, boxes):
+        pc, _ = trim(a[b[1]:b[1] + b[3], b[0]:b[0] + b[2]].copy()); e, _ = save(pc, nm, hh)
+        if center: e['ay'] = round(e['h'] / 2, 1)
+        man[nm] = e
+    json.dump(man, open(os.path.join(PROPS, 'manifest.json'), 'w'), indent=1); print(sid, '->', names)
+
+
+def bosses():
+    pieces('D06', ['gb_choir_s0', 'gb_choir_s1', 'gb_choir_s2', 'gb_choir_note'], [130, 105, 85, 34], center=False)
+    pieces('D08-parts', ['gb_leviathan_head', 'gb_leviathan_seg0', 'gb_leviathan_seg1', 'gb_leviathan_seg2', 'gb_leviathan_tail'], [150, 120, 100, 80, 110])
+    for i, (sid, nm, h) in enumerate((('D13-form1', 'gb_firstflame_wisp', 170), ('D13-form2', 'gb_firstflame_mirror', 130), ('D13-form3', 'gb_firstflame_sun', 480))):
+        pieces(sid, [nm], [h])
+    pieces('D13-effects', ['gb_firstflame_fireball', 'gb_firstflame_ring', 'gb_firstflame_meteor'], [60, 120, 60])
+
+
+if __name__ == '__main__' and len(sys.argv) > 1 and sys.argv[1] == 'bosses':
+    bosses()

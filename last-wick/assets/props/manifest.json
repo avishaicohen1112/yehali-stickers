@@ -786,5 +786,110 @@
   "h": 24.0,
   "ax": 54.5,
   "ay": 12.0
+ },
+ "gb_choir_s0": {
+  "img": "assets/props/gb_choir_s0.webp",
+  "w": 45.5,
+  "h": 130.0,
+  "ax": 22.8,
+  "ay": 130.0
+ },
+ "gb_choir_s1": {
+  "img": "assets/props/gb_choir_s1.webp",
+  "w": 47.5,
+  "h": 105.0,
+  "ax": 23.8,
+  "ay": 105.0
+ },
+ "gb_choir_s2": {
+  "img": "assets/props/gb_choir_s2.webp",
+  "w": 53.5,
+  "h": 85.0,
+  "ax": 26.8,
+  "ay": 85.0
+ },
+ "gb_choir_note": {
+  "img": "assets/props/gb_choir_note.webp",
+  "w": 31.5,
+  "h": 34.0,
+  "ax": 15.8,
+  "ay": 34.0
+ },
+ "gb_leviathan_head": {
+  "img": "assets/props/gb_leviathan_head.webp",
+  "w": 152.0,
+  "h": 150.0,
+  "ax": 76.0,
+  "ay": 75.0
+ },
+ "gb_leviathan_seg0": {
+  "img": "assets/props/gb_leviathan_seg0.webp",
+  "w": 98.0,
+  "h": 120.0,
+  "ax": 49.0,
+  "ay": 60.0
+ },
+ "gb_leviathan_seg1": {
+  "img": "assets/props/gb_leviathan_seg1.webp",
+  "w": 83.0,
+  "h": 100.0,
+  "ax": 41.5,
+  "ay": 50.0
+ },
+ "gb_leviathan_seg2": {
+  "img": "assets/props/gb_leviathan_seg2.webp",
+  "w": 62.5,
+  "h": 80.0,
+  "ax": 31.2,
+  "ay": 40.0
+ },
+ "gb_leviathan_tail": {
+  "img": "assets/props/gb_leviathan_tail.webp",
+  "w": 36.0,
+  "h": 110.0,
+  "ax": 18.0,
+  "ay": 55.0
+ },
+ "gb_firstflame_wisp": {
+  "img": "assets/props/gb_firstflame_wisp.webp",
+  "w": 139.5,
+  "h": 170.0,
+  "ax": 69.8,
+  "ay": 85.0
+ },
+ "gb_firstflame_mirror": {
+  "img": "assets/props/gb_firstflame_mirror.webp",
+  "w": 118.0,
+  "h": 130.0,
+  "ax": 59.0,
+  "ay": 65.0
+ },
+ "gb_firstflame_sun": {
+  "img": "assets/props/gb_firstflame_sun.webp",
+  "w": 488.0,
+  "h": 480.0,
+  "ax": 244.0,
+  "ay": 240.0
+ },
+ "gb_firstflame_fireball": {
+  "img": "assets/props/gb_firstflame_fireball.webp",
+  "w": 53.0,
+  "h": 60.0,
+  "ax": 26.5,
+  "ay": 30.0
+ },
+ "gb_firstflame_ring": {
+  "img": "assets/props/gb_firstflame_ring.webp",
+  "w": 121.5,
+  "h": 120.0,
+  "ax": 60.8,
+  "ay": 60.0
+ },
+ "gb_firstflame_meteor": {
+  "img": "assets/props/gb_firstflame_meteor.webp",
+  "w": 113.5,
+  "h": 60.0,
+  "ax": 56.8,
+  "ay": 30.0
  }
 }

@@ -345,6 +345,14 @@ G.Bosses = (function () {
     update(dt) { this.t += dt; this.flash = Math.max(0, this.flash - dt * 5); if (this.dead) this.deadT += dt; }
     draw(ctx, t) {
       if (this.dead) return; const a = 1;
+      const SK = 'gb_choir_s' + this.i, SP = window.PROPS[SK];
+      if (SP && G.Assets.get('prop_' + SK)) {
+        const sw = Math.sin(this.t * 2.4 + this.i) * 0.05, sy = 1 + Math.sin(this.t * 5) * 0.03 + this.charge * 0.06;
+        ctx.save(); ctx.translate(this.cx, this.y + this.h); ctx.rotate(sw); ctx.scale(1, sy); pimg(ctx, SK, 0, 0, 0, 0, false, 1);
+        if (this.flash > 0.3) { ctx.globalAlpha = this.flash * 0.6; ctx.globalCompositeOperation = 'lighter'; pimg(ctx, SK, 0, 0); } ctx.restore();
+        G.FX.flame(ctx, this.cx + Math.sin(sw) * SP.h, this.y + this.h - SP.h * sy + 6, 4 + this.charge * 4, t + this.i, { glow: 1 + this.charge });
+        return;
+      }
       if (window.RIGS && window.RIGS.b_choir) { if (!this.pup) this.pup = new G.Puppet.Puppet('b_choir'); this.pup.play(this.charge > 0 ? 'sing' : 'idle'); this.pup.update(1 / 60, {}); this.pup.draw(ctx, this.cx, this.y + this.h, { flash: this.flash }); }
       else if (G.Sprite.meta('b_choir')) { const fi = G.Sprite.frameOf('b_choir', 'idle', this.t); G.Sprite.draw(ctx, 'b_choir', 'idle', fi, this.cx, this.y + this.h, { flash: this.flash * 0.8 }); }
       else {
@@ -382,7 +390,8 @@ G.Bosses = (function () {
       for (const s of live) { const hb = s.hitbox(); if (hb) G.Main.hitPlayer(hb, s.cx); G.FX.light(s.cx, s.y + 20, 260, [255, 190, 110], 1); }
     }
     place(dt, k) { const live = this.singers.filter(s => !s.dead); live.forEach((s, i) => { const a = this.ang + i / live.length * Math.PI * 2; const tx = this.cxp + Math.cos(a) * 170 - s.w / 2, ty = this.cyp + Math.sin(a) * 90; s.x = lerp(s.x || tx, tx, Math.min(1, dt * k)); s.y = lerp(s.y || ty, ty, Math.min(1, dt * k)); }); }
-    note(s, p) { const a = Math.atan2(p.cy - s.cy, p.cx - s.cx); G.Sound.sfx('shard', { pitch: 0.8 + s.i * 0.25, vol: 0.5 }); G.Objects.spawnProj({ x: s.cx, y: s.cy, vx: Math.cos(a) * 330, vy: Math.sin(a) * 330, r: 13, life: 4, dmg: 1, c: [255, 220, 150], light: [255, 200, 120, 100], update: (pr, dt) => { pr.vy += Math.sin(pr.t * 6) * 30; } }); }
+    note(s, p) { const a = Math.atan2(p.cy - s.cy, p.cx - s.cx); G.Sound.sfx('shard', { pitch: 0.8 + s.i * 0.25, vol: 0.5 }); G.Objects.spawnProj({ x: s.cx, y: s.cy, vx: Math.cos(a) * 330, vy: Math.sin(a) * 330, r: 13, life: 4, dmg: 1, c: [255, 220, 150], light: [255, 200, 120, 100], update: (pr, dt) => { pr.vy += Math.sin(pr.t * 6) * 30; },
+      draw: window.PROPS.gb_choir_note ? (c, pr, t) => { G.FX.glow(c, pr.x, pr.y, 50, [255, 210, 140], 0.5); pimg(c, 'gb_choir_note', pr.x, pr.y, 0, Math.sin(pr.t * 5) * 0.3); } : undefined }); }
     beam(x) {
       G.Objects.spawnProj({ x, y: 0, vx: 0, vy: 0, r: 1, life: 0.55, dmg: 1, ghost: true,
         update: (pr) => { if (!G.Main.player.dead && overlap({ x: x - 26, y: 0, w: 52, h: 20 * TILE }, G.Main.player.hitbox())) G.Main.player.damage(1, x); },
@@ -437,6 +446,12 @@ G.Bosses = (function () {
     update(dt) { this.flash = Math.max(0, this.flash - dt * 5); if (this.boss.dead) { this.dead = true; this.deadT += dt; } }
     draw() {}
   }
+  // painted boss part (prop 'gb_<boss>_<part>'): centre/anchor at x,y, scaled to width w (or natural size), rotated
+  function pimg(ctx, key, x, y, w, rot, flip, alpha) {
+    const P = window.PROPS[key], im = P && G.Assets.get('prop_' + key); if (!im) return false;
+    const s = w ? w / P.w : 1; ctx.save(); ctx.translate(x, y); if (rot) ctx.rotate(rot); if (flip) ctx.scale(-1, 1); if (alpha !== undefined) ctx.globalAlpha *= alpha;
+    ctx.drawImage(im, -P.ax * s, -P.ay * s, P.w * s, P.h * s); ctx.restore(); return true;
+  }
   function fireball(x, y, vx, vy, o = {}) { return G.Objects.spawnProj(Object.assign({ x, y, vx, vy, r: 15, life: 4, dmg: 1, c: [255, 140, 60], light: [255, 130, 50, 120] }, o)); }
   function ringShot(x, y, n, sp, off = 0, o = {}) { for (let i = 0; i < n; i++) { const a = off + i / n * Math.PI * 2; fireball(x, y, Math.cos(a) * sp, Math.sin(a) * sp, o); } }
   function drawGlowBody(ctx, x, y, r, c, a = 1) { G.FX.glow(ctx, x, y, r * 2.2, c, 0.5 * a); ctx.save(); ctx.globalAlpha = a; const g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r); g.addColorStop(0, '#fff6e0'); g.addColorStop(0.4, rgba(c, 1)); g.addColorStop(1, rgba([c[0] * 0.3, c[1] * 0.3, c[2] * 0.3], 1)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.restore(); }
@@ -474,7 +489,16 @@ G.Bosses = (function () {
     place() { this.segs.forEach((s, i) => { const tr = this.trail[Math.min(this.trail.length - 1, i * 6)] || [this.x, this.y]; s.x = tr[0] - s.w / 2; s.y = tr[1] - s.h / 2; s.hidden = s.y > this.sea + 30; }); this.cxv = this.segs[0].cx; }
     get cx() { return this.x; } get cy() { return this.y; }
     draw(ctx, t) {
-      for (let i = this.segs.length - 1; i >= 0; i--) { const s = this.segs[i]; if (s.hidden) continue;
+      const N = this.segs.length, painted = window.PROPS.gb_leviathan_head && G.Assets.get('prop_gb_leviathan_head');
+      for (let i = N - 1; i >= 0; i--) { const s = this.segs[i]; if (s.hidden) continue;
+        if (painted) {  // painted segments, each turned along the body line
+          const nb = this.segs[Math.max(0, i - 1)], pv = this.segs[Math.min(N - 1, i + 1)];
+          const ang = Math.atan2(nb.cy - pv.cy, nb.cx - pv.cx), key = i === 0 ? 'head' : i === N - 1 ? 'tail' : i < 4 ? 'seg0' : i < 8 ? 'seg1' : 'seg2';
+          const flip = Math.cos(ang) < 0, a = this.dead ? Math.max(0, 1 - this.deadT * 0.5) : 1;
+          pimg(ctx, 'gb_leviathan_' + key, s.cx, s.cy, s.w * (i === 0 ? 1.9 : 1.5), flip ? ang + Math.PI : ang, flip, a);
+          if (s.flash > 0.2) G.FX.glow(ctx, s.cx, s.cy, s.w, [255, 255, 255], s.flash * 0.7);
+          continue;
+        }
         const r = s.w / 2; drawGlowBody(ctx, s.cx, s.cy, r * 0.95, i === 0 ? [255, 190, 110] : [240, 170, 100], this.dead ? Math.max(0, 1 - this.deadT * 0.5) : 1);
         if (s.flash > 0.2) { ctx.globalAlpha = s.flash; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s.cx, s.cy, r, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
         if (i === 0) { const d = this.vx >= 0 ? 1 : -1; ctx.fillStyle = '#1a0804'; ctx.beginPath(); ctx.ellipse(s.cx + d * r * 0.45, s.cy - r * 0.2, 10, 14, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#ffdd88'; ctx.beginPath(); ctx.arc(s.cx + d * r * 0.5, s.cy - r * 0.25, 4, 0, 7); ctx.fill(); }
@@ -674,6 +698,8 @@ G.Bosses = (function () {
     draw(ctx, t) {
       const a = this.dead ? Math.max(0, 1 - this.deadT * 0.5) : 1;
       if (this.form === 'mirror') { const fl = this.facing < 0; if (G.Sprite.meta('wick')) { const an = this.state === 'dashslash' && this.st > 0.25 ? 'dash' : !this.ground ? 'jump' : Math.abs(this.vx || 0) > 30 ? 'run' : 'idle'; G.Sprite.draw(ctx, 'wick', an, G.Sprite.frameOf('wick', an, this.t), this.cx, this.y + this.h, { flip: fl, alpha: 0.85 * a, tint: [255, 150, 50, 0.75], flash: this.flash }); } G.FX.flame(ctx, this.cx, this.y + 4, 7, t, { glow: 1.5 }); return; }
+      if (this.form === 'sun' && pimg(ctx, 'gb_firstflame_sun', this.cx, this.cy, this.state === 'core' ? 320 : 460, Math.sin(t * 0.5) * 0.04, false, a)) { G.FX.glow(ctx, this.cx, this.cy, 500, [255, 150, 60], 0.35 * a); if (this.flash > 0.2) G.FX.glow(ctx, this.cx, this.cy, 200, [255, 255, 255], this.flash); return; }
+      if (this.form === 'wisp' && pimg(ctx, 'gb_firstflame_wisp', this.cx, this.cy, 190, Math.sin(t * 2) * 0.08, this.facing < 0, a)) { G.FX.glow(ctx, this.cx, this.cy, 260, [255, 190, 90], 0.4 * a); if (this.flash > 0.2) G.FX.glow(ctx, this.cx, this.cy, 90, [255, 255, 255], this.flash); return; }
       if (this.form === 'sun') { const r = this.state === 'core' ? 70 : 110; G.FX.glow(ctx, this.cx, this.cy, r * 4, [255, 150, 60], 0.6 * a); G.FX.flame(ctx, this.cx, this.cy + r * 0.8, r / 5, t, { glow: 2 }); drawGlowBody(ctx, this.cx, this.cy, r * 0.6, [255, 200, 110], a); if (this.flash > 0.2) G.FX.glow(ctx, this.cx, this.cy, r * 1.5, [255, 255, 255], this.flash); return; }
       G.FX.flame(ctx, this.cx, this.cy + 40, 12, t, { glow: 1.6 }); drawGlowBody(ctx, this.cx, this.cy, 26, [255, 210, 130], a); if (this.flash > 0.2) G.FX.glow(ctx, this.cx, this.cy, 80, [255, 255, 255], this.flash);
     }
