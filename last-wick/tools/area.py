@@ -41,7 +41,7 @@ AREAS = {
  'O': ('clock', [('gear', 'spin'), ('pendulum', 'pendulum'), ('hand', 'spin')],
        ['grandclock', 'toolbox', 'bells', 'organ']),
  'P': ('core', [('drop', 'float'), ('sparkle', 'float'), ('flame', 'float')],
-       ['plinth', 'altar', 'bigcandles']),
+       ['plinth', 'altar', 'bigcandle', 'candle1', 'candle2', 'candle3']),
 }
 PROP_H = 190      # tallest prop on an X8 sheet -> this many game px; the rest keep the sheet's relative scale
 TRIM_W = 1400     # ground strips are stored this wide (terrain2d scales by trim_scale)

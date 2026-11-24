@@ -483,5 +483,80 @@
   "pad": 150,
   "flames": [],
   "lights": []
+ },
+ "z1": {
+  "img": "assets/rooms/z1.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "core_candle1",
+    "x": 1275,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "core_bigcandle",
+    "x": 125,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   },
+   {
+    "p": "core_altar",
+    "x": 775,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   }
+  ]
+ },
+ "z2": {
+  "img": "assets/rooms/z2.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "core_plinth",
+    "x": 1225,
+    "y": 1206,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   },
+   {
+    "p": "core_candle1",
+    "x": 2075,
+    "y": 1206,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": true
+   },
+   {
+    "p": "core_altar",
+    "x": 625,
+    "y": 1206,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "core_altar",
+    "x": 225,
+    "y": 1206,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   }
+  ]
  }
 }

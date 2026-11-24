@@ -1,0 +1,10 @@
+{
+ "core": [
+  "core_plinth",
+  "core_altar",
+  "core_bigcandle",
+  "core_candle1",
+  "core_candle2",
+  "core_candle3"
+ ]
+}

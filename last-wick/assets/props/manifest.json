@@ -221,5 +221,47 @@
   "h": 250.0,
   "ax": 150.0,
   "ay": 250.0
+ },
+ "core_plinth": {
+  "img": "assets/props/core_plinth.webp",
+  "w": 110.5,
+  "h": 137.0,
+  "ax": 55.2,
+  "ay": 137.0
+ },
+ "core_altar": {
+  "img": "assets/props/core_altar.webp",
+  "w": 194.5,
+  "h": 159.0,
+  "ax": 97.2,
+  "ay": 159.0
+ },
+ "core_bigcandle": {
+  "img": "assets/props/core_bigcandle.webp",
+  "w": 127.5,
+  "h": 190.0,
+  "ax": 63.8,
+  "ay": 190.0
+ },
+ "core_candle1": {
+  "img": "assets/props/core_candle1.webp",
+  "w": 125.5,
+  "h": 151.5,
+  "ax": 62.8,
+  "ay": 151.5
+ },
+ "core_candle2": {
+  "img": "assets/props/core_candle2.webp",
+  "w": 169.5,
+  "h": 122.0,
+  "ax": 84.8,
+  "ay": 122.0
+ },
+ "core_candle3": {
+  "img": "assets/props/core_candle3.webp",
+  "w": 147.5,
+  "h": 157.5,
+  "ax": 73.8,
+  "ay": 157.5
  }
 }
