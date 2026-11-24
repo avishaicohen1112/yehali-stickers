@@ -131,7 +131,7 @@ G.UI = (function () {
       ornament(c, VW / 2, VH * 0.22 + 30, 260, a * 0.85);
       text(c, card.l2, VW / 2, VH * 0.22 + 54, { size: 13, en: true, a: a * 0.65, spacing: 8, c: '#e2cfae' });
     } else {
-      const y = VH * 0.74;
+      const y = VH * 0.26;   // up top: never over the hero or the boss's health bar
       text(c, card.l2, VW / 2, y - 40, { size: 15, en: true, a: a * 0.75, spacing: 9, c: '#e2cfae' });
       text(c, card.l1, VW / 2, y + 4, { size: 58, w: 600, title: true, a, blur: 26, c: '#f6e4cc' });
       ornament(c, VW / 2, y + 44, 380, a);

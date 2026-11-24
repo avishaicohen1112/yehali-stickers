@@ -224,6 +224,7 @@ def paint(r):
         st, an = opts[seed % len(opts)]; drape(img, st, tops, an, seed + 1)
     else: drape(img, K['trim_top'], tops, K['anchor_top'], seed + 1)
     # platforms
+    pidx = [0]
     for yy in range(g.shape[0]):
         xx = 0
         while xx < g.shape[1]:
@@ -232,7 +233,9 @@ def paint(r):
                 while xx < g.shape[1] and g[yy, xx] == '=': xx += 1
                 wpx = (xx - x0) * T + 16
                 if K['plats']:   # one of six painted platforms, picked per platform; long ones are 3-sliced
-                    p = K['plats'][(x0 * 7 + yy * 13 + seed) % len(K['plats'])]
+                    # one main platform look per room, with now and then an accent piece (about one in five)
+                    n = len(K['plats']); main = seed % n; acc = (main + 1 + (seed // 7) % (n - 1)) % n if n > 1 else main
+                    pidx[0] += 1; p = K['plats'][acc if (pidx[0] % 5 == 3 and n > 1) else main]
                     ph = int(round(p.shape[0] * wpx / p.shape[1]))
                     if ph > 86 or ph < 40:
                         ph = 72; pi = cv2.resize(p, (max(8, int(p.shape[1] * ph / p.shape[0])), ph), interpolation=cv2.INTER_AREA); sl = three_slice(pi, wpx) if pi.shape[1] < wpx else cv2.resize(pi, (wpx, ph), interpolation=cv2.INTER_AREA)

@@ -172,34 +172,38 @@ G.Render = (function () {
     // dynamic overrides (gates/seals) drawn by objects
   }
   function drawWater(room, t) {
-    const x0 = Math.floor(cam.x / TILE), y0 = Math.floor(cam.y / TILE);
+    const x0 = Math.floor(cam.x / TILE), y0 = Math.floor(cam.y / TILE), W2 = window.WORLD.rooms[room.id].world === 'sea';
+    const wave = (wx, k) => Math.sin(t * 1.7 + wx * 0.013) * 3 + Math.sin(t * 2.6 - wx * 0.031) * 1.6 * k;
     for (let ty = y0; ty <= y0 + VH / TILE + 1; ty++) for (let tx = x0; tx <= x0 + VW / TILE + 1; tx++) {
       const c = room.tile(tx, ty); if (c !== '~' && c !== 'w' && c !== 'x') continue;
-      const top = room.tile(tx, ty - 1) !== c;
-      const X = tx * TILE - cam.x, Y = ty * TILE - cam.y;
-      if (c === 'x') { // shadow gate: swirling void wall
-        ctx.save(); const ph = t * 2 + tx * 1.3 + ty * 0.7;
-        const g = ctx.createLinearGradient(X, 0, X + TILE, 0); g.addColorStop(0, 'rgba(20,8,35,0.2)'); g.addColorStop(0.5, 'rgba(10,4,20,0.95)'); g.addColorStop(1, 'rgba(20,8,35,0.2)');
-        ctx.fillStyle = g; ctx.fillRect(X, Y, TILE, TILE + 1);
-        for (let k = 0; k < 3; k++) { ctx.fillStyle = `rgba(150,90,255,${0.25 + 0.2 * Math.sin(ph + k * 2)})`; ctx.beginPath(); ctx.arc(X + TILE / 2 + Math.sin(ph + k) * 14, Y + ((t * 40 + k * 17 + ty * 13) % TILE), 3 + k, 0, 7); ctx.fill(); }
-        ctx.restore(); G.FX.glow(ctx, X + TILE / 2, Y + TILE / 2, 50, [150, 90, 255], 0.15); continue;
-      }
-      const W2 = window.WORLD.rooms[room.id].world === 'sea';
-      if (c === '~' && W2) { // burning ember-sea
-        ctx.fillStyle = top ? 'rgba(60,12,4,0.95)' : 'rgba(30,6,2,0.98)'; ctx.fillRect(X, Y + (top ? 10 : 0), TILE + 1, TILE + 1 - (top ? 10 : 0));
-        if (top) { const w = Math.sin(t * 1.6 + tx * 0.7) * 3; ctx.fillStyle = 'rgba(255,150,60,0.8)'; ctx.fillRect(X, Y + 8 + w, TILE + 1, 3);
-          G.FX.glow(ctx, X + TILE / 2, Y + 14, 60, [255, 110, 40], 0.22); if (Math.random() < 0.02) G.FX.spawn({ x: tx * TILE + rand(0, TILE), y: ty * TILE + 8, vx: rand(-20, 20), vy: rand(-140, -60), life: 1.2, size: 2, kind: 'ember', c: [255, 150, 60], add: true }); }
+      const top = room.tile(tx, ty - 1) !== c, X = tx * TILE - cam.x, Y = ty * TILE - cam.y;
+      if (c === 'x') {   // shadow veil: one soft column of drifting darkness (edges fade, no tile blocks)
+        const L = room.tile(tx - 1, ty) === 'x', R = room.tile(tx + 1, ty) === 'x', U = room.tile(tx, ty - 1) === 'x', D = room.tile(tx, ty + 1) === 'x';
+        const g = ctx.createLinearGradient(X, 0, X + TILE, 0);
+        g.addColorStop(0, `rgba(12,5,22,${L ? 0.9 : 0})`); g.addColorStop(0.5, 'rgba(12,5,22,0.9)'); g.addColorStop(1, `rgba(12,5,22,${R ? 0.9 : 0})`);
+        ctx.save(); if (!U || !D) { ctx.globalAlpha = 0.75; } ctx.fillStyle = g; ctx.fillRect(X, Y - (U ? 0 : 10), TILE + 1, TILE + 1 + (U ? 0 : 10) + (D ? 0 : 10)); ctx.restore();
+        for (let k = 0; k < 2; k++) { const wy = ty * TILE + ((t * 30 + k * 25 + tx * 7) % TILE), wx = tx * TILE + TILE / 2 + Math.sin(t * 0.9 + wy * 0.02 + k * 3) * 16;
+          G.FX.glow(ctx, wx - cam.x, wy - cam.y, 16, [160, 100, 255], 0.16); }
         continue;
       }
-      if (c === '~') {
-        ctx.fillStyle = top ? 'rgba(4,8,22,0.92)' : 'rgba(2,4,12,0.97)'; ctx.fillRect(X, Y + (top ? 10 : 0), TILE + 1, TILE + 1 - (top ? 10 : 0));
-        if (top) { const w = Math.sin(t * 2 + tx * 0.8) * 2;
-          ctx.fillStyle = 'rgba(120,170,255,0.55)'; ctx.fillRect(X, Y + 9 + w, TILE + 1, 2);
-          G.FX.glow(ctx, X + TILE / 2, Y + 12, 40, [80, 130, 255], 0.12); }
-      } else {
-        ctx.fillStyle = 'rgba(30,70,120,0.35)'; ctx.fillRect(X, Y + (top ? 14 : 0), TILE + 1, TILE + 1 - (top ? 14 : 0));
-        if (top) { ctx.fillStyle = 'rgba(160,210,255,0.4)'; ctx.fillRect(X, Y + 13 + Math.sin(t * 2.5 + tx) * 1.5, TILE + 1, 2); }
-      }
+      const lava = c === '~' && W2, water = c === '~' && !W2;
+      const deep = lava ? ['rgba(70,16,4,0.96)', 'rgba(25,5,2,0.99)'] : water ? ['rgba(8,16,38,0.9)', 'rgba(2,4,12,0.97)'] : ['rgba(40,80,130,0.32)', 'rgba(30,70,120,0.38)'];
+      const gg = ctx.createLinearGradient(0, Y, 0, Y + TILE); gg.addColorStop(0, top ? deep[0] : deep[1]); gg.addColorStop(1, deep[1]); ctx.fillStyle = gg;
+      // a pool that ends in open air (not against rock) fades out sideways instead of stopping in a straight cut
+      const openL = room.tile(tx - 1, ty) === '.', openR = room.tile(tx + 1, ty) === '.';
+      if (openL || openR) { ctx.save(); const fg = ctx.createLinearGradient(X, 0, X + TILE, 0); fg.addColorStop(0, openL ? 'rgba(0,0,0,0)' : '#000'); fg.addColorStop(0.6, '#000'); fg.addColorStop(1, openR ? 'rgba(0,0,0,0)' : '#000');
+        ctx.globalAlpha = 0.55; }
+      if (!top) { ctx.fillRect(X, Y, TILE + 1, TILE + 1); if (openL || openR) ctx.restore(); continue; }
+      // the surface follows one continuous wave across the whole pool
+      ctx.beginPath(); ctx.moveTo(X, Y + TILE + 1);
+      for (let i = 0; i <= 5; i++) { const sx = X + i * TILE / 5; ctx.lineTo(sx, Y + 10 + wave(tx * TILE + i * TILE / 5, 1)); }
+      ctx.lineTo(X + TILE + 1, Y + TILE + 1); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = lava ? 'rgba(255,170,80,0.85)' : water ? 'rgba(150,195,255,0.55)' : 'rgba(170,215,255,0.4)'; ctx.lineWidth = lava ? 2.5 : 1.6;
+      ctx.beginPath(); for (let i = 0; i <= 5; i++) { const sx = X + i * TILE / 5, sy = Y + 10 + wave(tx * TILE + i * TILE / 5, 1); i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); } ctx.stroke();
+      if (lava) { G.FX.glow(ctx, X + TILE / 2, Y + 14, 70, [255, 110, 40], 0.2);
+        if (Math.random() < 0.02) G.FX.spawn({ x: tx * TILE + rand(0, TILE), y: ty * TILE + 8, vx: rand(-20, 20), vy: rand(-140, -60), life: 1.2, size: 2, kind: 'ember', c: [255, 150, 60], add: true }); }
+      else if (water) G.FX.glow(ctx, X + TILE / 2, Y + 12, 40, [80, 130, 255], 0.1);
+      if (openL || openR) ctx.restore();
     }
   }
   function drawLighting(room, extraDark) {
@@ -344,11 +348,24 @@ G.Render = (function () {
   }
   function drawSeal(c, o, t) {
     if (!o.closed) return;
-    const x = o.tx * TILE, y = o.ty * TILE;
-    c.save(); const g = c.createLinearGradient(x, y, x, y + TILE);
-    g.addColorStop(0, 'rgba(200,170,255,0.85)'); g.addColorStop(1, 'rgba(90,60,160,0.85)'); c.fillStyle = g;
-    for (let i = 0; i < o.w * 2; i++) { const sx = x + i * TILE / 2; c.beginPath(); c.moveTo(sx, y + TILE); c.lineTo(sx + TILE / 4, y - 10 + Math.sin(i * 1.7) * 6); c.lineTo(sx + TILE / 2, y + TILE); c.fill(); }
-    c.restore(); G.FX.light(x + o.w * TILE / 2, y + 25, 200, [190, 150, 255], 0.8);
+    const x = o.tx * TILE - 6, y = o.ty * TILE, w = o.w * TILE + 12, h = TILE, area = G.Main.room && G.Main.room.area;
+    const rf = area && G.Assets.get('rockfill_' + area);
+    c.save(); c.beginPath(); c.roundRect(x, y + 2, w, h - 2, 10);
+    if (rf) { const pt = c.createPattern(rf, 'repeat'); c.fillStyle = pt; c.fill(); c.fillStyle = 'rgba(255,240,220,0.12)'; c.fill(); }
+    else { c.fillStyle = '#2a2228'; c.fill(); }
+    c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = 3; c.stroke();
+    // wax poured over the top edge, drips hanging down the face
+    c.fillStyle = '#e9cfa2'; c.beginPath(); c.moveTo(x, y + 8);
+    for (let i = 0; i <= o.w * 4; i++) { const sx = x + i * w / (o.w * 4); c.lineTo(sx, y + 2 + Math.sin(i * 2.3) * 2); }
+    c.lineTo(x + w, y + 12); c.lineTo(x, y + 12); c.closePath(); c.fill();
+    for (let i = 0; i < o.w * 2; i++) { const dx = x + 14 + i * (w - 28) / Math.max(1, o.w * 2 - 1), dl = 8 + ((i * 37) % 17);
+      c.beginPath(); c.ellipse(dx, y + 10 + dl / 2, 3.2, dl / 2 + 2, 0, 0, 7); c.fill(); }
+    // glowing wax seal in the middle
+    const cx = x + w / 2, cy = y + h / 2 + 4, pulse = 0.75 + 0.25 * Math.sin(t * 3);
+    G.FX.glow(c, cx, cy, 46, [255, 170, 90], 0.45 * pulse);
+    c.fillStyle = '#b5482a'; c.beginPath(); c.arc(cx, cy, 13, 0, 7); c.fill(); c.strokeStyle = '#7a2a18'; c.lineWidth = 2; c.stroke();
+    c.fillStyle = `rgba(255,210,150,${0.85 * pulse})`; c.beginPath(); c.moveTo(cx, cy - 8); c.quadraticCurveTo(cx + 6, cy, cx, cy + 7); c.quadraticCurveTo(cx - 6, cy, cx, cy - 8); c.fill();
+    c.restore(); G.FX.light(cx, cy, 160, [255, 170, 90], 0.6);
   }
   function drawPortal(c, o, t) {
     const x = o.x, y = o.y - 100, open = o.open;
