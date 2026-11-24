@@ -263,7 +263,10 @@ G.Player = (function () {
       const I = G.Input, busy = I.h('left') || I.h('right') || I.h('jump') || I.h('attack') || I.h('dash') || I.h('down') || I.h('focus');
       const still = this.ground && !busy && Math.abs(this.vx) < 20 && this.atkT <= 0 && this.dashT <= 0 && !this.focusing && this.hurtT <= 0 && this.lock <= 0;
       if (I.p('dance') && this.ground) { this.dancing = this.dancing ? 0 : 1; this.danceT = 0; }
-      if (!still) { this.dancing = 0; this.idleT = 0; } else this.idleT += 1 / 60;
+      if (!still) { if (this.idleT > 24) this.wakeT = 0.4; this.dancing = 0; this.idleT = 0; } else this.idleT += 1 / 60;   // woken up: a startled jolt
+      this.wakeT = Math.max(0, (this.wakeT || 0) - 1 / 60); this.waveT = Math.max(0, (this.waveT || 0) - 1 / 60);
+      const nb = G.Objects.nearest && G.Objects.nearest();   // greet someone you walk up to
+      if (nb && nb.type === 'npc' && nb !== this.waved && this.ground) { this.waved = nb; this.waveT = 1.1; } else if (!nb || nb.type !== 'npc') this.waved = null;
       if (this.dancing) this.danceT = (this.danceT || 0) + 1 / 60;
       let a;
       if (this.hurtT > 0) a = 'hurt';
@@ -278,10 +281,12 @@ G.Player = (function () {
       else if (this.landT > 0) a = 'land';
       else if (this.windV && Math.abs(this.windV) > 150 && (!this.mx || this.mx * this.windV < 0)) a = this.mx ? 'windwalk' : 'blown';
       else if (this.dancing) a = Math.floor(this.danceT / 4) % 2 ? 'dance2' : 'dance';
+      else if (this.wakeT > 0 && Math.abs(this.vx) < 120) a = 'wake';
       else if (Math.abs(this.vx) > 30) a = 'run';
-      else a = this.idleT > 28 ? 'sleep' : this.idleT > 8 ? 'bored' : 'idle';
+      else if (this.waveT > 0) a = 'wave';
+      else a = this.idleT > 34 ? 'sleep' : this.idleT > 24 ? 'hug' : this.idleT > 8 ? 'bored' : 'idle';
       // poses that only the painted (v2) atlas has fall back to the nearest older one
-      if (!G.Sprite.has('wick', a)) a = ({ dance2: 'dance', dance: 'idle', bored: 'idle', sleep: 'sit', lever: 'focus', point: 'cast', windwalk: 'run', blown: 'hurt', open: 'focus', glide: 'fall', djump: 'jump', lookup: 'idle', slashup: 'slash', slashdown: 'slash', wall: 'fall', cast: 'focus', sit: 'idle', death: 'hurt' })[a] || a;
+      if (!G.Sprite.has('wick', a)) a = ({ dance2: 'dance', dance: 'idle', bored: 'idle', sleep: 'sit', hug: 'sit', wake: 'land', wave: 'idle', lever: 'focus', point: 'cast', windwalk: 'run', blown: 'hurt', open: 'focus', glide: 'fall', djump: 'jump', lookup: 'idle', slashup: 'slash', slashdown: 'slash', wall: 'fall', cast: 'focus', sit: 'idle', death: 'hurt' })[a] || a;
       this.setAnim(a);
     }
     draw(ctx) {

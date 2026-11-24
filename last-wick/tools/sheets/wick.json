@@ -2,7 +2,8 @@
  "atlas": "wick",
  "sources": {
   "A02": "art_src/A02",
-  "A03": "art_src/A03"
+  "A03": "art_src/A03",
+  "A05": "art_src/A05"
  },
  "grid": [
   4,
@@ -44,6 +45,24 @@
    "death1",
    "death2",
    "rise"
+  ],
+  "A05": [
+   "bored0",
+   "bored1",
+   "bored2",
+   "bored3",
+   "dance0",
+   "dance1",
+   "dance2",
+   "dance3",
+   "spin0",
+   "spin1",
+   "hop",
+   "bow",
+   "wave",
+   "hug",
+   "sleep",
+   "wake"
   ]
  },
  "scale": {
@@ -53,6 +72,10 @@
   ],
   "A03": [
    "lookup",
+   108
+  ],
+  "A05": [
+   "bored0",
    108
   ]
  },
@@ -183,6 +206,67 @@
   "rise": {
    "f": [
     "rise"
+   ]
+  },
+  "bored": {
+   "f": [
+    "bored0",
+    "bored0",
+    "bored0",
+    "bored1",
+    "bored1",
+    "bored1",
+    "bored2",
+    "bored2",
+    "bored3",
+    "bored3",
+    "bored3"
+   ],
+   "fps": 1.6,
+   "loop": true
+  },
+  "dance": {
+   "f": [
+    "dance0",
+    "dance1",
+    "dance2",
+    "dance3"
+   ],
+   "fps": 6,
+   "loop": true
+  },
+  "dance2": {
+   "f": [
+    "spin0",
+    "spin1",
+    "spin0",
+    "spin1",
+    "hop",
+    "hop",
+    "bow",
+    "bow"
+   ],
+   "fps": 5,
+   "loop": true
+  },
+  "wave": {
+   "f": [
+    "wave"
+   ]
+  },
+  "hug": {
+   "f": [
+    "hug"
+   ]
+  },
+  "sleep": {
+   "f": [
+    "sleep"
+   ]
+  },
+  "wake": {
+   "f": [
+    "wake"
    ]
   }
  }

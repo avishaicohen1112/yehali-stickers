@@ -204,10 +204,18 @@ G.Main = (function () {
     o.push({ s: G.T('sound') + ': ' + (G.Sound.muted ? G.T('off') : G.T('on')), go: () => { G.Sound.toggleMute(); } });
     return o;
   }
+  // the opening is a storybook: each line over its own slowly drifting painted scene, revealed letter by letter
+  const INTRO_SCENES = [['core', 1, [255, 170, 90]], ['core', 0.3, [120, 110, 130]], ['nave', 0.8, [150, 170, 230]], ['crypts', 0.6, [255, 190, 120]], [null, 0, [255, 190, 120]]];
+  const INTRO_CPS = 28, INTRO_HOLD = 3.2;
+  function introLen() { return (G.TEXT.intro[introI] || '').length / INTRO_CPS; }
   function updateIntro(dt) {
-    const I = G.Input;
-    if (modeT > 0.8 && (I.p('jump') || I.p('attack') || I.p('confirm') || I.tap())) { introI++; modeT = 0; G.Sound.sfx('ui_move'); }
-    if (modeT > 6) { introI++; modeT = 0.01; }
+    const I = G.Input, skip = I.p('pause') || I.p('dash');
+    if (skip || G.UI.introSkip) { G.UI.introSkip = false; introI = G.TEXT.intro.length; }
+    else if (modeT > 0.4 && (I.p('jump') || I.p('attack') || I.p('confirm') || I.tap())) {
+      if (modeT < introLen() + 0.3) modeT = introLen() + 0.3;   // first tap shows the whole line
+      else { introI++; modeT = 0; G.Sound.sfx('ui_move'); }
+    }
+    if (modeT > introLen() + INTRO_HOLD) { introI++; modeT = 0.01; }
     if (introI >= G.TEXT.intro.length) startPlay('c1', 6 * TILE, 15 * TILE, true);
   }
   function updatePlay(dt) {
@@ -300,11 +308,34 @@ G.Main = (function () {
     G.UI.text(ctx, 'v1.0', VW - 40, VH - 26, { size: 16, en: true, a: 0.3, align: 'right' });
   }
   function drawIntro() {
-    const VW = Rn.VW, VH = Rn.VH; ctx.fillStyle = '#030204'; ctx.fillRect(0, 0, VW, VH);
-    const s = G.TEXT.intro[Math.min(introI, G.TEXT.intro.length - 1)]; const a = Math.min(1, modeT * 1.2) * Math.min(1, Math.max(0, 6 - modeT));
-    const lines = G.UI.wrap(ctx, s, Math.min(1100, VW - 120), 40);
-    lines.forEach((l, i) => G.UI.text(ctx, l, VW / 2, VH / 2 - (lines.length - 1) * 28 + i * 56, { size: 40, a }));
-    if (introI === G.TEXT.intro.length - 1) G.FX.flame(ctx, VW / 2, VH / 2 - 90, 5 * a, t, { alpha: a });
+    const VW = Rn.VW, VH = Rn.VH, i = Math.min(introI, G.TEXT.intro.length - 1), s = G.TEXT.intro[i], sc = INTRO_SCENES[Math.min(i, INTRO_SCENES.length - 1)];
+    const life = introLen() + INTRO_HOLD, a = Math.min(1, modeT * 1.4) * Math.min(1, Math.max(0, (life - modeT) * 1.5));
+    ctx.fillStyle = '#030204'; ctx.fillRect(0, 0, VW, VH);
+    const im = sc[0] && G.Assets.get('scn_' + sc[0] + '_far');
+    if (im) {   // painted backdrop, slow push-in and drift
+      const k = Math.max(VW / im.width, VH / im.height) * (1.12 + modeT * 0.012), w = im.width * k, h = im.height * k;
+      ctx.save(); ctx.globalAlpha = a * sc[1]; ctx.drawImage(im, (VW - w) / 2 - modeT * 6 * (i % 2 ? -1 : 1), (VH - h) / 2 - modeT * 3, w, h); ctx.restore();
+    }
+    G.FX.glow(ctx, VW / 2, VH * 0.42, VW * 0.45, sc[2], 0.12 * a);
+    const vg = ctx.createRadialGradient(VW / 2, VH / 2, VH * 0.2, VW / 2, VH / 2, VW * 0.65); vg.addColorStop(0, 'rgba(3,2,4,0.05)'); vg.addColorStop(1, 'rgba(3,2,4,0.92)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, VW, VH);
+    // embers rising through the scene
+    for (let k = 0; k < 26; k++) { const r = ((k * 97) % 101) / 101, y = VH - ((t * (18 + r * 30) + k * 53) % (VH + 60)), x = VW * ((k * 0.37 + r * 0.5) % 1) + Math.sin(t * 0.8 + k) * 20;
+      G.FX.glow(ctx, x, y, 4 + r * 5, [255, 180, 100], 0.5 * a * Math.min(1, y / VH * 2)); }
+    // the words: lower third, on a soft pool of shadow, letter by letter
+    const size = Math.round(Math.min(46, VW / 26)), lines = G.UI.wrap(ctx, s, Math.min(1000, VW - 200), size), LH = size * 1.55;
+    const y0 = VH * 0.66 - (lines.length - 1) * LH / 2, shown = Math.floor(modeT * INTRO_CPS);
+    const sh = ctx.createLinearGradient(0, y0 - LH * 1.6, 0, y0 + lines.length * LH + LH); sh.addColorStop(0, 'rgba(3,2,4,0)'); sh.addColorStop(0.5, `rgba(3,2,4,${0.55 * a})`); sh.addColorStop(1, 'rgba(3,2,4,0)');
+    ctx.fillStyle = sh; ctx.fillRect(0, y0 - LH * 1.6, VW, lines.length * LH + LH * 2.6);
+    G.UI.ornament(ctx, VW / 2, y0 - LH * 0.95, Math.min(420, VW * 0.4), a * 0.9);
+    let left = shown;
+    lines.forEach((l, k) => { const part = l.slice(0, Math.max(0, left)); left -= l.length + 1;
+      if (part) G.UI.text(ctx, part, VW / 2, y0 + k * LH, { size, a, c: '#f6ecdc', blur: 16 }); });
+    if (i === G.TEXT.intro.length - 1) { G.FX.flame(ctx, VW / 2, VH * 0.4, 7 * a, t, { alpha: a, glow: 1.4 }); }
+    // progress dots + skip
+    const n = G.TEXT.intro.length; for (let k = 0; k < n; k++) { ctx.fillStyle = k === i ? 'rgba(255,215,160,0.9)' : 'rgba(255,235,210,0.25)'; ctx.beginPath(); ctx.arc(VW / 2 + (k - (n - 1) / 2) * 22, VH - 46, k === i ? 4.5 : 3, 0, 7); ctx.fill(); }
+    G.UI.text(ctx, G.T('skip'), VW - 70, VH - 46, { size: 24, a: 0.65, c: '#efe2cc' });
+    G.UI.tapRegion(VW - 160, VH - 90, 160, 90, () => { G.UI.introSkip = true; });
   }
   function drawPlay() {
     const VW = Rn.VW, VH = Rn.VH, cam = Rn.cam;

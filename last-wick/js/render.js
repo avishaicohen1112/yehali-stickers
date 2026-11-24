@@ -107,6 +107,8 @@ G.Render = (function () {
     const art = window.ROOMART[room.id]; if (!art || !art.props) return;
     for (const pr of art.props) {
       if (pr.l !== layer) continue;
+      if (room.lore === undefined) room.lore = ((window.WORLD.rooms[room.id] || {}).ents || []).some(e => e.t === 'lore');
+      if (room.lore && LORE_PROP[room.area] && LORE_PROP[room.area][0] === pr.p) continue;   // the readable one is the only one in the room
       const P = window.PROPS[pr.p]; if (!P) continue;
       const im = G.Assets.get('prop_' + pr.p); if (!im) continue;
       const par = pr.d || 1; // depth parallax

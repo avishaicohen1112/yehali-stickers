@@ -30,6 +30,11 @@ def kit(area):
     if k['rock'] is None:  # placeholder: dark noise
         n = T2.fbm(512, 512, 60, 5, 7); c = np.array(T2.PAL[area]['body'], np.float32)
         k['rock'] = np.dstack([c[None, None, :] * (0.5 + n[..., None]), np.full((512, 512), 255.0)])
+    # part-2 kit (kit2.py): platform variety, floor strips, masonry wall, wall strips, corners, wall decor
+    k['plats'] = [x for x in (load(os.path.join(d, f'plat{i}.png')) for i in range(6)) if x is not None]
+    k['floors'] = [x for x in (load(os.path.join(d, f'floor{i}.png')) for i in range(2)) if x is not None]
+    for n in ('wall', 'wallL', 'wallR', 'cTL', 'cTR', 'cBL', 'cBR'): k[n] = load(os.path.join(d, n + '.png'))
+    k['decos'] = [x for x in (load(os.path.join(d, f'deco{i}.png')) for i in range(4)) if x is not None]
     if k['rock_scale'] != 1:
         r = k['rock']; k['rock'] = cv2.resize(r, (int(r.shape[1] * k['rock_scale']), int(r.shape[0] * k['rock_scale'])), interpolation=cv2.INTER_AREA)
     for n in ('trim_top', 'trim_bottom', 'plat', 'spikes'):
@@ -113,13 +118,88 @@ def shape(r):
     dd = cv2.distanceTransform(S, cv2.DIST_L2, 5)
     return g, S, dd, sdf, seed, W, H
 
+def wall_runs(g, minlen=5):
+    """vertical faces between solid and air at least minlen tiles tall: ('L', x_face_px, y0, y1) = wall on the left"""
+    H, W = g.shape; sol = g == '#'; out = []
+    for x in range(1, W - 1):
+        for side, m in (('L', sol[:, x - 1] & ~sol[:, x]), ('R', sol[:, x] & ~sol[:, x - 1])):
+            y = 0
+            while y < H:
+                if m[y]:
+                    y0 = y
+                    while y < H and m[y]: y += 1
+                    # not in passages that run out of the room (the strip would stop dead at the room's edge),
+                    # nor where a ledge comes out of the wall
+                    ax = x if side == 'L' else x - 1
+                    ledge = (g[y0:y, ax] == '=').any()
+                    if y - y0 >= minlen and y0 > T2.PADT and y < H - T2.PADT and not ledge: out.append((side, x * T, y0, y))
+                else: y += 1
+    return out
+
+def strip_wall(img, st, side, fx, a0, a1, occ):
+    """tile a vertical wall strip down a face (top cap, repeating middle, bottom cap)"""
+    if st is None: return
+    h, w = st.shape[:2]; cap = int(h * 0.2); mid = st[cap:h - cap]; x = fx - w + 14 if side == 'L' else fx - 14
+    col = np.zeros((a1 - a0, w, 4), np.float32); n = a1 - a0
+    if n < 2 * cap + 10: return
+    col[:cap] = st[:cap]; col[n - cap:] = st[h - cap:]; y = cap
+    while y < n - cap: k = min(mid.shape[0], n - cap - y); col[y:y + k] = mid[:k]; y += k
+    over(img, col, x, a0); occ[a0:a1, max(0, x):x + w] = True
+
+def corners(img, K, g, occ, limit=8):
+    """inner corners where a ceiling or a floor meets a wall get the painted vault / ledge corner pieces"""
+    sol = g == '#'; H, W = g.shape; n = 0
+    def solid(x, y): return 0 <= x < W and 0 <= y < H and sol[y, x]
+    for y in range(1, H - 1):
+        for x in range(1, W - 1):
+            if sol[y, x] or g[y, x] != '.' or n >= limit: continue
+            for nm, dx, dy in (('cTL', -1, -1), ('cTR', 1, -1), ('cBL', -1, 1), ('cBR', 1, 1)):
+                pc = K.get(nm)
+                if pc is None or not (solid(x + dx, y) and solid(x, y + dy) and solid(x + dx, y + dy)): continue
+                # both arms long enough: the wall runs 3 tiles away from the corner, the ceiling/floor 3 tiles along
+                if not all(solid(x + dx, y - dy * k) for k in (1, 2)) or not all(solid(x - dx * k, y + dy) for k in (1, 2)): continue
+                h, w = pc.shape[:2]; inset = 34
+                px = x * T - inset if dx < 0 else (x + 1) * T + inset - w
+                py = y * T - inset if dy < 0 else (y + 1) * T - int(h * 0.62)
+                if occ[max(0, py):py + h, max(0, px):px + w].mean() > 0.25: continue
+                over(img, pc, px, py); occ[max(0, py):py + h, max(0, px):px + w] = True; n += 1
+
+def decor(img, K, S, dd, g, occ, seed, n=3):
+    """a window / niche / relief / crack set into thick walls near where you play"""
+    if not K['decos']: return
+    rng = np.random.default_rng(seed + 5); H, W = S.shape; placed = 0
+    for _ in range(400):
+        if placed >= n: break
+        pc = K['decos'][int(rng.integers(0, len(K['decos'])))]; h, w = pc.shape[:2]
+        x, y = int(rng.integers(T * 3, max(T * 3 + 1, W - T * 3 - w))), int(rng.integers(T * 3, max(T * 3 + 1, H - T * 3 - h)))
+        box = dd[y:y + h, x:x + w]
+        if box.shape != (h, w) or box.min() < 22 or box.min() > 120 or occ[y - 20:y + h + 20, x - 20:x + w + 20].any(): continue
+        # only in a wall: solid rock above it (not just under a floor), and open air beside it at its middle height
+        if y < 90 or S[y - 90:y, x:x + w].min() == 0: continue
+        my = y + h // 2; side_air = (S[my, max(0, x - 130):x] == 0).any() or (S[my, x + w:x + w + 130] == 0).any()
+        if not side_air: continue
+        d2 = pc.copy(); d2[..., :3] *= 0.78   # set into the wall, a touch darker than the lit edges
+        over(img, d2, x, y); occ[y - 40:y + h + 40, x - 40:x + w + 40] = True; placed += 1
+
 def paint(r):
     K = kit(r.area); seed = int(hashlib.md5(r.id.encode()).hexdigest()[:6], 16)
     g, S, dd, sdf, _, W, H = shape(r)
+    walls = wall_runs(g) if K['wallL'] is not None else []
+    if walls:   # long vertical walls become straight built masonry faces (a pilaster strip is painted on them below)
+        S = S.copy()
+        for side, fx, y0, y1 in walls:
+            # the raw rock steps back behind the strip (it must never poke out past the masonry); the strip covers the face
+            a0, a1 = y0 * T, y1 * T
+            if side == 'L': S[a0:a1, fx - 110:fx - 34] = 1; S[a0:a1, fx - 34:fx + 70] = 0
+            else: S[a0:a1, fx + 34:fx + 110] = 1; S[a0:a1, fx - 70:fx + 34] = 0
+        dd = cv2.distanceTransform(S, cv2.DIST_L2, 5)
     img = np.zeros((H, W, 4), np.float32)
     rock = K['rock']; rh, rw = rock.shape[:2]
     reps = (H // rh + 2, W // rw + 2)
     tiled = np.tile(rock[..., :3], (reps[0], reps[1], 1))[:H, :W]
+    if K['wall'] is not None:   # deep inside a mass the raw rock turns into the area's masonry
+        wl = K['wall']; tw = np.tile(wl[..., :3], (H // wl.shape[0] + 2, W // wl.shape[1] + 2, 1))[:H, :W]
+        mix = T2.smoothstep(70, 230, dd)[..., None]; tiled = tiled * (1 - mix) + tw * mix
     deep = T2.smoothstep(18, 150, dd)[..., None]
     # solid rock reads as a dark mass (texture kept only near the lit edges) so it never blends into the painted background
     edge = 1 - T2.smoothstep(6, 60, dd)[..., None]
@@ -133,9 +213,16 @@ def paint(r):
     rgb = rgb * (0.25 + 0.75 * T2.smoothstep(0, 2.5, dd)[..., None])
     Ssm = cv2.GaussianBlur(S.astype(np.float32), (0, 0), 0.8)
     img[..., :3] = rgb; img[..., 3] = Ssm * 255
-    # trims follow the organic edges
+    occ = np.zeros((H, W), bool)
+    for side, fx, y0, y1 in walls: strip_wall(img, K['wallL' if side == 'L' else 'wallR'], side, fx, y0 * T - 34, y1 * T + 24, occ)   # tucked into ceiling and floor
+    corners(img, K, g, occ); decor(img, K, S, dd, g, occ, seed)
+    # trims follow the organic edges; floors alternate between the X6 cap and the two part-2 floor strips
     drape(img, K['trim_bottom'], edge_runs(S, top=False), K['anchor_bottom'], seed + 2)
-    drape(img, K['trim_top'], edge_runs(S, top=True), K['anchor_top'], seed + 1)
+    tops = edge_runs(S, top=True)
+    if K['floors']:   # one floor style per room (the X6 cap or one of the part-2 strips): variety between rooms, calm within one
+        opts = [(K['trim_top'], K['anchor_top'])] + [(f, 0.42) for f in K['floors']]
+        st, an = opts[seed % len(opts)]; drape(img, st, tops, an, seed + 1)
+    else: drape(img, K['trim_top'], tops, K['anchor_top'], seed + 1)
     # platforms
     for yy in range(g.shape[0]):
         xx = 0
@@ -144,7 +231,14 @@ def paint(r):
                 x0 = xx
                 while xx < g.shape[1] and g[yy, xx] == '=': xx += 1
                 wpx = (xx - x0) * T + 16
-                if K['plat'] is not None:
+                if K['plats']:   # one of six painted platforms, picked per platform; long ones are 3-sliced
+                    p = K['plats'][(x0 * 7 + yy * 13 + seed) % len(K['plats'])]
+                    ph = int(round(p.shape[0] * wpx / p.shape[1]))
+                    if ph > 86 or ph < 40:
+                        ph = 72; pi = cv2.resize(p, (max(8, int(p.shape[1] * ph / p.shape[0])), ph), interpolation=cv2.INTER_AREA); sl = three_slice(pi, wpx) if pi.shape[1] < wpx else cv2.resize(pi, (wpx, ph), interpolation=cv2.INTER_AREA)
+                    else: sl = cv2.resize(p, (wpx, ph), interpolation=cv2.INTER_AREA)
+                    over(img, sl, x0 * T - 8, yy * T - int(ph * 0.2))
+                elif K['plat'] is not None:
                     p = K['plat']; s = wpx / p.shape[1] if p.shape[1] < wpx * 0.6 else 1
                     ph = int(p.shape[0] * min(1, (T * 0.9) / p.shape[0] * 1.6))
                     pi = cv2.resize(p, (max(8, int(p.shape[1] * ph / p.shape[0])), ph), interpolation=cv2.INTER_AREA)
@@ -179,7 +273,7 @@ def paint(r):
 def rockfill(area):
     """the deep-rock look as a small tileable texture: the game fills everything outside a room with it, so a narrow
     room sits inside a thick stone wall instead of a black void (same formula as deep rock inside paint())"""
-    K = kit(area); r = K['rock'][..., :3]
+    K = kit(area); r = (K['wall'] if K['wall'] is not None else K['rock'])[..., :3]   # deepest rock = the masonry, when the area has one
     rgb = r * K['tex_mul'] * (1 - K['darken']) + np.array(K['deep'], np.float32) * 0.6
     d = os.path.join(ROOT, 'assets', 'scn', area); os.makedirs(d, exist_ok=True)
     Image.fromarray(np.clip(rgb, 0, 255).astype(np.uint8), 'RGB').save(os.path.join(d, 'rockfill.webp'), 'WEBP', quality=82, method=5)

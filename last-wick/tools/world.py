@@ -94,7 +94,7 @@ c2.ent('lore', 22, 15, text='lore_c2')
 c3 = room('c3', 'crypts', 84, -8, 44, 26, 'אולם הפתילים')
 c3.carve(1, 1, 42, 22)
 c3.fill(1, 1, 8, 3).fill(36, 1, 7, 4).fill(1, 19, 2, 4)
-c3.plat(10, 20, 5).plat(16, 17, 5).plat(9, 14, 5).plat(17, 11, 6).plat(24, 8, 5).plat(19, 5, 5).plat(16, 2, 3)
+c3.plat(10, 20, 5).plat(16, 17, 5).plat(9, 14, 5).plat(17, 11, 6).plat(24, 8, 5).plat(19, 5, 5).plat(16, 2, 3).plat(23, 16, 4)   # stepping stone up to the brazier ledge
 c3.fill(30, 15, 13, 1).fill(36, 13, 7, 2)
 c3.ent('bench', 24, 23).ent('npc', 33, 23, id='merchant').ent('brazier', 40, 13)
 c3.ent('lore', 11, 23, text='lore_hub')
