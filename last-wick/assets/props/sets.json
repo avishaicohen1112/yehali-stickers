@@ -6,5 +6,45 @@
   "core_candle1",
   "core_candle2",
   "core_candle3"
+ ],
+ "crypts": [
+  "crypts_lamp3",
+  "crypts_monk",
+  "crypts_urn",
+  "crypts_skulls",
+  "crypts_lectern",
+  "crypts_tomb"
+ ],
+ "gardens": [
+  "gardens_bigshroom",
+  "gardens_lotus",
+  "gardens_ferns",
+  "gardens_mothstatue",
+  "gardens_pot",
+  "gardens_lantern"
+ ],
+ "nave": [
+  "nave_pillar",
+  "nave_lamp",
+  "nave_angel",
+  "nave_bell",
+  "nave_pew",
+  "nave_font"
+ ],
+ "spire": [
+  "spire_crystals",
+  "spire_nunstatue",
+  "spire_lens",
+  "spire_mirror",
+  "spire_orb",
+  "spire_shelf"
+ ],
+ "hearth": [
+  "hearth_ashstatue",
+  "hearth_brazier",
+  "hearth_column",
+  "hearth_throne",
+  "hearth_bell",
+  "hearth_ashpile"
  ]
 }

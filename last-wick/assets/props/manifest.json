@@ -263,5 +263,215 @@
   "h": 157.5,
   "ax": 73.8,
   "ay": 157.5
+ },
+ "crypts_lamp3": {
+  "img": "assets/props/crypts_lamp3.webp",
+  "w": 95.0,
+  "h": 181.5,
+  "ax": 47.5,
+  "ay": 181.5
+ },
+ "crypts_monk": {
+  "img": "assets/props/crypts_monk.webp",
+  "w": 128.5,
+  "h": 190.0,
+  "ax": 64.2,
+  "ay": 190.0
+ },
+ "crypts_urn": {
+  "img": "assets/props/crypts_urn.webp",
+  "w": 107.5,
+  "h": 146.0,
+  "ax": 53.8,
+  "ay": 146.0
+ },
+ "crypts_skulls": {
+  "img": "assets/props/crypts_skulls.webp",
+  "w": 172.5,
+  "h": 124.5,
+  "ax": 86.2,
+  "ay": 124.5
+ },
+ "crypts_lectern": {
+  "img": "assets/props/crypts_lectern.webp",
+  "w": 139.0,
+  "h": 150.0,
+  "ax": 69.5,
+  "ay": 150.0
+ },
+ "crypts_tomb": {
+  "img": "assets/props/crypts_tomb.webp",
+  "w": 180.0,
+  "h": 158.5,
+  "ax": 90.0,
+  "ay": 158.5
+ },
+ "gardens_bigshroom": {
+  "img": "assets/props/gardens_bigshroom.webp",
+  "w": 190.0,
+  "h": 169.0,
+  "ax": 95.0,
+  "ay": 169.0
+ },
+ "gardens_lotus": {
+  "img": "assets/props/gardens_lotus.webp",
+  "w": 171.0,
+  "h": 150.5,
+  "ax": 85.5,
+  "ay": 150.5
+ },
+ "gardens_ferns": {
+  "img": "assets/props/gardens_ferns.webp",
+  "w": 184.0,
+  "h": 122.5,
+  "ax": 92.0,
+  "ay": 122.5
+ },
+ "gardens_mothstatue": {
+  "img": "assets/props/gardens_mothstatue.webp",
+  "w": 176.0,
+  "h": 166.5,
+  "ax": 88.0,
+  "ay": 166.5
+ },
+ "gardens_pot": {
+  "img": "assets/props/gardens_pot.webp",
+  "w": 146.5,
+  "h": 183.0,
+  "ax": 73.2,
+  "ay": 183.0
+ },
+ "gardens_lantern": {
+  "img": "assets/props/gardens_lantern.webp",
+  "w": 96.0,
+  "h": 190.0,
+  "ax": 48.0,
+  "ay": 190.0
+ },
+ "nave_pillar": {
+  "img": "assets/props/nave_pillar.webp",
+  "w": 101.0,
+  "h": 180.0,
+  "ax": 50.5,
+  "ay": 180.0
+ },
+ "nave_lamp": {
+  "img": "assets/props/nave_lamp.webp",
+  "w": 95.0,
+  "h": 190.0,
+  "ax": 47.5,
+  "ay": 190.0
+ },
+ "nave_angel": {
+  "img": "assets/props/nave_angel.webp",
+  "w": 134.5,
+  "h": 185.5,
+  "ax": 67.2,
+  "ay": 185.5
+ },
+ "nave_bell": {
+  "img": "assets/props/nave_bell.webp",
+  "w": 173.0,
+  "h": 158.0,
+  "ax": 86.5,
+  "ay": 158.0
+ },
+ "nave_pew": {
+  "img": "assets/props/nave_pew.webp",
+  "w": 185.5,
+  "h": 141.0,
+  "ax": 92.8,
+  "ay": 141.0
+ },
+ "nave_font": {
+  "img": "assets/props/nave_font.webp",
+  "w": 117.0,
+  "h": 156.0,
+  "ax": 58.5,
+  "ay": 156.0
+ },
+ "spire_crystals": {
+  "img": "assets/props/spire_crystals.webp",
+  "w": 129.5,
+  "h": 175.0,
+  "ax": 64.8,
+  "ay": 175.0
+ },
+ "spire_nunstatue": {
+  "img": "assets/props/spire_nunstatue.webp",
+  "w": 108.0,
+  "h": 190.0,
+  "ax": 54.0,
+  "ay": 190.0
+ },
+ "spire_lens": {
+  "img": "assets/props/spire_lens.webp",
+  "w": 106.5,
+  "h": 168.5,
+  "ax": 53.2,
+  "ay": 168.5
+ },
+ "spire_mirror": {
+  "img": "assets/props/spire_mirror.webp",
+  "w": 120.5,
+  "h": 181.5,
+  "ax": 60.2,
+  "ay": 181.5
+ },
+ "spire_orb": {
+  "img": "assets/props/spire_orb.webp",
+  "w": 93.5,
+  "h": 167.5,
+  "ax": 46.8,
+  "ay": 167.5
+ },
+ "spire_shelf": {
+  "img": "assets/props/spire_shelf.webp",
+  "w": 121.0,
+  "h": 177.5,
+  "ax": 60.5,
+  "ay": 177.5
+ },
+ "hearth_ashstatue": {
+  "img": "assets/props/hearth_ashstatue.webp",
+  "w": 130.0,
+  "h": 187.5,
+  "ax": 65.0,
+  "ay": 187.5
+ },
+ "hearth_brazier": {
+  "img": "assets/props/hearth_brazier.webp",
+  "w": 113.0,
+  "h": 185.0,
+  "ax": 56.5,
+  "ay": 185.0
+ },
+ "hearth_column": {
+  "img": "assets/props/hearth_column.webp",
+  "w": 95.0,
+  "h": 180.0,
+  "ax": 47.5,
+  "ay": 180.0
+ },
+ "hearth_throne": {
+  "img": "assets/props/hearth_throne.webp",
+  "w": 119.0,
+  "h": 190.0,
+  "ax": 59.5,
+  "ay": 190.0
+ },
+ "hearth_bell": {
+  "img": "assets/props/hearth_bell.webp",
+  "w": 140.5,
+  "h": 179.5,
+  "ax": 70.2,
+  "ay": 179.5
+ },
+ "hearth_ashpile": {
+  "img": "assets/props/hearth_ashpile.webp",
+  "w": 150.5,
+  "h": 84.5,
+  "ax": 75.2,
+  "ay": 84.5
  }
 }

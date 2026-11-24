@@ -28,9 +28,9 @@ G.Scenery = (function () {
     }
     fogCache[key] = cv; return cv;
   }
-  function elementDraw(ctx, it, X, Y, s, t) {
+  function elementDraw(ctx, it, X, Y, s, t, L) {
     const im = G.Assets.get(it.img); if (!im && !it.frames) return;
-    let img = im;
+    let img = L ? depthImg({ img: it.img, id: L.id, dim: L.dim }) || im : im;
     if (it.frames) { const f = Math.floor(t * it.frames.fps + (it.ph || 0)) % it.frames.imgs.length; img = G.Assets.get(it.frames.imgs[f]); if (!img) return; }
     const w = img.width * s * (it.s || 1), h = img.height * s * (it.s || 1);
     const pv = it.pivot || [0.5, 1];
@@ -79,7 +79,7 @@ G.Scenery = (function () {
       }
       if (L.kind === 'rays') { drawRays(ctx, room, cam, VW, VH, t, L); continue; }
       if (L.kind === 'motes') { continue; }
-      const im = G.Assets.get(L.img);
+      const im = depthImg(L);
       // layer height in view px; layer scrolls by parallax over room travel
       const travelX = roomX * p, travelY = roomY * py;
       const dh = L.front ? VH * (L.h || 1.0) : Math.max(VH * (L.h || 1.1), VH + travelY + 2);
@@ -93,12 +93,24 @@ G.Scenery = (function () {
       }
       if (L.items) for (const it of L.items) {
         const ix = it.x * s, iy = it.y * s;
-        if (L.tile) { let x0 = (ox % dw); if (x0 > 0) x0 -= dw; for (let x = x0; x < VW + dw; x += dw) { const X = x + ix; if (X > -300 && X < VW + 300) elementDraw(ctx, it, X, oy + iy, s, t); } }
-        else elementDraw(ctx, it, ox + ix, oy + iy, s, t);
+        if (L.tile) { let x0 = (ox % dw); if (x0 > 0) x0 -= dw; for (let x = x0; x < VW + dw; x += dw) { const X = x + ix; if (X > -300 && X < VW + 300) elementDraw(ctx, it, X, oy + iy, s, t, L); } }
+        else elementDraw(ctx, it, ox + ix, oy + iy, s, t, L);
       }
       ctx.restore();
     }
     return true;
+  }
+  // painted layers are pushed back in depth (darker, flatter, softer) so the playable ground and characters read
+  // clearly in front of them. L.dim overrides the default per layer: [brightness, saturation, blur px].
+  const DEPTH = { far: [0.62, 0.8, 1.2], sil: [0.48, 0.7, 0.8], mid: [0.56, 0.78, 0.6], front: [0.32, 0.6, 0] };
+  const depthCache = {};
+  function depthImg(L) {
+    const im = G.Assets.get(L.img); if (!im) return null;
+    const d = L.dim || DEPTH[L.id]; if (!d) return im;
+    const k = L.img + d.join(','); if (depthCache[k]) return depthCache[k];
+    const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d');
+    x.filter = `brightness(${d[0]}) saturate(${d[1]})${d[2] ? ` blur(${d[2]}px)` : ''}`; x.drawImage(im, 0, 0);
+    return (depthCache[k] = c);
   }
   function drawRays(ctx, room, cam, VW, VH, t, L) {
     const seed = hashStr(room.id || room.area); ctx.save(); ctx.globalCompositeOperation = 'lighter';
