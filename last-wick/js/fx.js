@@ -61,6 +61,12 @@ G.FX = (function () {
           ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (p.kind === 'ember' ? k : 1), 0, 7); ctx.fill();
           glow(ctx, p.x, p.y, p.size * 6, p.c, a * 0.5);
         }
+      } else if (p.kind === 'curl') {  // wind swirl: a growing, fading spiral arc
+        const im = p.img && G.Assets.get(p.img);
+        ctx.globalAlpha = Math.sin(Math.PI * p.t / p.life) * (p.a || 0.4);
+        if (im) { const s = p.size / 40; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot * 0.2); ctx.drawImage(im, -im.width * s / 2, -im.height * s / 2, im.width * s, im.height * s); ctx.restore(); }
+        else { ctx.strokeStyle = rgba(p.c, 1); ctx.lineWidth = 2; ctx.lineCap = 'round'; const r = p.size * (0.6 + p.t / p.life);
+          ctx.beginPath(); ctx.arc(p.x, p.y, r, p.rot, p.rot + 4.2); ctx.stroke(); ctx.beginPath(); ctx.arc(p.x + r * 0.35, p.y, r * 0.55, p.rot + 1, p.rot + 4.6); ctx.stroke(); }
       } else if (p.kind === 'streak') {  // wind streak: thin line along velocity, fades in and out
         ctx.globalAlpha = Math.sin(Math.PI * p.t / p.life) * (p.a || 0.5); ctx.strokeStyle = rgba(p.c, 1); ctx.lineWidth = p.size; ctx.lineCap = 'round';
         ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * 0.09, p.y - p.vy * 0.09); ctx.stroke();

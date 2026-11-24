@@ -35,6 +35,11 @@ G.Wind = (function () {
       }
       n -= 1;
     }
+    if (gale && galeK > 0.5) {  // the gale is something you can see: swirls + debris tumbling through the air
+      if (Math.random() < dt * 4 * galeK) { const im = window.PROPS && window.PROPS.fx_wind_curl0 ? 'prop_fx_wind_curl' + randi(0, 3) : null;
+        G.FX.spawn({ x: cam.x + (D > 0 ? rand(-100, VW * 0.6) : rand(VW * 0.4, VW + 100)), y: cam.y + rand(VH * 0.15, VH * 0.85), vx: D * rand(500, 800), vy: rand(-30, 30), life: rand(0.9, 1.5), size: rand(22, 46), kind: 'curl', rot: rand(6), vr: D * 5, c: col, a: 0.45, add: true, img: im }); }
+      if (Math.random() < dt * 10 * galeK) G.FX.spawn({ x: cam.x + (D > 0 ? -20 : VW + 20), y: cam.y + rand(VH * 0.3, VH), vx: D * rand(600, 950), vy: rand(-120, 40), g: 120, life: 2, size: rand(2.5, 5), kind: 'chunk', rot: rand(6), vr: rand(-12, 12), c: [Math.round(col[0] * 0.5), Math.round(col[1] * 0.45), Math.round(col[2] * 0.45)], add: false });
+    }
   }
   function sheltered(ent) {
     const d = gale.dir, x = ent.cx - d * (ent.w / 2 + 4);

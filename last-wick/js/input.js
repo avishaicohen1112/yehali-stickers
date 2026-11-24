@@ -6,7 +6,7 @@ G.Input = (function () {
   const KEYMAP = {
     ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down',
     Space: 'jump', KeyZ: 'jump', KeyX: 'attack', KeyJ: 'attack', KeyC: 'dash', KeyK: 'dash', ShiftLeft: 'dash', ShiftRight: 'dash',
-    KeyF: 'focus', KeyL: 'focus', KeyV: 'focus', Tab: 'map', KeyM: 'map', Escape: 'pause', KeyP: 'pause', Enter: 'confirm', KeyE: 'interact'
+    KeyF: 'focus', KeyL: 'focus', KeyV: 'focus', Tab: 'map', KeyM: 'map', Escape: 'pause', KeyP: 'pause', Enter: 'confirm', KeyE: 'interact', KeyG: 'dance'
   };
   let lastDevice = 'kb';
   function down(a) { if (!held[a]) { pressed[a] = true; } held[a] = true; }
@@ -20,7 +20,7 @@ G.Input = (function () {
   addEventListener('blur', () => { for (const k in held) up(k); });
 
   // gamepad
-  const PADMAP = { 0: 'jump', 2: 'attack', 1: 'focus', 5: 'dash', 7: 'dash', 3: 'interact', 9: 'pause', 8: 'map', 12: 'up', 13: 'down', 14: 'left', 15: 'right' };
+  const PADMAP = { 4: 'dance', 0: 'jump', 2: 'attack', 1: 'focus', 5: 'dash', 7: 'dash', 3: 'interact', 9: 'pause', 8: 'map', 12: 'up', 13: 'down', 14: 'left', 15: 'right' };
   const padPrev = {};
   function pollPad() {
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
@@ -30,7 +30,7 @@ G.Input = (function () {
       for (const i in PADMAP) if (p.buttons[i] && p.buttons[i].pressed) st[PADMAP[i]] = true;
       const ax = p.axes[0] || 0, ay = p.axes[1] || 0;
       if (ax < -0.4) st.left = true; if (ax > 0.4) st.right = true; if (ay < -0.5) st.up = true; if (ay > 0.5) st.down = true;
-      for (const a of ['jump', 'attack', 'focus', 'dash', 'interact', 'pause', 'map', 'up', 'down', 'left', 'right']) {
+      for (const a of ['jump', 'attack', 'focus', 'dash', 'interact', 'pause', 'map', 'dance', 'up', 'down', 'left', 'right']) {
         if (st[a] && !padPrev[a]) { down(a); lastDevice = 'pad'; if (a === 'jump') down('confirm_any'); }
         if (!st[a] && padPrev[a]) { up(a); if (a === 'jump') up('confirm_any'); }
         padPrev[a] = !!st[a];
