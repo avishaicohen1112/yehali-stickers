@@ -27,8 +27,11 @@ G.UI = (function () {
     c.restore();
   }
   function panel(c, x, y, w, h, a = 0.85) {
-    c.save(); const g = c.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, `rgba(10,8,14,${a})`); g.addColorStop(1, `rgba(4,3,6,${a})`);
-    c.fillStyle = g; c.fillRect(x, y, w, h); c.strokeStyle = 'rgba(220,200,170,0.25)'; c.lineWidth = 1; c.strokeRect(x + 6, y + 6, w - 12, h - 12);
+    c.save(); c.shadowColor = 'rgba(0,0,0,0.6)'; c.shadowBlur = 30;
+    const g = c.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, `rgba(22,17,24,${a})`); g.addColorStop(1, `rgba(9,7,11,${a})`);
+    c.fillStyle = g; c.beginPath(); c.roundRect(x, y, w, h, 18); c.fill(); c.shadowBlur = 0;
+    c.strokeStyle = 'rgba(232,206,165,0.32)'; c.lineWidth = 1.5; c.beginPath(); c.roundRect(x + 7, y + 7, w - 14, h - 14, 13); c.stroke();
+    const D = G.Assets.get('prop_ui_divider'); if (D) { const dw = Math.min(w * 0.5, 420), dh = dw * D.height / D.width; c.globalAlpha = 0.9; c.drawImage(D, x + (w - dw) / 2, y - dh * 0.45, dw, dh); }
     c.restore();
   }
   // ---------------- HUD ----------------
@@ -95,8 +98,10 @@ G.UI = (function () {
   }
   function prompt(c, x, y, s) {
     const tt = performance.now() / 1000;
-    c.save(); c.globalAlpha = 0.85 + Math.sin(tt * 4) * 0.15;
-    text(c, s, x, y + Math.sin(tt * 3) * 3, { size: 24, c: '#f4ead8' }); c.restore();
+    const yy = y + Math.sin(tt * 3) * 3; c.save(); c.font = `600 20px ${HE}`; const w = c.measureText(s).width + 34;
+    c.globalAlpha = 0.82; c.fillStyle = 'rgba(12,9,14,0.7)'; c.beginPath(); c.roundRect(x - w / 2, yy - 17, w, 34, 17); c.fill();
+    c.strokeStyle = 'rgba(240,214,170,0.35)'; c.lineWidth = 1; c.stroke(); c.restore();
+    text(c, s, x, yy + 1, { size: 20, w: 600, c: '#f4e6cf', blur: 0, a: 0.95 });
   }
   function toast(s, dur = 2.6) { toasts.push({ s, t: 0, dur }); }
   function tallowPing() { tallowShow = 2; }
@@ -108,19 +113,20 @@ G.UI = (function () {
     if (!card) return; card.t += dt; const k = card.t / card.dur; if (k >= 1) { card = null; return; }
     const a = k < 0.2 ? k / 0.2 : k > 0.75 ? (1 - k) / 0.25 : 1; const VW = R().VW, VH = R().VH;
     if (card.kind === 'world') {
-      c.fillStyle = `rgba(0,0,0,${0.35 * a})`; c.fillRect(0, VH * 0.18, VW, VH * 0.26);
-      text(c, card.l2, VW / 2, VH * 0.24, { size: 22, en: true, a: a * 0.8, spacing: 12 });
-      text(c, card.l1, VW / 2, VH * 0.31, { size: 92, w: 900, a, blur: 30 });
-      ornament(c, VW / 2, VH * 0.31 + 62, 620, a);
+      const vg = c.createRadialGradient(VW / 2, VH * 0.27, 10, VW / 2, VH * 0.27, VW * 0.32); vg.addColorStop(0, `rgba(0,0,0,${0.32 * a})`); vg.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = vg; c.fillRect(0, 0, VW, VH * 0.6);
+      text(c, card.l2, VW / 2, VH * 0.2, { size: 15, en: true, a: a * 0.7, spacing: 10, c: '#e2cfae' });
+      text(c, card.l1, VW / 2, VH * 0.27, { size: 54, w: 700, a, blur: 24, c: '#f6ead6' });
+      ornament(c, VW / 2, VH * 0.27 + 40, 340, a * 0.9);
     } else if (card.kind === 'area') {
-      ornament(c, VW / 2, VH * 0.27 + 46, 420, a);
-      text(c, card.l1, VW / 2, VH * 0.27 - 8, { size: 64, w: 700, a, blur: 20 });
-      text(c, card.l2, VW / 2, VH * 0.27 + 80, { size: 20, en: true, a: a * 0.8, spacing: 6 });
+      text(c, card.l1, VW / 2, VH * 0.22, { size: 40, w: 700, a: a * 0.95, blur: 20, c: '#f6ead6' });
+      ornament(c, VW / 2, VH * 0.22 + 30, 260, a * 0.85);
+      text(c, card.l2, VW / 2, VH * 0.22 + 54, { size: 13, en: true, a: a * 0.65, spacing: 8, c: '#e2cfae' });
     } else {
       const y = VH * 0.74;
-      text(c, card.l2, VW / 2, y - 52, { size: 22, en: true, a: a * 0.85, spacing: 8, c: '#d8c8b0' });
-      text(c, card.l1, VW / 2, y + 6, { size: 86, w: 900, a, blur: 26 });
-      ornament(c, VW / 2, y + 64, 560, a);
+      text(c, card.l2, VW / 2, y - 40, { size: 15, en: true, a: a * 0.75, spacing: 9, c: '#e2cfae' });
+      text(c, card.l1, VW / 2, y + 4, { size: 58, w: 900, a, blur: 26, c: '#f6e4cc' });
+      ornament(c, VW / 2, y + 44, 380, a);
     }
   }
   // ------------- modals -------------
@@ -194,12 +200,15 @@ G.UI = (function () {
   function drawModal(c) {
     const VW = R().VW, VH = R().VH; const m = modal; if (!m) return;
     if (m.kind === 'talk') {
-      const w = Math.min(1100, VW - 80), h = 210, x = (VW - w) / 2, y = VH - h - 40;
-      panel(c, x, y, w, h, 0.88);
-      if (m.name) { text(c, m.name, VW / 2, y + 34, { size: 30, w: 700, c: '#f0d9b5' }); ornament(c, VW / 2, y + 62, 300); }
-      const lines = wrap(c, m.lines[m.i] || '', w - 120, 30);
-      lines.forEach((l, k) => text(c, l, VW / 2, y + (m.name ? 102 : 70) + k * 40, { size: 30 }));
-      if (m.t > 0.4) text(c, '▼', VW / 2, y + h - 22, { size: 18, a: 0.5 + Math.sin(m.t * 5) * 0.3, en: true });
+      const w = Math.min(980, VW - 60), x = (VW - w) / 2, por = m.npc && G.Sprite.has('n_' + m.npc, 'head') ? 150 : 0;
+      const tw = w - 90 - por, lines = wrap(c, m.lines[m.i] || '', tw, 28), h = Math.max(160, 74 + lines.length * 42 + (m.name ? 30 : 0)), y = VH - h - 28;
+      panel(c, x, y, w, h, 0.9);
+      if (por) { G.FX.glow(c, x + por / 2 + 20, y + h / 2, 90, [255, 200, 140], 0.25);   // speaker portrait (painted head)
+        const at = 'n_' + m.npc, M = window.ATLAS[at]; G.Sprite.draw(c, at, 'head', 0, x + por / 2 + 22, y + h / 2 + 52 + Math.sin(m.t * 2) * 2, { ppu: (M.ppu || 50) * 1.6 }); }
+      const rx = x + w - 44; let ty = y + 46;
+      if (m.name) { text(c, m.name, rx, ty, { size: 27, w: 700, c: '#f0cf98', align: 'right', blur: 0 }); ty += 42; }
+      lines.forEach((l, k) => text(c, l, rx, ty + k * 42, { size: 28, align: 'right', c: '#efe4d3', blur: 0 }));
+      if (m.t > 0.4) G.FX.flame(c, x + por + 40, y + h - 26, 2.4, m.t * 1.3, { glow: 0.6 });
       tapRegion(0, 0, VW, VH, () => { m.i++; m.t = 0; if (m.i >= m.lines.length) { modal = null; if (m.after) m.after(); } });
     } else if (m.kind === 'ability') {
       const a = Math.min(1, m.t * 1.5); const ab = G.TEXT.abil[m.ab];
@@ -265,7 +274,10 @@ G.UI = (function () {
   }
   function drawToasts(c) {
     const VW = R().VW, VH = R().VH;
-    toasts.forEach((t, i) => { const a = Math.min(1, t.t * 4, (t.dur - t.t) * 2); text(c, t.s, VW / 2, VH * 0.86 - i * 40, { size: 28, a, c: '#f2e2c8' }); });
+    toasts.forEach((t, i) => { const a = Math.min(1, t.t * 4, (t.dur - t.t) * 2), y = VH * 0.82 - i * 46;
+      c.save(); c.font = `600 21px ${HE}`; const w = c.measureText(t.s).width + 56; c.globalAlpha = a * 0.85; c.fillStyle = 'rgba(12,9,14,0.75)';
+      c.beginPath(); c.roundRect(VW / 2 - w / 2, y - 19, w, 38, 19); c.fill(); c.strokeStyle = 'rgba(240,214,170,0.3)'; c.lineWidth = 1; c.stroke(); c.restore();
+      text(c, t.s, VW / 2, y + 1, { size: 21, w: 600, a, c: '#f4e6cf', blur: 0 }); });
   }
   return { clearTaps: () => { taps = []; }, hud, prompt, toast, tallowPing, areaCard, worldCard, bossCard, drawCard, talk, lore, ability, openShop, pause, map, update, drawModal, drawToasts, handleTap, tapRegion, text, ornament, panel, wrap,
     get modal() { return modal; }, set modal(v) { modal = v; }, get card() { return card; }, HE, EN };

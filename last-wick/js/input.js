@@ -48,7 +48,7 @@ G.Input = (function () {
       const r = stick.clientWidth / 2, m = Math.hypot(dx, dy), k = Math.min(1, m / r);
       const nx = m ? dx / m * k : 0, ny = m ? dy / m * k : 0;
       knob.style.transform = `translate(${nx * r * 0.6}px,${ny * r * 0.6}px)`;
-      const L = nx < -0.35, R = nx > 0.35, U = ny < -0.55, D = ny > 0.55;
+      const L = nx < -0.35, R = nx > 0.35, U = ny < -0.45, D = ny > 0.38;
       L ? down('left') : up('left'); R ? down('right') : up('right'); U ? down('up') : up('up'); D ? down('down') : up('down');
     };
     stick.addEventListener('touchstart', e => { e.preventDefault(); const t = e.changedTouches[0]; sid = t.identifier; const b = stick.getBoundingClientRect(); cx = b.left + b.width / 2; cy = b.top + b.height / 2; setDir(t.clientX - cx, t.clientY - cy); lastDevice = 'touch'; if (G.Sound) G.Sound.init(); }, { passive: false });

@@ -46,12 +46,17 @@ G.Render = (function () {
     cam.look = snap ? lookX : lerp(cam.look, lookX, Math.min(1, dt * 2.5));
     let lookY = 0; if (G.Input.h('down') && p.ground && Math.abs(p.vx) < 10) lookY = 200; if (G.Input.h('up') && p.ground && Math.abs(p.vx) < 10) lookY = -200;
     cam.lookY = snap ? 0 : lerp(cam.lookY || 0, lookY, Math.min(1, dt * 2));
-    let tx = p.cx + cam.look - VW / 2, ty = p.cy - VH * 0.55 + cam.lookY + (p.vy > 600 ? 120 : 0);
+    // vertical follow with a dead zone: jumps (even double jumps) don't drag the camera; it follows the ground you
+    // stand on, and only moves up when you climb well above it, or down as soon as you fall below it
+    if (snap || cam.ay === undefined || p.ground || p.wall) cam.ay = p.cy;
+    else if (p.cy < cam.ay - VH * 0.3) cam.ay = p.cy + VH * 0.3;
+    else if (p.cy > cam.ay) cam.ay = p.cy;
+    let tx = p.cx + cam.look - VW / 2, ty = cam.ay - VH * 0.55 + cam.lookY + (p.vy > 600 ? 120 : 0);
     if (room.pw <= VW) tx = (room.pw - VW) / 2; else tx = clamp(tx, 0, room.pw - VW);
     if (room.ph <= VH) ty = (room.ph - VH) / 2; else ty = clamp(ty, 0, room.ph - VH);
     if (G.Main.bossCam) { const b = G.Main.bossCam; tx = clamp(lerp(tx, b.x - VW / 2, 0.35), room.pw <= VW ? tx : 0, room.pw <= VW ? tx : room.pw - VW); }
     if (snap) { cam.x = tx; cam.y = ty; }
-    else { cam.x = lerp(cam.x, tx, Math.min(1, dt * 6)); cam.y = lerp(cam.y, ty, Math.min(1, dt * (p.vy > 400 ? 9 : 5))); }
+    else { cam.x = lerp(cam.x, tx, Math.min(1, dt * 6)); cam.y = lerp(cam.y, ty, Math.min(1, dt * (p.vy > 500 ? 7 : 3.2))); }
   }
   // ---- ambient particles
   let ambT = 0;
@@ -221,6 +226,8 @@ G.Render = (function () {
   }
   function drawFog(room, t) {
     const A = AREA[room.area]; grade(room);
+    const tg = ctx.createLinearGradient(0, 0, 0, VH * 0.22); tg.addColorStop(0, 'rgba(4,3,6,0.55)'); tg.addColorStop(1, 'rgba(4,3,6,0)');
+    ctx.fillStyle = tg; ctx.fillRect(0, 0, VW, VH * 0.22);   // ceilings sink into shadow
     const g = ctx.createLinearGradient(0, VH * 0.55, 0, VH); g.addColorStop(0, rgba(A.fog, 0)); g.addColorStop(1, rgba(A.fog, 0.10));
     ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
     ctx.drawImage(vignette, 0, 0, VW, VH);
@@ -291,7 +298,7 @@ G.Render = (function () {
     G.Sprite.draw(c, at, 'head', 0, o.x + f * rh[0] * s, hy, { flip, rot: f * rot, ppu: m.ppu || 50 });
   }
   function drawLore(c, o, t) {
-    if (!drawPropAt('tablet', o.x, o.y + 2)) { c.fillStyle = '#29242c'; c.fillRect(o.x - 24, o.y - 70, 48, 70); }
+    if (!drawPropAt('tablet', o.x, o.y + 10, 0.9)) { c.fillStyle = '#29242c'; c.fillRect(o.x - 24, o.y - 70, 48, 70); }
     G.FX.light(o.x, o.y - 50, 140, [200, 210, 255], 0.6);
     G.FX.glow(c, o.x, o.y - 50, 50, [180, 200, 255], 0.25 + Math.sin(t * 2) * 0.08);
     if (G.Objects.nearest() === o) G.UI.prompt(c, o.x, o.y - 120, G.T('read'));

@@ -66,7 +66,7 @@ G.Scenery = (function () {
     const kx = roomX ? cam.x / roomX : 0.5, ky = roomY ? cam.y / roomY : 0.5;
     for (const L of S.layers) {
       if (!!L.front !== !!front) continue;
-      const p = L.p ?? 0.2, py = L.py ?? p;
+      const p = L.p ?? 0.2, py = L.py ?? p * 0.4;   // gentle vertical parallax: jumping doesn't make the backdrop bob
       if (L.kind === 'fog') {
         const tex = fogTex(room.area + (L.seed || '')); const h = VH * (L.h || 0.5), w = h * 2;
         let ox = (-(cam.x * p) - t * (L.speed || 10)) % w; if (ox > 0) ox -= w;
