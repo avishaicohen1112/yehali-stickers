@@ -20,11 +20,11 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 # element kinds: hang = swings from the top (chain-bent), float = bobs in the air (glows), drift = slow drifting mote
 AREAS = {
- 'E': ('crypts', [('censer', 'hang'), ('chain', 'hang'), ('candles', 'float'), ('drip', 'drip'), ('curtain', 'hang')],
+ 'E': ('crypts', [('censer', 'hang'), ('chain', 'hang'), ('candles', 'ground'), ('drip', 'drip'), ('curtain', 'hang')],
        ['lamp3', 'monk', 'urn', 'skulls', 'lectern', 'tomb']),
  'F': ('gardens', [('vine', 'hang'), ('moss', 'hang'), ('moth', 'drift'), ('flower', 'sway')],
        ['bigshroom', 'lotus', 'ferns', 'mothstatue', 'pot', 'lantern']),
- 'G': ('nave', [('chandelier', 'hang'), ('banner', 'hang'), ('weed', 'hang'), ('candle', 'float')],
+ 'G': ('nave', [('chandelier', 'hang'), ('banner', 'hang'), ('weed', 'hang'), ('candle', 'ground')],
        ['pillar', 'lamp', 'angel', 'bell', 'pew', 'font']),
  'H': ('spire', [('crystal', 'float'), ('glasslamp', 'hang'), ('shard', 'spin'), ('stars', 'hang')],
        ['crystals', 'nunstatue', 'lens', 'mirror', 'orb', 'shelf']),
@@ -34,11 +34,11 @@ AREAS = {
        ['anchor', 'barrel', 'pierlamp', 'wreck', 'shells', 'chest']),
  'L': ('galleon', [('lantern', 'hang'), ('rope', 'hang'), ('net', 'hang')],
        ['cannon', 'wheel', 'crates', 'barrels', 'maptable', 'bell']),
- 'M': ('lighthouse', [('gear', 'spin'), ('chain', 'hang')],
+ 'M': ('lighthouse', [('gear', 'gearbase'), ('chain', 'hang')],
        ['lens', 'lanterns', 'logbook', 'oilmachine']),
  'N': ('paper', [('crane', 'hang'), ('leaf', 'drift'), ('ribbon', 'hang')],
        ['papertree', 'paperlamp', 'bridge', 'books']),
- 'O': ('clock', [('gear', 'spin'), ('pendulum', 'pendulum'), ('hand', 'spin')],
+ 'O': ('clock', [('gear', 'gearbase'), ('pendulum', 'pendulum'), ('hand', 'skip')],
        ['grandclock', 'toolbox', 'bells', 'organ']),
  'P': ('core', [('drop', 'float'), ('sparkle', 'float'), ('flame', 'float')],
        ['plinth', 'altar', 'bigcandle', 'candle1', 'candle2', 'candle3']),
@@ -98,7 +98,7 @@ def elements(a, names, area, out):
     res = []
     for i, b in enumerate(boxes):
         x, y, w, h = b[:4]; piece, _ = trim(a[y:y + h, x:x + w].copy())
-        nm, kind = names[i] if i < len(names) else (f'piece{i}', 'float')
+        nm, kind = names[i] if i < len(names) else (f'piece{i}', 'skip')
         sc = min(1.0, 420 / max(piece.shape[:2]))  # elements are drawn in layer space; keep them modest
         sz = save_webp(piece, os.path.join(out, f'el_{nm}.webp'), h=max(8, round(piece.shape[0] * sc)))
         res.append((nm, kind, sz))
@@ -115,6 +115,7 @@ def element_items(els, area, layer_w, layer_h):
     k = 0
     for rep in range(2):
         for nm, kind, (w, h) in els:
+            if kind == 'skip': continue
             x = float(xs[k % len(xs)] * layer_w + rng.uniform(-40, 40)); k += 1
             it = {'img': f'scn_{area}_el_{nm}', 'src': f'assets/scn/{area}/el_{nm}.webp', 'x': round(x), 's': round(float(rng.uniform(0.8, 1.1)), 2)}
             if kind in ('hang', 'pendulum'):
@@ -124,6 +125,8 @@ def element_items(els, area, layer_w, layer_h):
             elif kind == 'drift': it.update(y=round(float(rng.uniform(0.2, 0.6)) * layer_h), pivot=[0.5, 0.5], bob=[14, 0.7], sway=[0.08, 0.9])
             elif kind == 'drip': it.update(y=round(float(rng.uniform(0.05, 0.2)) * layer_h), pivot=[0.5, 0], bob=[6, 1.3])
             elif kind == 'sway': it.update(y=round(layer_h * 0.98), pivot=[0.5, 1], sway=[0.05, 0.8])
+            elif kind == 'ground': it.update(y=round(layer_h * 0.985), pivot=[0.5, 1], flicker=[0.85, 1, 2])           # stands on the layer's floor
+            elif kind == 'gearbase': it.update(y=round(layer_h * 0.95), pivot=[0.5, 0.5], spin=round(float(rng.choice([-1, 1]) * rng.uniform(0.1, 0.25)), 2))  # machinery half-sunk at the base
             elif kind == 'wave': it.update(y=round(layer_h * 0.92), pivot=[0.5, 1], bob=[5, 1.1], flicker=[0.75, 1, 3])
             else: it.update(y=round(float(rng.uniform(0.2, 0.55)) * layer_h), pivot=[0.5, 0.5], bob=[10, 0.8], flicker=[0.8, 1, 2.2])
             items.append(it)
@@ -144,8 +147,8 @@ def build(letter, rooms=False):
         a = load_rgba(p); a[..., 3] = 255; S['sky'] = sky_from(a); fogc = [int(v) for v in a[int(a.shape[0] * 0.4):int(a.shape[0] * 0.7), :, :3].reshape(-1, 3).mean(0) * 1.6 // 1]
         fogc = [min(255, v) for v in fogc]
         save_webp(make_tileable(a), os.path.join(out, 'far.webp'), h=900, q=84)
-        L['far'] = {'id': 'far', 'img': f'scn_{area}_far', 'src': f'assets/scn/{area}/far.webp', 'p': 0.06, 'h': 1.12, 'tile': True}; done.append('far')
-    for n, key, par, h, tile in ((2, 'sil', 0.16, 1.05, True), (3, 'mid', 0.32, 1.0, True)):
+        L['far'] = {'id': 'far', 'img': f'scn_{area}_far', 'src': f'assets/scn/{area}/far.webp', 'p': 0.1, 'h': 1.3, 'tile': True}; done.append('far')
+    for n, key, par, h, tile in ((2, 'sil', 0.24, 1.22, True), (3, 'mid', 0.42, 1.15, True)):
         p = src(f'{letter}{n}')
         if not p: continue
         a = keyed(p); save_webp(make_tileable(a, 0.08), os.path.join(out, key + '.webp'), h=900)

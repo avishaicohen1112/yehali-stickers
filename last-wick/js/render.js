@@ -3,7 +3,7 @@
 G.Render = (function () {
   const cv = document.getElementById('game'), ctx = cv.getContext('2d');
   const lc = document.createElement('canvas'), lx = lc.getContext('2d');
-  const VH = 900; let VW = 1600, scale = 1, W = 0, H = 0;
+  let VH = 700; let VW = 1600, scale = 1, W = 0, H = 0;
   const cam = { x: 0, y: 0, tx: 0, ty: 0, look: 0 };
   // per-area look
   const AREA = {
@@ -108,6 +108,7 @@ G.Render = (function () {
       const s = pr.s || 1, w = P.w * s, h = P.h * s;
       const x = sx - P.ax * s, y = sy - P.ay * s;
       if (x > VW + 50 || x + w < -50 || y > VH + 50 || y + h < -50) continue;
+      if (layer === 'back' && par >= 0.99 && !pr.hang) groundShadow(ctx, sx, sy - 2, w * 0.42);  // seat props on the floor
       ctx.save();
       if (pr.f) { ctx.translate(sx * 2, 0); ctx.scale(-1, 1); }
       if (pr.a !== undefined) ctx.globalAlpha = pr.a;
@@ -213,8 +214,14 @@ G.Render = (function () {
   }
   // ---------- object drawings (fallbacks if no art) ----------
   function propImg(name) { return G.Assets.get('prop_' + name) ? window.PROPS[name] : null; }
+  // soft contact shadow under anything standing on the ground
+  function groundShadow(c, x, y, rx) {
+    const g = c.createRadialGradient(x, y, 0, x, y, rx); g.addColorStop(0, 'rgba(0,0,0,0.55)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.save(); c.translate(x, y); c.scale(1, 0.22); c.translate(-x, -y); c.fillStyle = g; c.beginPath(); c.arc(x, y, rx, 0, 7); c.fill(); c.restore();
+  }
   function drawPropAt(name, x, y, s = 1, flip = false, alpha = 1) {
     const P = window.PROPS[name], im = G.Assets.get('prop_' + name); if (!P || !im) return false;
+    if (P.ay >= P.h * 0.9) groundShadow(ctx, x, y - 3, P.w * s * 0.45);
     ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); if (flip) ctx.scale(-1, 1);
     ctx.drawImage(im, -P.ax * s, -P.ay * s, P.w * s, P.h * s); ctx.restore(); return true;
   }
@@ -230,7 +237,7 @@ G.Render = (function () {
   function drawNPC(c, o, t) {
     const at = 'n_' + o.id;
     if (G.Sprite.meta(at)) {
-      const m = window.ATLAS[at];
+      const m = window.ATLAS[at]; groundShadow(c, o.x, o.y, 40);
       if (m.rig && m.rig.head && m.anims.head && m.anims.body) { drawNPCRig(c, o, t, at, m); if (G.Objects.nearest() === o) G.UI.prompt(c, o.x, o.y - 175, G.T('talk')); return; }
       const fi = G.Sprite.frameOf(at, 'idle', t + o.x * 0.01);
       // painted NPCs come as one pose: give them a slow breath around the feet
@@ -339,8 +346,8 @@ G.Render = (function () {
     G.FX.flame(c, o.x, y + 20, 4, t, { c: [150, 110, 255], glow: 0.8 });
   }
   return {
-    ctx, cv, cam, AREA, get VW() { return VW; }, VH, get scale() { return scale; }, resize,
+    ctx, cv, cam, AREA, get VW() { return VW; }, get VH() { return VH; }, setZoom(v) { if (v !== VH) { VH = v; resize(); } }, get scale() { return scale; }, resize,
     camUpdate, ambient, roomLights, drawFlames, drawBG, drawProps, drawTerrain, drawWater, drawLighting, drawFog,
-    drawBench, drawNPC, drawChest, drawLore, drawPortal, drawBrazier, drawGate, drawSeal, drawPickup, drawCinder, drawPropAt
+    groundShadow, drawBench, drawNPC, drawChest, drawLore, drawPortal, drawBrazier, drawGate, drawSeal, drawPickup, drawCinder, drawPropAt
   };
 })();

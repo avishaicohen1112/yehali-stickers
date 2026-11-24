@@ -63,6 +63,15 @@ def drape(img, strip, pts, anchor, seed, flip=False):
     if strip is None or not pts: return
     h, w = strip.shape[:2]; ay = int(h * anchor); rng = np.random.default_rng(seed)
     off = int(rng.integers(0, w)); H, W = img.shape[:2]
+    # runs of neighbouring edge points -> distance to the nearest end of the run, used to taper the strip
+    pts = sorted(pts); fade = {}; run = []
+    def flush():
+        n = len(run)
+        for i, q in enumerate(run): fade[q] = min(1.0, min(i, n - 1 - i) / 70.0)
+    for q in pts:
+        if run and (q[0] - run[-1][0] > 1 or abs(q[1] - run[-1][1]) > 8): flush(); run = []
+        run.append(q)
+    if run: flush()
     # group points per column (multiple edges per column allowed)
     for (x, y) in pts:
         sx = (x + off) % w; col = strip[:, sx:sx + 1]
@@ -70,7 +79,8 @@ def drape(img, strip, pts, anchor, seed, flip=False):
         a0, a1 = max(0, y0), min(H, y0 + h)
         if a1 <= a0: continue
         s = col[a0 - y0:a1 - y0, 0]; d = img[a0:a1, x]
-        a = s[:, 3:4] / 255.0; da = d[:, 3:4] / 255.0; oa = a + da * (1 - a)
+        f = fade.get((x, y), 1.0); f = f * f * (3 - 2 * f)
+        a = s[:, 3:4] / 255.0 * f; da = d[:, 3:4] / 255.0; oa = a + da * (1 - a)
         d[:, :3] = np.where(oa > 0, (s[:, :3] * a + d[:, :3] * da * (1 - a)) / np.maximum(oa, 1e-4), 0); d[:, 3:4] = oa * 255
 
 def three_slice(img, w_target):
@@ -88,8 +98,14 @@ def shape(r):
     g = T2.grid_of(r); H, W = g.shape[0] * T2.T, g.shape[1] * T2.T
     solid = np.kron((g == '#').astype(np.uint8), np.ones((T2.T, T2.T), np.uint8))
     d_in = cv2.distanceTransform(solid, cv2.DIST_L2, 5); d_out = cv2.distanceTransform(1 - solid, cv2.DIST_L2, 5)
-    sdf = cv2.GaussianBlur(d_in - d_out, (0, 0), 6)
-    sdf = sdf + (T2.fbm(H, W, 90, 4, seed) - 0.5) * 16 + (T2.fbm(H, W, 22, 3, seed + 1) - 0.5) * 6
+    sdf = cv2.GaussianBlur(d_in - d_out, (0, 0), 11)   # rounded corners instead of tile-cut 90 degree edges
+    # walkable tops stay close to the collision line; walls, cliffs and ceilings get big organic lumps
+    gt = g == '#'; above_air = np.vstack([np.zeros((1, gt.shape[1]), bool), ~gt[:-1]])
+    fl = np.zeros((H, W), np.uint8)
+    for (ty, tx) in zip(*np.nonzero(gt & above_air)): fl[ty * T2.T:ty * T2.T + 3, tx * T2.T:(tx + 1) * T2.T] = 1
+    fd = cv2.distanceTransform(1 - fl, cv2.DIST_L2, 5)
+    wob = 0.12 + 0.88 * T2.smoothstep(10, 80, fd)
+    sdf = sdf + ((T2.fbm(H, W, 150, 4, seed) - 0.5) * 46 + (T2.fbm(H, W, 45, 3, seed + 1) - 0.5) * 14 + (T2.fbm(H, W, 14, 2, seed + 3) - 0.5) * 4) * wob
     S = (sdf > 0).astype(np.uint8)
     S = cv2.morphologyEx(S, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
     dd = cv2.distanceTransform(S, cv2.DIST_L2, 5)
@@ -110,7 +126,8 @@ def paint(r):
     gy, gx = np.gradient(cv2.GaussianBlur(S.astype(np.float32), (0, 0), 3))
     up = np.clip(gy * 6, 0, 1)[..., None]
     edge = (1 - T2.smoothstep(0, 9, dd))[..., None]
-    rgb = rgb + np.array(K['rim'], np.float32) * edge * up * 0.55
+    edge2 = (1 - T2.smoothstep(0, 16, dd))[..., None]
+    rgb = rgb + np.array(K['rim'], np.float32) * (edge * 0.55 + edge2 * 0.35) * up  # walkable tops catch the light
     rgb = rgb * (0.25 + 0.75 * T2.smoothstep(0, 2.5, dd)[..., None])
     Ssm = cv2.GaussianBlur(S.astype(np.float32), (0, 0), 0.8)
     img[..., :3] = rgb; img[..., 3] = Ssm * 255
@@ -144,11 +161,17 @@ def paint(r):
                     if seg.shape[1] < T: seg = spi[:, :T]
                     over(img, seg, xx * T, yy * T + T - sh + 4)
     # soft contact shadow
-    sh = cv2.GaussianBlur(S.astype(np.float32), (0, 0), 16) * 0.65
+    Sf = S.astype(np.float32); sh = np.clip(cv2.GaussianBlur(Sf, (0, 0), 10) * 0.55 + cv2.GaussianBlur(Sf, (0, 0), 42) * 0.4, 0, 0.85)  # rock sits in the scene
     a = img[..., 3:4] / 255.0; shade = sh[..., None] * (1 - a)
     A2 = a + shade
     img[..., :3] = np.where(A2 > 0, img[..., :3] * a / np.maximum(A2, 1e-4) + np.array(K['deep'], np.float32) * shade / np.maximum(A2, 1e-4), 0)
     img[..., 3:4] = np.clip(A2, 0, 1) * 255
+    # a faint warm light just above every walkable edge, so floors read at a glance
+    tl = (np.clip(gy * 6, 0, 1) * (1 - T2.smoothstep(0, 3, dd)) * (S > 0)).astype(np.float32)
+    glow = cv2.GaussianBlur(tl, (0, 0), 9); glow = np.roll(glow, -10, axis=0) * (S == 0) * 0.5
+    a = img[..., 3:4] / 255.0; g3 = np.clip(glow[..., None], 0, 0.35); A3 = a + g3 * (1 - a)
+    img[..., :3] = np.where(A3 > 0, (img[..., :3] * a + np.array(K['rim'], np.float32) * g3 * (1 - a)) / np.maximum(A3, 1e-4), 0)
+    img[..., 3:4] = np.clip(A3, 0, 1) * 255
     return Image.fromarray(np.clip(img, 0, 255).astype(np.uint8), 'RGBA')
 
 if __name__ == '__main__':

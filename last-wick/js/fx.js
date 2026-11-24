@@ -86,8 +86,19 @@ G.FX = (function () {
   }
   // HK-style slash crescent
   function slash(x, y, dir, facing, o = {}) { const s = { x, y, dir, facing, t: 0, dur: o.dur || 0.16, big: o.big || 1, c: o.c || [255, 244, 225], follow: o.follow }; if (o.follow) { s.ox = x - o.follow.cx; s.oy = y - o.follow.cy; } slashes.push(s); }
+  // needle thrust: a quick bright streak along the needle (the painted hero stabs rather than swings)
+  function thrust(x, y, facing, o = {}) { const s = { thrust: true, x, y, facing, t: -(o.delay || 0), dur: o.dur || 0.16, len: o.len || 150, follow: o.follow, c: o.c || [255, 236, 200] }; if (o.follow) { s.ox = x - o.follow.cx; s.oy = y - o.follow.cy; } slashes.push(s); }
+  function drawThrust(ctx, s) {
+    if (s.t < 0) return; const k = s.t / s.dur, a = 1 - k * k, L = s.len * ease.out(Math.min(1, k * 2.2));
+    let x = s.x, y = s.y; if (s.follow) { x = s.follow.cx + s.ox; y = s.follow.cy + s.oy; }
+    ctx.save(); ctx.translate(x, y); ctx.scale(s.facing, 1); ctx.globalCompositeOperation = 'lighter';
+    const g = ctx.createLinearGradient(0, 0, L, 0); g.addColorStop(0, rgba(s.c, 0)); g.addColorStop(0.55, rgba(s.c, 0.55 * a)); g.addColorStop(1, rgba([255, 255, 255], 0.95 * a));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, -9 * a); ctx.lineTo(L, -1.5); ctx.lineTo(L + 14, 0); ctx.lineTo(L, 1.5); ctx.lineTo(0, 9 * a); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = a; glow(ctx, L, 0, 34, s.c, 0.9 * a); ctx.restore();
+  }
   function drawSlashes(ctx) {
     for (const s of slashes) {
+      if (s.thrust) { drawThrust(ctx, s); continue; }
       const k = s.t / s.dur, a = 1 - k * k;
       let x = s.x, y = s.y; if (s.follow) { x = s.follow.cx + s.ox; y = s.follow.cy + s.oy; }
       ctx.save(); ctx.translate(x, y);
@@ -136,7 +147,7 @@ G.FX = (function () {
   }
   return {
     parts, lights: () => lights, S,
-    spawn, burst, update, drawParts, slash, drawSlashes, ring, drawRings, glow, flame,
+    spawn, burst, update, drawParts, slash, thrust, drawSlashes, ring, drawRings, glow, flame,
     light(x, y, r, c, i = 1) { lights.push({ x, y, r, c, i }); },
     clearLights() { lights = []; },
     shake(a, t) { if (a >= S.shake) { S.shake = a; S.shakeT = t; } },

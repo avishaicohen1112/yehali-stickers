@@ -41,6 +41,8 @@ G.Main = (function () {
     room = new G.World.Room(id); G.state.room = id; G.state.visited[id] = true;
     roomImg(id); areaImgs(room.area); for (const n of neighbors(id)) { roomImg(n); areaImgs(window.WORLD.rooms[n].area); }
     enemies = []; boss = null; G.FX.reset(); G.Objects.build(room); G.Main.bossCam = null; G.Wind.enter(room);
+    // closer camera everywhere (hero ~1/6 of the screen); the giant-boss stages pull back so the whole fight fits
+    Rn.setZoom(room.area === 'theatre' && room.id !== 't1' ? 900 : 700);
     for (const e of room.ents) {
       if (e.t === 'enemy') { const en = new G.Enemies.Enemy(e.kind, e.x, e.y); enemies.push(en); }
       if (e.t === 'boss' && !G.state.bosses[e.kind]) { boss = G.Bosses.create(e.kind, e.x, e.y); if (boss) enemies.push(boss); }

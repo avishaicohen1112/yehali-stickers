@@ -125,7 +125,8 @@ G.Player = (function () {
         this.atkT = C.ATK_T; this.atkCd = C.ATK_CD; this.atkHit = new Set(); this.atkAlt = !this.atkAlt;
         G.Sound.sfx('slash', { pitch: rand(0.9, 1.1) });
         const o = this.atkDir === 'up' ? [0, -62] : this.atkDir === 'down' ? [0, 58] : [this.facing * 52, -2];
-        G.FX.slash(this.cx + o[0], this.cy + o[1], this.atkDir, this.facing, { follow: this, big: this.atkDir === 'side' ? 1.05 : 1 });
+        if (this.atkDir === 'side') G.FX.thrust(this.cx + this.facing * 18, this.cy - 4, this.facing, { follow: this, delay: 0.075, len: 135 });
+        else G.FX.slash(this.cx + o[0], this.cy + o[1], this.atkDir, this.facing, { follow: this, big: 1 });
       }
       if (this.atkT > 0) {
         this.atkT -= dt;
@@ -305,6 +306,7 @@ G.Player = (function () {
       const tip = an && an.tip ? G.Sprite.point('wick', an.tip[fi], fx, fy + yo, { flip, anim: this.anim, fi, sy }) : { x: fx, y: this.y };
       this.tip = tip;
       if (this.hazardT > 0) return;
+      if (this.ground && G.Render.groundShadow) G.Render.groundShadow(ctx, fx, fy - 1, 26);
       G.Sprite.draw(ctx, 'wick', this.anim, fi, fx, fy + yo, { flip, sy, rot, alpha: blink ? 0.45 : 1, flash: this.hurtT > 0.2 ? 0.8 : 0 });
     }
     drawCrane(ctx) {  // stand-in paper crane until ART_BRIEF_2 sends the painted one (4 wing frames)
