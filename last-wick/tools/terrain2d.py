@@ -132,7 +132,10 @@ def wall_runs(g, minlen=5):
                     # nor where a ledge comes out of the wall
                     ax = x if side == 'L' else x - 1
                     ledge = (g[y0:y, ax] == '=').any()
-                    if y - y0 >= minlen and y0 > T2.PADT and y < H - T2.PADT and not ledge: out.append((side, x * T, y0, y))
+                    # a real wall: the air beside it has a ceiling above and a floor below (no stubs hanging in the ceiling)
+                    bx = x if side == 'L' else x - 1; airx = bx if side == 'L' else x
+                    floored = y < H and g[y, airx] in '#=^' ; ceiled = y0 > 0 and g[y0 - 1, airx] == '#'
+                    if y - y0 >= minlen and y0 > T2.PADT and y < H - T2.PADT and not ledge and floored and ceiled: out.append((side, x * T, y0, y))
                 else: y += 1
     return out
 
@@ -157,7 +160,7 @@ def corners(img, K, g, occ, limit=8):
                 pc = K.get(nm)
                 if pc is None or not (solid(x + dx, y) and solid(x, y + dy) and solid(x + dx, y + dy)): continue
                 # both arms long enough: the wall runs 3 tiles away from the corner, the ceiling/floor 3 tiles along
-                if not all(solid(x + dx, y - dy * k) for k in (1, 2)) or not all(solid(x - dx * k, y + dy) for k in (1, 2)): continue
+                if not all(solid(x + dx, y - dy * k) for k in (1, 2, 3, 4)) or not all(solid(x - dx * k, y + dy) for k in (1, 2)): continue
                 h, w = pc.shape[:2]; inset = 34
                 px = x * T - inset if dx < 0 else (x + 1) * T + inset - w
                 py = y * T - inset if dy < 0 else (y + 1) * T - int(h * 0.62)
@@ -176,8 +179,8 @@ def decor(img, K, S, dd, g, occ, seed, n=3):
         if box.shape != (h, w) or box.min() < 22 or box.min() > 120 or occ[y - 20:y + h + 20, x - 20:x + w + 20].any(): continue
         # only in a wall: solid rock above it (not just under a floor), and open air beside it at its middle height
         if y < 90 or S[y - 90:y, x:x + w].min() == 0: continue
-        my = y + h // 2; side_air = (S[my, max(0, x - 130):x] == 0).any() or (S[my, x + w:x + w + 130] == 0).any()
-        if not side_air: continue
+        my = y + h // 2; la = (S[my, max(0, x - 130):x] == 0).any(); ra = (S[my, x + w:x + w + 130] == 0).any()
+        if la == ra: continue   # a wall face on exactly one side (not buried, not in the middle of a pillar)
         d2 = pc.copy(); d2[..., :3] *= 0.78   # set into the wall, a touch darker than the lit edges
         over(img, d2, x, y); occ[y - 40:y + h + 40, x - 40:x + w + 40] = True; placed += 1
 

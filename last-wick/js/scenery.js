@@ -36,6 +36,9 @@ G.Scenery = (function () {
     const pv = it.pivot || [0.5, 1];
     let x = X, y = Y, rot = 0, sc = 1, a = it.a ?? 1;
     const ph = it.ph || (it.x * 0.013);
+    if (it.travel) {   // crosses the layer slowly and wraps around (bats, moths, ghost fish)
+      const span = it.travel[1] * s, ix = it.x * s; x = X - ix + (((ix + t * it.travel[0] * s) % span) + span) % span;
+    }
     if (it.bob) y += Math.sin(t * it.bob[1] + ph) * it.bob[0] * s;
     const wk = G.Wind ? G.Wind.sway() : 1;  // gusts make hanging/standing elements swing harder
     if (it.sway) rot += Math.sin(t * it.sway[1] * (0.8 + wk * 0.2) + ph) * it.sway[0] * wk;
@@ -45,8 +48,19 @@ G.Scenery = (function () {
     if (it.glow) G.FX.glow(ctx, x + (0.5 - pv[0]) * w, y + (0.5 - pv[1]) * h, it.glow[3] * s, [it.glow[0], it.glow[1], it.glow[2]], (it.glow[4] ?? 0.5) * a);
     ctx.save(); ctx.globalAlpha *= a; if (it.blend) ctx.globalCompositeOperation = it.blend;
     ctx.translate(x, y); if (rot) ctx.rotate(rot); if (sc !== 1) ctx.scale(sc, sc); if (it.flip) ctx.scale(-1, 1);
+    if (it.parts) for (const q of it.parts) {   // chains above a hanging thing, or a stand under a swinging bell, drawn behind
+      if (q.len !== undefined) { const ci = G.Assets.get(q.img); if (ci) { const cw = ci.width * s * (it.s || 1) * 0.8, ch = ci.height * cw / ci.width, n = Math.ceil(q.len * s / ch);
+        for (let k = 1; k <= n; k++) ctx.drawImage(ci, -cw / 2, -k * ch, cw, ch + 1); } }
+    }
     if (it.chain) chainDraw(ctx, img, w, h, pv, wk > 1.05 ? Object.assign({}, it.chain, { amp: (it.chain.amp || 0.05) * wk }) : it.chain, t + ph);
     else ctx.drawImage(img, -pv[0] * w, -pv[1] * h, w, h);
+    if (it.parts) for (const q of it.parts) {   // clock hands turning on the face, a flower head on its stem, a bell on its arm
+      if (q.len !== undefined) continue; const qi = G.Assets.get(q.img); if (!qi) continue;
+      const qs = s * (q.s || 1), qw = qi.width * qs, qh = qi.height * qs, qp = q.pv || [0.5, 0.5];
+      ctx.save(); ctx.translate(q.dx * w, q.top ? -pv[1] * h : q.dy * h);
+      if (q.spin) ctx.rotate(t * q.spin + ph); if (q.swing) ctx.rotate(Math.sin(t * q.swing[1] + ph) * q.swing[0] * wk);
+      ctx.drawImage(qi, -qp[0] * qw, q.top ? -qh * 0.85 : -qp[1] * qh, qw, qh); ctx.restore();
+    }
     ctx.restore();
   }
   function chainDraw(ctx, img, w, h, pv, C, t) {
@@ -132,7 +146,7 @@ G.Scenery = (function () {
     }
     ctx.restore();
   }
-  function images() { const out = []; if (!window.SCENES) return out; for (const a in window.SCENES) for (const L of window.SCENES[a].layers) { if (L.img) out.push([L.img, L.src]); if (L.items) for (const it of L.items) { if (it.img && it.src) out.push([it.img, it.src]); if (it.frames) it.frames.imgs.forEach((k, i) => out.push([k, it.frames.srcs[i]])); } } return out; }
+  function images() { const out = []; if (!window.SCENES) return out; for (const a in window.SCENES) for (const L of window.SCENES[a].layers) { if (L.img) out.push([L.img, L.src]); if (L.items) for (const it of L.items) { if (it.img && it.src) out.push([it.img, it.src]); if (it.frames) it.frames.imgs.forEach((k, i) => out.push([k, it.frames.srcs[i]])); if (it.parts) for (const q of it.parts) out.push([q.img, q.src]); } } return out; }
   function drawFront(ctx, room, cam, VW, VH, t) { return draw(ctx, room, cam, VW, VH, t, true); }
   return { draw, drawFront, images, elementDraw };
 })();
