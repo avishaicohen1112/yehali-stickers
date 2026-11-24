@@ -335,7 +335,7 @@ G.Giants = (function () {
         c.strokeStyle = 'rgba(240,232,215,0.9)'; c.lineWidth = 3; c.beginPath(); c.moveTo(this.hx + s.fx, this.hy + 40); c.lineTo(a[0], a[1]); c.stroke(); }
       // marionette knight
       const my = this.FY - this.mjump;
-      this.img(fallen ? 'marionette_fallen' : 'marionette', this.mx, my, 300, 440, fallen ? 0 : this.mst === 'swing' ? this.mface * 0.15 : Math.sin(this.t * 3) * 0.04, (c) => {
+      this.img(fallen ? 'marionette_fallen' : 'marionette', this.mx, my, fallen ? 440 : 300, fallen ? 220 : 440, fallen ? 0 : this.mst === 'swing' ? this.mface * 0.15 : Math.sin(this.t * 3) * 0.04, (c) => {
         c.fillStyle = '#4a4048'; c.fillRect(-80, fallen ? -120 : -380, 160, fallen ? 120 : 300); c.fillStyle = '#c9b89a'; if (!fallen) { c.beginPath(); c.arc(0, -400, 45, 0, 7); c.fill(); }
         if (!fallen && !this.strings[1].cut) { c.fillStyle = '#9aa6b2'; c.fillRect(this.mface * 90 - 8, -360, 16, 260); } }, { ctx: c, pivot: [0.5, 1], flip: this.mface < 0 });
       // the hand
