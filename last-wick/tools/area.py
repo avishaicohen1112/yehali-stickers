@@ -119,6 +119,7 @@ def element_items(els, area, layer_w, layer_h):
             small = kind in ('float', 'drift', 'spin')   # free-floating things read as distant and small, never as stuck objects
             x = float(xs[k % len(xs)] * layer_w + rng.uniform(-40, 40)); k += 1
             sc = float(rng.uniform(0.8, 1.1)) if not small else min(1.0, 110 / max(w, h)) * float(rng.uniform(0.8, 1.1))
+            if kind in ('ground', 'gearbase'): sc = min(sc, 150 / max(w, h))   # background objects on the far floor stay small (they are far away)
             it = {'img': f'scn_{area}_el_{nm}', 'src': f'assets/scn/{area}/el_{nm}.webp', 'x': round(x), 's': round(sc, 2)}
             if kind in ('hang', 'pendulum'):
                 it.update(y=0, pivot=[0.5, 0], chain={'segs': 8, 'amp': 0.05 if kind == 'hang' else 0.0, 'speed': 0.9})

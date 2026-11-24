@@ -57,8 +57,8 @@
      {
       "img": "scn_crypts_el_censer",
       "src": "assets/scn/crypts/el_censer.webp",
-      "x": 110,
-      "s": 1.03,
+      "x": 62,
+      "s": 0.8,
       "y": 0,
       "pivot": [
        0.5,
@@ -73,8 +73,8 @@
      {
       "img": "scn_crypts_el_chain",
       "src": "assets/scn/crypts/el_chain.webp",
-      "x": 219,
-      "s": 1.01,
+      "x": 208,
+      "s": 0.88,
       "y": 0,
       "pivot": [
        0.5,
@@ -89,8 +89,8 @@
      {
       "img": "scn_crypts_el_candles",
       "src": "assets/scn/crypts/el_candles.webp",
-      "x": 347,
-      "s": 0.95,
+      "x": 302,
+      "s": 0.36,
       "y": 886,
       "pivot": [
        0.5,
@@ -105,9 +105,9 @@
      {
       "img": "scn_crypts_el_drip",
       "src": "assets/scn/crypts/el_drip.webp",
-      "x": 449,
-      "s": 1.01,
-      "y": 169,
+      "x": 482,
+      "s": 0.92,
+      "y": 135,
       "pivot": [
        0.5,
        0
@@ -120,8 +120,8 @@
      {
       "img": "scn_crypts_el_curtain",
       "src": "assets/scn/crypts/el_curtain.webp",
-      "x": 540,
-      "s": 0.87,
+      "x": 564,
+      "s": 0.95,
       "y": 0,
       "pivot": [
        0.5,
@@ -136,8 +136,8 @@
      {
       "img": "scn_crypts_el_censer",
       "src": "assets/scn/crypts/el_censer.webp",
-      "x": 643,
-      "s": 1.04,
+      "x": 671,
+      "s": 0.92,
       "y": 0,
       "pivot": [
        0.5,
@@ -152,8 +152,8 @@
      {
       "img": "scn_crypts_el_chain",
       "src": "assets/scn/crypts/el_chain.webp",
-      "x": 789,
-      "s": 1.09,
+      "x": 791,
+      "s": 0.88,
       "y": 0,
       "pivot": [
        0.5,
@@ -168,8 +168,8 @@
      {
       "img": "scn_crypts_el_candles",
       "src": "assets/scn/crypts/el_candles.webp",
-      "x": 925,
-      "s": 0.89,
+      "x": 912,
+      "s": 0.36,
       "y": 886,
       "pivot": [
        0.5,
@@ -184,9 +184,9 @@
      {
       "img": "scn_crypts_el_drip",
       "src": "assets/scn/crypts/el_drip.webp",
-      "x": 1015,
-      "s": 1.08,
-      "y": 166,
+      "x": 1037,
+      "s": 0.95,
+      "y": 151,
       "pivot": [
        0.5,
        0
@@ -199,8 +199,8 @@
      {
       "img": "scn_crypts_el_curtain",
       "src": "assets/scn/crypts/el_curtain.webp",
-      "x": 1142,
-      "s": 0.99,
+      "x": 1158,
+      "s": 0.9,
       "y": 0,
       "pivot": [
        0.5,
@@ -301,8 +301,8 @@
      {
       "img": "scn_gardens_el_vine",
       "src": "assets/scn/gardens/el_vine.webp",
-      "x": 82,
-      "s": 0.95,
+      "x": 95,
+      "s": 1.02,
       "y": 0,
       "pivot": [
        0.5,
@@ -317,8 +317,8 @@
      {
       "img": "scn_gardens_el_moss",
       "src": "assets/scn/gardens/el_moss.webp",
-      "x": 222,
-      "s": 0.93,
+      "x": 254,
+      "s": 0.83,
       "y": 0,
       "pivot": [
        0.5,
@@ -333,9 +333,9 @@
      {
       "img": "scn_gardens_el_moth",
       "src": "assets/scn/gardens/el_moth.webp",
-      "x": 419,
-      "s": 0.27,
-      "y": 203,
+      "x": 418,
+      "s": 0.25,
+      "y": 308,
       "pivot": [
        0.5,
        0.5
@@ -352,8 +352,8 @@
      {
       "img": "scn_gardens_el_flower",
       "src": "assets/scn/gardens/el_flower.webp",
-      "x": 532,
-      "s": 1.09,
+      "x": 558,
+      "s": 1.0,
       "y": 882,
       "pivot": [
        0.5,
@@ -367,8 +367,8 @@
      {
       "img": "scn_gardens_el_vine",
       "src": "assets/scn/gardens/el_vine.webp",
-      "x": 710,
-      "s": 0.91,
+      "x": 663,
+      "s": 0.97,
       "y": 0,
       "pivot": [
        0.5,
@@ -383,8 +383,8 @@
      {
       "img": "scn_gardens_el_moss",
       "src": "assets/scn/gardens/el_moss.webp",
-      "x": 838,
-      "s": 1.08,
+      "x": 869,
+      "s": 0.99,
       "y": 0,
       "pivot": [
        0.5,
@@ -399,9 +399,9 @@
      {
       "img": "scn_gardens_el_moth",
       "src": "assets/scn/gardens/el_moth.webp",
-      "x": 994,
-      "s": 0.26,
-      "y": 203,
+      "x": 1019,
+      "s": 0.23,
+      "y": 348,
       "pivot": [
        0.5,
        0.5
@@ -418,8 +418,8 @@
      {
       "img": "scn_gardens_el_flower",
       "src": "assets/scn/gardens/el_flower.webp",
-      "x": 1179,
-      "s": 0.97,
+      "x": 1142,
+      "s": 0.93,
       "y": 882,
       "pivot": [
        0.5,
@@ -519,8 +519,8 @@
      {
       "img": "scn_nave_el_chandelier",
       "src": "assets/scn/nave/el_chandelier.webp",
-      "x": 97,
-      "s": 0.98,
+      "x": 123,
+      "s": 0.83,
       "y": 0,
       "pivot": [
        0.5,
@@ -535,8 +535,8 @@
      {
       "img": "scn_nave_el_banner",
       "src": "assets/scn/nave/el_banner.webp",
-      "x": 245,
-      "s": 1.08,
+      "x": 256,
+      "s": 0.88,
       "y": 0,
       "pivot": [
        0.5,
@@ -551,8 +551,8 @@
      {
       "img": "scn_nave_el_weed",
       "src": "assets/scn/nave/el_weed.webp",
-      "x": 425,
-      "s": 1.0,
+      "x": 428,
+      "s": 0.93,
       "y": 0,
       "pivot": [
        0.5,
@@ -567,8 +567,8 @@
      {
       "img": "scn_nave_el_candle",
       "src": "assets/scn/nave/el_candle.webp",
-      "x": 585,
-      "s": 0.95,
+      "x": 575,
+      "s": 0.41,
       "y": 886,
       "pivot": [
        0.5,
@@ -583,8 +583,8 @@
      {
       "img": "scn_nave_el_chandelier",
       "src": "assets/scn/nave/el_chandelier.webp",
-      "x": 724,
-      "s": 1.08,
+      "x": 704,
+      "s": 0.92,
       "y": 0,
       "pivot": [
        0.5,
@@ -599,8 +599,8 @@
      {
       "img": "scn_nave_el_banner",
       "src": "assets/scn/nave/el_banner.webp",
-      "x": 857,
-      "s": 0.94,
+      "x": 837,
+      "s": 1.03,
       "y": 0,
       "pivot": [
        0.5,
@@ -615,8 +615,8 @@
      {
       "img": "scn_nave_el_weed",
       "src": "assets/scn/nave/el_weed.webp",
-      "x": 1018,
-      "s": 1.01,
+      "x": 962,
+      "s": 1.04,
       "y": 0,
       "pivot": [
        0.5,
@@ -631,8 +631,8 @@
      {
       "img": "scn_nave_el_candle",
       "src": "assets/scn/nave/el_candle.webp",
-      "x": 1177,
-      "s": 1.0,
+      "x": 1163,
+      "s": 0.41,
       "y": 886,
       "pivot": [
        0.5,
@@ -733,8 +733,8 @@
      {
       "img": "scn_spire_el_glasslamp",
       "src": "assets/scn/spire/el_glasslamp.webp",
-      "x": 98,
-      "s": 0.98,
+      "x": 69,
+      "s": 1.08,
       "y": 0,
       "pivot": [
        0.5,
@@ -749,8 +749,8 @@
      {
       "img": "scn_spire_el_stars",
       "src": "assets/scn/spire/el_stars.webp",
-      "x": 224,
-      "s": 0.89,
+      "x": 192,
+      "s": 1.07,
       "y": 0,
       "pivot": [
        0.5,
@@ -765,8 +765,8 @@
      {
       "img": "scn_spire_el_glasslamp",
       "src": "assets/scn/spire/el_glasslamp.webp",
-      "x": 322,
-      "s": 0.89,
+      "x": 286,
+      "s": 0.94,
       "y": 0,
       "pivot": [
        0.5,
@@ -781,8 +781,8 @@
      {
       "img": "scn_spire_el_stars",
       "src": "assets/scn/spire/el_stars.webp",
-      "x": 403,
-      "s": 0.9,
+      "x": 348,
+      "s": 0.83,
       "y": 0,
       "pivot": [
        0.5,
@@ -883,8 +883,8 @@
      {
       "img": "scn_hearth_el_cage",
       "src": "assets/scn/hearth/el_cage.webp",
-      "x": 122,
-      "s": 0.87,
+      "x": 114,
+      "s": 0.98,
       "y": 0,
       "pivot": [
        0.5,
@@ -899,9 +899,9 @@
      {
       "img": "scn_hearth_el_smoke",
       "src": "assets/scn/hearth/el_smoke.webp",
-      "x": 216,
-      "s": 0.23,
-      "y": 202,
+      "x": 267,
+      "s": 0.29,
+      "y": 456,
       "pivot": [
        0.5,
        0.5
@@ -918,9 +918,9 @@
      {
       "img": "scn_hearth_el_ember",
       "src": "assets/scn/hearth/el_ember.webp",
-      "x": 431,
-      "s": 1.06,
-      "y": 385,
+      "x": 394,
+      "s": 0.97,
+      "y": 259,
       "pivot": [
        0.5,
        0.5
@@ -938,8 +938,8 @@
      {
       "img": "scn_hearth_el_flag",
       "src": "assets/scn/hearth/el_flag.webp",
-      "x": 546,
-      "s": 1.01,
+      "x": 535,
+      "s": 0.88,
       "y": 0,
       "pivot": [
        0.5,
@@ -954,8 +954,8 @@
      {
       "img": "scn_hearth_el_cage",
       "src": "assets/scn/hearth/el_cage.webp",
-      "x": 720,
-      "s": 1.02,
+      "x": 684,
+      "s": 1.01,
       "y": 0,
       "pivot": [
        0.5,
@@ -970,9 +970,9 @@
      {
       "img": "scn_hearth_el_smoke",
       "src": "assets/scn/hearth/el_smoke.webp",
-      "x": 832,
-      "s": 0.28,
-      "y": 524,
+      "x": 843,
+      "s": 0.23,
+      "y": 374,
       "pivot": [
        0.5,
        0.5
@@ -989,9 +989,9 @@
      {
       "img": "scn_hearth_el_ember",
       "src": "assets/scn/hearth/el_ember.webp",
-      "x": 988,
-      "s": 1.0,
-      "y": 424,
+      "x": 1027,
+      "s": 0.92,
+      "y": 213,
       "pivot": [
        0.5,
        0.5
@@ -1009,8 +1009,8 @@
      {
       "img": "scn_hearth_el_flag",
       "src": "assets/scn/hearth/el_flag.webp",
-      "x": 1165,
-      "s": 1.07,
+      "x": 1171,
+      "s": 0.97,
       "y": 0,
       "pivot": [
        0.5,
@@ -1111,8 +1111,8 @@
      {
       "img": "scn_shore_el_firewave",
       "src": "assets/scn/shore/el_firewave.webp",
-      "x": 128,
-      "s": 0.92,
+      "x": 68,
+      "s": 0.81,
       "y": 828,
       "pivot": [
        0.5,
@@ -1131,8 +1131,8 @@
      {
       "img": "scn_shore_el_ropelamp",
       "src": "assets/scn/shore/el_ropelamp.webp",
-      "x": 192,
-      "s": 1.08,
+      "x": 223,
+      "s": 0.89,
       "y": 0,
       "pivot": [
        0.5,
@@ -1147,8 +1147,8 @@
      {
       "img": "scn_shore_el_flag",
       "src": "assets/scn/shore/el_flag.webp",
-      "x": 319,
-      "s": 0.86,
+      "x": 324,
+      "s": 0.84,
       "y": 0,
       "pivot": [
        0.5,
@@ -1163,9 +1163,9 @@
      {
       "img": "scn_shore_el_spark",
       "src": "assets/scn/shore/el_spark.webp",
-      "x": 393,
-      "s": 0.25,
-      "y": 433,
+      "x": 348,
+      "s": 0.24,
+      "y": 376,
       "pivot": [
        0.5,
        0.5
@@ -1183,8 +1183,8 @@
      {
       "img": "scn_shore_el_firewave",
       "src": "assets/scn/shore/el_firewave.webp",
-      "x": 513,
-      "s": 0.88,
+      "x": 467,
+      "s": 1.09,
       "y": 828,
       "pivot": [
        0.5,
@@ -1203,8 +1203,8 @@
      {
       "img": "scn_shore_el_ropelamp",
       "src": "assets/scn/shore/el_ropelamp.webp",
-      "x": 537,
-      "s": 0.89,
+      "x": 605,
+      "s": 0.94,
       "y": 0,
       "pivot": [
        0.5,
@@ -1219,8 +1219,8 @@
      {
       "img": "scn_shore_el_flag",
       "src": "assets/scn/shore/el_flag.webp",
-      "x": 681,
-      "s": 1.06,
+      "x": 659,
+      "s": 1.08,
       "y": 0,
       "pivot": [
        0.5,
@@ -1235,9 +1235,9 @@
      {
       "img": "scn_shore_el_spark",
       "src": "assets/scn/shore/el_spark.webp",
-      "x": 750,
-      "s": 0.27,
-      "y": 260,
+      "x": 753,
+      "s": 0.26,
+      "y": 412,
       "pivot": [
        0.5,
        0.5
@@ -1341,8 +1341,8 @@
      {
       "img": "scn_galleon_el_lantern",
       "src": "assets/scn/galleon/el_lantern.webp",
-      "x": 132,
-      "s": 1.09,
+      "x": 84,
+      "s": 1.0,
       "y": 0,
       "pivot": [
        0.5,
@@ -1357,8 +1357,8 @@
      {
       "img": "scn_galleon_el_rope",
       "src": "assets/scn/galleon/el_rope.webp",
-      "x": 345,
-      "s": 1.01,
+      "x": 306,
+      "s": 0.84,
       "y": 0,
       "pivot": [
        0.5,
@@ -1373,8 +1373,8 @@
      {
       "img": "scn_galleon_el_net",
       "src": "assets/scn/galleon/el_net.webp",
-      "x": 512,
-      "s": 0.98,
+      "x": 531,
+      "s": 1.04,
       "y": 0,
       "pivot": [
        0.5,
@@ -1389,8 +1389,8 @@
      {
       "img": "scn_galleon_el_lantern",
       "src": "assets/scn/galleon/el_lantern.webp",
-      "x": 729,
-      "s": 0.8,
+      "x": 764,
+      "s": 1.05,
       "y": 0,
       "pivot": [
        0.5,
@@ -1405,8 +1405,8 @@
      {
       "img": "scn_galleon_el_rope",
       "src": "assets/scn/galleon/el_rope.webp",
-      "x": 948,
-      "s": 0.89,
+      "x": 929,
+      "s": 0.93,
       "y": 0,
       "pivot": [
        0.5,
@@ -1421,8 +1421,8 @@
      {
       "img": "scn_galleon_el_net",
       "src": "assets/scn/galleon/el_net.webp",
-      "x": 1175,
-      "s": 1.01,
+      "x": 1119,
+      "s": 0.81,
       "y": 0,
       "pivot": [
        0.5,
@@ -1523,20 +1523,20 @@
      {
       "img": "scn_lighthouse_el_gear",
       "src": "assets/scn/lighthouse/el_gear.webp",
-      "x": 118,
-      "s": 0.95,
+      "x": 70,
+      "s": 0.36,
       "y": 855,
       "pivot": [
        0.5,
        0.5
       ],
-      "spin": -0.16
+      "spin": 0.21
      },
      {
       "img": "scn_lighthouse_el_chain",
       "src": "assets/scn/lighthouse/el_chain.webp",
-      "x": 254,
-      "s": 1.01,
+      "x": 251,
+      "s": 0.85,
       "y": 0,
       "pivot": [
        0.5,
@@ -1551,20 +1551,20 @@
      {
       "img": "scn_lighthouse_el_gear",
       "src": "assets/scn/lighthouse/el_gear.webp",
-      "x": 438,
-      "s": 0.89,
+      "x": 414,
+      "s": 0.36,
       "y": 855,
       "pivot": [
        0.5,
        0.5
       ],
-      "spin": -0.2
+      "spin": -0.23
      },
      {
       "img": "scn_lighthouse_el_chain",
       "src": "assets/scn/lighthouse/el_chain.webp",
-      "x": 553,
-      "s": 1.02,
+      "x": 575,
+      "s": 0.93,
       "y": 0,
       "pivot": [
        0.5,
@@ -1665,8 +1665,8 @@
      {
       "img": "scn_paper_el_crane",
       "src": "assets/scn/paper/el_crane.webp",
-      "x": 109,
-      "s": 0.99,
+      "x": 114,
+      "s": 1.07,
       "y": 0,
       "pivot": [
        0.5,
@@ -1681,9 +1681,9 @@
      {
       "img": "scn_paper_el_leaf",
       "src": "assets/scn/paper/el_leaf.webp",
-      "x": 274,
-      "s": 0.27,
-      "y": 203,
+      "x": 287,
+      "s": 0.25,
+      "y": 470,
       "pivot": [
        0.5,
        0.5
@@ -1700,8 +1700,8 @@
      {
       "img": "scn_paper_el_ribbon",
       "src": "assets/scn/paper/el_ribbon.webp",
-      "x": 478,
-      "s": 0.9,
+      "x": 508,
+      "s": 0.98,
       "y": 0,
       "pivot": [
        0.5,
@@ -1716,8 +1716,8 @@
      {
       "img": "scn_paper_el_crane",
       "src": "assets/scn/paper/el_crane.webp",
-      "x": 743,
-      "s": 0.97,
+      "x": 698,
+      "s": 0.89,
       "y": 0,
       "pivot": [
        0.5,
@@ -1732,9 +1732,9 @@
      {
       "img": "scn_paper_el_leaf",
       "src": "assets/scn/paper/el_leaf.webp",
-      "x": 957,
-      "s": 0.3,
-      "y": 206,
+      "x": 899,
+      "s": 0.27,
+      "y": 405,
       "pivot": [
        0.5,
        0.5
@@ -1751,8 +1751,8 @@
      {
       "img": "scn_paper_el_ribbon",
       "src": "assets/scn/paper/el_ribbon.webp",
-      "x": 1164,
-      "s": 0.93,
+      "x": 1182,
+      "s": 0.96,
       "y": 0,
       "pivot": [
        0.5,
@@ -1853,20 +1853,20 @@
      {
       "img": "scn_clock_el_gear",
       "src": "assets/scn/clock/el_gear.webp",
-      "x": 91,
-      "s": 0.88,
+      "x": 127,
+      "s": 0.45,
       "y": 855,
       "pivot": [
        0.5,
        0.5
       ],
-      "spin": 0.11
+      "spin": 0.19
      },
      {
       "img": "scn_clock_el_pendulum",
       "src": "assets/scn/clock/el_pendulum.webp",
-      "x": 209,
-      "s": 0.92,
+      "x": 190,
+      "s": 0.88,
       "y": 0,
       "pivot": [
        0.5,
@@ -1880,20 +1880,20 @@
      {
       "img": "scn_clock_el_gear",
       "src": "assets/scn/clock/el_gear.webp",
-      "x": 318,
-      "s": 1.07,
+      "x": 363,
+      "s": 0.45,
       "y": 855,
       "pivot": [
        0.5,
        0.5
       ],
-      "spin": -0.11
+      "spin": -0.15
      },
      {
       "img": "scn_clock_el_pendulum",
       "src": "assets/scn/clock/el_pendulum.webp",
-      "x": 442,
-      "s": 1.01,
+      "x": 439,
+      "s": 1.02,
       "y": 0,
       "pivot": [
        0.5,
@@ -1993,9 +1993,9 @@
      {
       "img": "scn_core_el_drop",
       "src": "assets/scn/core/el_drop.webp",
-      "x": 131,
-      "s": 0.44,
-      "y": 191,
+      "x": 80,
+      "s": 0.39,
+      "y": 412,
       "pivot": [
        0.5,
        0.5
@@ -2013,9 +2013,9 @@
      {
       "img": "scn_core_el_sparkle",
       "src": "assets/scn/core/el_sparkle.webp",
-      "x": 322,
-      "s": 0.91,
-      "y": 266,
+      "x": 294,
+      "s": 0.79,
+      "y": 374,
       "pivot": [
        0.5,
        0.5
@@ -2033,9 +2033,9 @@
      {
       "img": "scn_core_el_flame",
       "src": "assets/scn/core/el_flame.webp",
-      "x": 532,
+      "x": 498,
       "s": 0.31,
-      "y": 294,
+      "y": 459,
       "pivot": [
        0.5,
        0.5
@@ -2053,9 +2053,9 @@
      {
       "img": "scn_core_el_drop",
       "src": "assets/scn/core/el_drop.webp",
-      "x": 762,
-      "s": 0.43,
-      "y": 250,
+      "x": 728,
+      "s": 0.37,
+      "y": 443,
       "pivot": [
        0.5,
        0.5
@@ -2073,9 +2073,9 @@
      {
       "img": "scn_core_el_sparkle",
       "src": "assets/scn/core/el_sparkle.webp",
-      "x": 953,
-      "s": 0.91,
-      "y": 354,
+      "x": 945,
+      "s": 0.7,
+      "y": 406,
       "pivot": [
        0.5,
        0.5
@@ -2093,9 +2093,9 @@
      {
       "img": "scn_core_el_flame",
       "src": "assets/scn/core/el_flame.webp",
-      "x": 1130,
-      "s": 0.39,
-      "y": 406,
+      "x": 1179,
+      "s": 0.4,
+      "y": 366,
       "pivot": [
        0.5,
        0.5
