@@ -139,7 +139,7 @@ G.Main = (function () {
       G.Objects.lockArena(room, false);
       enemies = enemies.filter(e => e !== boss);
       if (boss.kind === 'firstflame') { setMode('ending'); G.Sound.music('victory'); save(); return; }
-      const reward = { knight: 'dash', moth: 'djump', angler: 'wall', vesper: 'moon', choir: 'heart', colossus: 'spellup', extinguisher: 'hearthlit', leviathan: 'glide', captain: 'shadow', keeper: 'heart', paperking: 'vessel', clockmaker: 'heart' }[boss.kind];
+      const reward = { waxmother: 'heart', whale: 'vessel', lanternqueen: 'heart', puppeteer: 'spellup', director: 'moon', knight: 'dash', moth: 'djump', angler: 'wall', vesper: 'moon', choir: 'heart', colossus: 'spellup', extinguisher: 'hearthlit', leviathan: 'glide', captain: 'shadow', keeper: 'heart', paperking: 'vessel', clockmaker: 'heart' }[boss.kind];
       for (const k in room.over) delete room.over[k]; G.Objects.build(room);
       if (boss.kind === 'vesper') G.Objects.openSeals(room);
       G.UI.toast(G.T('boss_defeated'), 3);

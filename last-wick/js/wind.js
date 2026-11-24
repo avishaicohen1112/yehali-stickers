@@ -5,7 +5,7 @@
 //     letting go = you get blown back.
 G.Wind = (function () {
   const PCOL = { crypts: [210, 185, 150], gardens: [150, 235, 195], nave: [170, 195, 235], spire: [225, 205, 255], hearth: [255, 140, 80],
-    shore: [205, 195, 185], galleon: [185, 165, 225], lighthouse: [225, 225, 240], paper: [245, 235, 215], clock: [245, 215, 150], core: [255, 220, 150] };
+    shore: [205, 195, 185], galleon: [185, 165, 225], lighthouse: [225, 225, 240], paper: [245, 235, 215], clock: [245, 215, 150], core: [255, 220, 150], theatre: [255, 215, 170] };
   let room = null, gale = null, galeK = 0, galeT = 0;
   let g = 0, gTarget = 0, wait = 6, hold = 0, dirA = 1;
   function enter(r) {

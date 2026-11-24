@@ -18,6 +18,7 @@ G.Render = (function () {
     clock: { amb: [8, 7, 4], dark: 0.4, sky: ['#100c05', '#2e2410', '#080602'], fog: [230, 190, 110], rock: '#0a0805', mote: { c: [255, 215, 140], kind: 'mote', n: 26, vy: -6 } },
     core: { amb: [12, 6, 2], dark: 0.3, sky: ['#1a0a02', '#5a2a08', '#0a0401'], fog: [255, 170, 80], rock: '#0c0603', mote: { c: [255, 200, 120], kind: 'ember', n: 60, vy: -60 } },
     hearth: { amb: [10, 4, 4], dark: 0.42, sky: ['#0c0606', '#2a0e08', '#050202'], fog: [200, 70, 30], rock: '#070404', mote: { c: [255, 110, 50], kind: 'ember', n: 40, vy: -50 } },
+    theatre: { amb: [10, 4, 6], dark: 0.36, sky: ['#120608', '#3a0c14', '#070204'], fog: [255, 200, 150], rock: '#0a0507', mote: { c: [255, 225, 170], kind: 'mote', n: 22, vy: -10 } },
   };
   let vignette = null, holeSprite = null;
   function resize() {

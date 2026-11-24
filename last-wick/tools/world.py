@@ -7,6 +7,7 @@ WORLDS = {
     'lumen': {'name': 'לומנהולד', 'en': 'LUMENHOLD'},
     'sea':   {'name': 'ים הגחלים', 'en': 'THE EMBER SEA'},
     'dream': {'name': 'עולם החלום', 'en': 'THE DREAMING WICK'},
+    'stage': {'name': 'תיאטרון הצללים', 'en': 'THE SHADOW THEATRE'},
 }
 AREAS = {
     'crypts':  {'name': 'מערות השעווה', 'music': 'crypts', 'world': 'lumen'},
@@ -20,6 +21,7 @@ AREAS = {
     'paper':   {'name': 'יער הנייר', 'music': 'paper', 'world': 'dream'},
     'clock':   {'name': 'קפלת השעונים', 'music': 'clock', 'world': 'dream'},
     'core':    {'name': 'לב הנר', 'music': 'core', 'world': 'dream'},
+    'theatre': {'name': 'תיאטרון הצללים', 'music': 'clock', 'world': 'stage'},
 }
 
 class Room:
@@ -368,6 +370,28 @@ s6.ent('lore', 55, 15, text='lore_winds')
 s6.ent('enemy', 40, 8, kind='gustwraith').ent('enemy', 18, 7, kind='gustwraith').ent('enemy', 30, 6, kind='windmoth').ent('enemy', 27, 15, kind='anchorgrub')
 s6.ent('chest', 4, 15, id='chest_winds', kind='rare', give='heart', tallow=40)
 link('s5', 's6', -73, 4)
+
+# =====================================================================
+# WORLD 4 — THE SHADOW THEATRE: a lobby with five stage doors; each door is a giant-boss arena (portal-linked)
+# =====================================================================
+t1 = room('t1', 'theatre', 0, 0, 62, 20, 'הפואייה')
+t1.carve(1, 3, 60, 14).plat(10, 12, 5).plat(47, 12, 5)
+t1.ent('portal', 3, 17, to='p1', tx=26, ty=16, id='p_theatre_back').ent('bench', 9, 17).ent('npc', 14, 17, id='usher')
+for i, (rid, k) in enumerate((('tA', 'waxmother'), ('tB', 'whale'), ('tC', 'lanternqueen'), ('tD', 'puppeteer'))):
+    t1.ent('portal', 21 + i * 8, 17, to=rid, tx=6, ty=16, id='p_' + rid)
+t1.ent('portal', 56, 17, to='tE', tx=6, ty=16, id='p_tE', req=['waxmother', 'whale', 'lanternqueen', 'puppeteer'])
+def arena(rid, gx, gy, w, h, kind, door, extra=None):
+    r = room(rid, 'theatre', gx, gy, w, h, {'waxmother': 'במת השעווה', 'whale': 'שמי החלום', 'lanternqueen': 'אולם הפנסים', 'puppeteer': 'במת הבובות', 'director': 'הבמה הראשית'}[kind])
+    r.carve(1, 1, w - 2, h - 3)
+    r.ent('boss', w // 2, h - 2, kind=kind).ent('portal', 3, h - 2, to='t1', tx=door, ty=17, id='p_back_' + rid, req=kind)
+    if extra: extra(r)
+    return r
+arena('tA', 0, 30, 36, 18, 'waxmother', 21, lambda r: r.plat(4, 12, 6).plat(15, 11, 6).plat(26, 12, 6))
+arena('tB', 40, 30, 40, 18, 'whale', 29, lambda r: r.ent('crane', 0, 0))
+arena('tC', 0, -30, 36, 22, 'lanternqueen', 37, lambda r: r.plat(5, 15, 5).plat(26, 15, 5).plat(15, 12, 6))
+arena('tD', 40, -30, 36, 18, 'puppeteer', 45, lambda r: r.plat(3, 11, 4).plat(29, 11, 4))
+arena('tE', 80, 0, 36, 18, 'director', 56, lambda r: r.plat(10, 12, 5).plat(21, 12, 5))
+p1.ent('portal', 26, 16, to='t1', tx=6, ty=17, id='p_theatre', req='clockmaker')
 
 link('p2', 'p3', -2, 4)
 link('p2', 'q1', 15, 4)

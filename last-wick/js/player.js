@@ -16,7 +16,7 @@ G.Player = (function () {
       this.focusHold = 0; this.focusT = 0; this.focusing = false; this.castT = 0;
       this.anim = 'idle'; this.animT = 0; this.landT = 0; this.dead = false; this.deadT = 0; this.sitting = false;
       this.safe = { x: this.x, y: this.y }; this.safeT = 0; this.stepT = 0; this.recoilT = 0; this.flameT = 0;
-      this.hazardT = 0; this.openT = 0; this.djumpT = 0; this.runPhase = 0;
+      this.hazardT = 0; this.openT = 0; this.leverT = 0; this.pointT = 0; this.pullV = 0; this.dodgeT = 0; this.djumpT = 0; this.runPhase = 0;
       this.pup = window.RIGS && window.RIGS.wick ? new G.Puppet.Puppet('wick') : null;
     }
     get cx() { return this.x + this.w / 2; } get cy() { return this.y + this.h / 2; }
@@ -36,6 +36,8 @@ G.Player = (function () {
       this.inv = Math.max(0, this.inv - dt); this.lock = Math.max(0, this.lock - dt); this.hurtT = Math.max(0, this.hurtT - dt);
       this.dashCd = Math.max(0, this.dashCd - dt); this.atkCd = Math.max(0, this.atkCd - dt); this.castT = Math.max(0, this.castT - dt);
       this.wallJumpT = Math.max(0, this.wallJumpT - dt); this.landT = Math.max(0, this.landT - dt); this.djumpT = Math.max(0, this.djumpT - dt); this.openT = Math.max(0, this.openT - dt); this.recoilT = Math.max(0, this.recoilT - dt);
+      this.leverT = Math.max(0, this.leverT - dt); this.pointT = Math.max(0, this.pointT - dt);
+      if (room.crane) { this.updateCrane(dt, room); return; }
       const L = I.h('left'), R = I.h('right'), U = I.h('up'), D = I.h('down');
       let mx = (R ? 1 : 0) - (L ? 1 : 0);
       if (this.lock > 0) mx = 0;
@@ -74,7 +76,7 @@ G.Player = (function () {
         if (this.dashT <= 0) this.vx = this.facing * C.RUN * 0.8;
       } else {
         // ---- horizontal
-        const Wv = G.Wind ? G.Wind.force(this) : 0; this.windV = Wv; this.mx = mx;
+        const Wv = (G.Wind ? G.Wind.force(this) : 0) + this.pullV; this.pullV = 0;  // wind + boss pulls (e.g. the Wax Mother inhaling) this.windV = Wv; this.mx = mx;
         if (Wv && this.wallJumpT <= 0 && this.recoilT <= 0 && this.lock <= 0) {
           // gale: into the wind = slow grind, with it = fast, hands off = blown back
           const against = mx && mx * Wv < 0;
@@ -173,6 +175,24 @@ G.Player = (function () {
       this.pickAnim();
       if (this.pup) this.pup.update(dt, { vx: this.vx, vy: this.vy, facing: this.facing });
     }
+    // paper-crane flight (whale arena): free 8-way flying, rapid paper darts, dodge roll with i-frames
+    updateCrane(dt, room) {
+      const I = G.Input; this.ground = true; this.coyote = 0; this.facing = 1; this.dodgeT = Math.max(0, this.dodgeT - dt);
+      const mx = (I.h('right') ? 1 : 0) - (I.h('left') ? 1 : 0), my = (I.h('down') ? 1 : 0) - (I.h('up') ? 1 : 0);
+      const n = Math.hypot(mx, my) || 1, sp = this.dodgeT > 0 ? 980 : 560;
+      if (this.recoilT <= 0) { this.vx = approach(this.vx, mx / n * sp, 4200 * dt); this.vy = approach(this.vy, my / n * sp, 4200 * dt); }
+      if (I.p('dash') && this.dashCd <= 0) { this.dodgeT = 0.26; this.dashCd = 0.55; this.inv = Math.max(this.inv, 0.32); G.Sound.sfx('dash');
+        for (let i = 0; i < 8; i++) G.FX.spawn({ x: this.cx, y: this.cy, vx: -this.vx * rand(0.2, 0.5), vy: rand(-80, 80), life: 0.4, size: rand(5, 10), kind: 'smoke', c: [240, 232, 215], a: 0.4, drag: 4 }); }
+      room.moveX(this, this.vx * dt); room.moveY(this, this.vy * dt);
+      this.x = clamp(this.x, TILE, room.pw - TILE - this.w); this.y = clamp(this.y, TILE, room.ph - 2 * TILE - this.h);
+      if (I.h('attack') && this.atkCd <= 0) {
+        this.atkCd = 0.15; G.Sound.sfx('slash', { pitch: 1.6, vol: 0.35 });
+        G.Objects.spawnProj({ kind: 'dart', x: this.cx + 40, y: this.cy + 6, vx: 1350, vy: 0, friendly: true, dmg: 0.45 * G.state.needle, r: 10, life: 1.3, ghost: true,
+          draw: (c, pr) => { c.save(); c.translate(pr.x, pr.y); c.fillStyle = '#f2e9d8'; c.beginPath(); c.moveTo(14, 0); c.lineTo(-10, -6); c.lineTo(-5, 0); c.lineTo(-10, 6); c.closePath(); c.fill(); c.restore(); } });
+      }
+      if (Math.random() < dt * 30) G.FX.spawn({ x: this.cx - 50, y: this.cy + 20 + rand(-10, 10), vx: -300, vy: rand(-20, 20), life: 0.4, size: 1.4, kind: 'streak', c: [255, 245, 225], a: 0.5, add: true });
+      this.setAnim('sit');
+    }
     tryCast(room) {
       const S = G.state; if (!S.abil.spell || S.soul < C.SPELL_COST || this.castT > 0 || this.lock > 0) return;
       S.soul -= C.SPELL_COST; this.castT = 0.32; this.setAnim('cast'); G.Sound.sfx('cast');
@@ -233,6 +253,8 @@ G.Player = (function () {
       let a;
       if (this.hurtT > 0) a = 'hurt';
       else if (this.openT > 0) a = 'open';
+      else if (this.leverT > 0) a = 'lever';
+      else if (this.pointT > 0) a = 'point';
       else if (this.dashT > 0) a = 'dash';
       else if (this.castT > 0) a = 'cast';
       else if (this.atkT > 0) a = this.atkDir === 'up' ? 'slashup' : this.atkDir === 'down' ? 'slashdown' : 'slash';
@@ -242,7 +264,7 @@ G.Player = (function () {
       else if (this.windV && Math.abs(this.windV) > 150 && (!this.mx || this.mx * this.windV < 0)) a = this.mx ? 'windwalk' : 'blown';
       else a = Math.abs(this.vx) > 30 ? 'run' : 'idle';
       // poses that only the painted (v2) atlas has fall back to the nearest older one
-      if (!G.Sprite.has('wick', a)) a = ({ windwalk: 'run', blown: 'hurt', open: 'focus', glide: 'fall', djump: 'jump', lookup: 'idle', slashup: 'slash', slashdown: 'slash', wall: 'fall', cast: 'focus', sit: 'idle', death: 'hurt' })[a] || a;
+      if (!G.Sprite.has('wick', a)) a = ({ lever: 'focus', point: 'cast', windwalk: 'run', blown: 'hurt', open: 'focus', glide: 'fall', djump: 'jump', lookup: 'idle', slashup: 'slash', slashdown: 'slash', wall: 'fall', cast: 'focus', sit: 'idle', death: 'hurt' })[a] || a;
       this.setAnim(a);
     }
     draw(ctx) {
@@ -256,6 +278,7 @@ G.Player = (function () {
         this.pup.draw(ctx, fx, fy, { flip, alpha: blink ? 0.45 : 1, flash: this.hurtT > 0.2 ? 0.8 : 0 });
         return;
       }
+      if (G.Main.room && G.Main.room.crane) this.drawCrane(ctx);
       const meta = G.Sprite.meta('wick');
       const an = meta && meta.anims[this.anim];
       // run cadence follows real speed (feet don't skate when slowing down)
@@ -272,6 +295,15 @@ G.Player = (function () {
       this.tip = tip;
       if (this.hazardT > 0) return;
       G.Sprite.draw(ctx, 'wick', this.anim, fi, fx, fy, { flip, sy, alpha: blink ? 0.45 : 1, flash: this.hurtT > 0.2 ? 0.8 : 0 });
+    }
+    drawCrane(ctx) {  // stand-in paper crane until ART_BRIEF_2 sends the painted one (4 wing frames)
+      const x = this.cx, y = this.feet + 6, f = Math.sin(this.flameT * 9) * 26;
+      const im = G.Assets.get('prop_gb_whale_crane' + (Math.floor(this.flameT * 9) % 4));
+      if (im) { const P = window.PROPS['gb_whale_crane0']; ctx.drawImage(im, x - P.ax, y - P.ay, P.w, P.h); return; }
+      ctx.save(); ctx.translate(x, y); ctx.fillStyle = '#efe6d4'; ctx.strokeStyle = '#9b8f78'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(70, -8); ctx.lineTo(-60, -4); ctx.lineTo(-90, -40); ctx.lineTo(-40, 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(10, -6); ctx.lineTo(-20, -60 - f); ctx.lineTo(-40, -4); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(60, -8); ctx.lineTo(95, -36); ctx.lineTo(80, -10); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
     }
     drawFlame(ctx, t) {
       if (!this.tip || this.hazardT > 0) return;

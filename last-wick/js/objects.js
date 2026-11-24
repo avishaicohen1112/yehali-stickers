@@ -130,7 +130,7 @@ G.Objects = (function () {
     for (const o of list) {
       o.t = (o.t || 0) + dt;
       if (o.type === 'gate') o.k = approach(o.k, o.closed ? 1 : 0, dt * 4);
-      if (o.type === 'portal') { const open = !o.req || S.bosses[o.req]; o.open = open; if (open) { G.FX.light(o.x, o.y - 90, 380, [200, 170, 255], 1); if (Math.random() < dt * 30) G.FX.spawn({ x: o.x + rand(-50, 50), y: o.y - rand(20, 170), vx: 0, vy: rand(-60, -20), life: 1.4, size: rand(1.5, 3), kind: 'mote', ph: rand(6), a: 1, c: [215, 190, 255], add: true }); } }
+      if (o.type === 'portal') { const open = !o.req || (Array.isArray(o.req) ? o.req.every(k => S.bosses[k]) : S.bosses[o.req]); o.open = open; if (open) { G.FX.light(o.x, o.y - 90, 380, [200, 170, 255], 1); if (Math.random() < dt * 30) G.FX.spawn({ x: o.x + rand(-50, 50), y: o.y - rand(20, 170), vx: 0, vy: rand(-60, -20), life: 1.4, size: rand(1.5, 3), kind: 'mote', ph: rand(6), a: 1, c: [215, 190, 255], add: true }); } }
       if (o.type === 'chest') updateChest(o, dt, p);
       if (o.type === 'bench' || o.type === 'npc' || o.type === 'lore' || o.type === 'portal' || (o.type === 'chest' && !o.open)) {
         const d = Math.abs(p.cx - o.x); if (d < o.w * 0.6 && Math.abs(p.feet - o.y) < 60 && d < nd) { nd = d; nearest = o; }

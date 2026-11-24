@@ -680,8 +680,9 @@ G.Bosses = (function () {
   }
 
   function create(kind, tx, ty) {
+    if (G.Giants && G.Giants.has(kind)) return G.Giants.create(kind, tx, ty);
     const C = { knight: Knight, moth: Moth, angler: Angler, vesper: Vesper, extinguisher: Extinguisher, choir: Choir, colossus: Colossus, leviathan: Leviathan, captain: Captain, keeper: Keeper, paperking: PaperKing, clockmaker: Clockmaker, firstflame: FirstFlame }[kind];
     return C ? new C(tx, ty) : null;
   }
-  return { create, wave };
+  return { create, wave, Boss, fireball, ringShot };
 })();
