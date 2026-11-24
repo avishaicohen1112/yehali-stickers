@@ -40,7 +40,7 @@ G.Main = (function () {
     const prev = room ? room.id : null;
     room = new G.World.Room(id); G.state.room = id; G.state.visited[id] = true;
     roomImg(id); areaImgs(room.area); for (const n of neighbors(id)) { roomImg(n); areaImgs(window.WORLD.rooms[n].area); }
-    enemies = []; boss = null; G.FX.reset(); G.Objects.build(room); G.Main.bossCam = null;
+    enemies = []; boss = null; G.FX.reset(); G.Objects.build(room); G.Main.bossCam = null; G.Wind.enter(room);
     for (const e of room.ents) {
       if (e.t === 'enemy') { const en = new G.Enemies.Enemy(e.kind, e.x, e.y); enemies.push(en); }
       if (e.t === 'boss' && !G.state.bosses[e.kind]) { boss = G.Bosses.create(e.kind, e.x, e.y); if (boss) enemies.push(boss); }
@@ -228,7 +228,7 @@ G.Main = (function () {
     if (boss && boss.active && !boss.dead && boss.cx > 0) G.Main.bossCam = { x: lerp(player.cx, boss.cx, 0.25) };
     else G.Main.bossCam = null;
     bossAftermath(dt);
-    G.FX.update(dt); Rn.ambient(dt, room);
+    G.FX.update(dt); Rn.ambient(dt, room); G.Wind.update(dt, Rn.cam, Rn.VW, Rn.VH);
     Rn.camUpdate(dt, room, player);
     checkTransition();
     if (player.dead) { deathT += dt; if (deathT > 1.8 && fade.target === 0) { fade.target = 1; fade.speed = 1.2; } if (deathT > 3) respawn(); }

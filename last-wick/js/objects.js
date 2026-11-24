@@ -98,6 +98,7 @@ G.Objects = (function () {
       else if (e.t === 'lore') add({ type: 'lore', text: e.text, x, y, w: 90 });
       else if (e.t === 'pickup') { const id = e.id || e.kind; if (!S.picked[id]) add({ type: 'pickup', kind: e.kind, id, x, y: y - 50, t: 0 }); }
       else if (e.t === 'brazier') add({ type: 'brazier', x, y });
+      else if (e.t === 'chest') { const done = !!S.picked[e.id]; add({ type: 'chest', id: e.id, kind: e.kind || 'small', give: e.give, tallow: e.tallow ?? 25, x, y, w: 110, open: done, k: done ? 1 : 0, opening: 0 }); }
       else if (e.t === 'gate') add({ type: 'gate', id: e.id, tx: e.x, ty: e.y - e.h, h: e.h, req: e.req, closed: false, k: 0 });
       else if (e.t === 'seal') add({ type: 'seal', id: e.id, tx: e.x, ty: e.y === 0 ? 0 : e.y, w: e.w, closeOnBoss: e.closeOnBoss, req: e.req || 'vesper', closed: false, k: 0 });
       else if (e.t === 'portal') add({ type: 'portal', id: e.id, x, y, w: 140, to: e.to, tx: e.tx, ty: e.ty, req: e.req, t: 0 });
@@ -130,7 +131,8 @@ G.Objects = (function () {
       o.t = (o.t || 0) + dt;
       if (o.type === 'gate') o.k = approach(o.k, o.closed ? 1 : 0, dt * 4);
       if (o.type === 'portal') { const open = !o.req || S.bosses[o.req]; o.open = open; if (open) { G.FX.light(o.x, o.y - 90, 380, [200, 170, 255], 1); if (Math.random() < dt * 30) G.FX.spawn({ x: o.x + rand(-50, 50), y: o.y - rand(20, 170), vx: 0, vy: rand(-60, -20), life: 1.4, size: rand(1.5, 3), kind: 'mote', ph: rand(6), a: 1, c: [215, 190, 255], add: true }); } }
-      if (o.type === 'bench' || o.type === 'npc' || o.type === 'lore' || o.type === 'portal') {
+      if (o.type === 'chest') updateChest(o, dt, p);
+      if (o.type === 'bench' || o.type === 'npc' || o.type === 'lore' || o.type === 'portal' || (o.type === 'chest' && !o.open)) {
         const d = Math.abs(p.cx - o.x); if (d < o.w * 0.6 && Math.abs(p.feet - o.y) < 60 && d < nd) { nd = d; nearest = o; }
       }
       if (o.type === 'bench') G.FX.light(o.x, o.y - 70, 420, [255, 170, 90], 1);
@@ -154,7 +156,28 @@ G.Objects = (function () {
     if (o.type === 'bench') G.Main.sitBench(o);
     else if (o.type === 'npc') G.UI.talk(o);
     else if (o.type === 'lore') G.UI.lore(o.text);
+    else if (o.type === 'chest') openChest(o, p);
     else if (o.type === 'portal') { if (o.open) G.Main.portalTo(o.to, o.tx, o.ty); else { G.UI.toast(G.T('portal_sealed')); G.Sound.sfx('clank'); } }
+  }
+  // chests: hero kneels (anim 'open'), lid swings up, wax drops + an optional item spill out
+  function openChest(o, p) {
+    if (o.open || p.dead) return;
+    o.open = true; o.opening = 0.001; G.state.picked[o.id] = true;
+    p.facing = sign(o.x - p.cx) || p.facing; p.lock = 0.95; p.openT = 0.95; p.vx = 0;
+    G.Sound.sfx('clank', { pitch: 0.8 });
+  }
+  function updateChest(o, dt, p) {
+    if (o.k > 0) G.FX.light(o.x, o.y - 40, 160 + o.k * 120, [255, 200, 120], o.k);
+    if (!o.opening) return;
+    const t0 = o.opening; o.opening += dt;
+    if (o.opening > 0.3) o.k = Math.min(1, o.k + dt * 3.2);
+    if (t0 < 0.42 && o.opening >= 0.42) {
+      G.Sound.sfx('heal', { pitch: 1.2 }); G.FX.flash('#ffe6b8', 0.12, 0.3);
+      G.FX.burst(o.x, o.y - 40, 26, { speed: 320, life: 0.8, size: 3, c: [255, 215, 150], kind: 'ember', angle: -Math.PI / 2, spread: 0.9 });
+      if (o.tallow) dropTallow(o.x, o.y - 50, o.tallow);
+      if (o.give) G.Main.grant(o.give, o.id); else G.Main.save();
+    }
+    if (o.opening > 1.2) o.opening = 0;
   }
   function hit(hb, p) { return false; }
   function drawBack(ctx, t) {
@@ -166,6 +189,7 @@ G.Objects = (function () {
       else if (o.type === 'gate') G.Render.drawGate(ctx, o, t);
       else if (o.type === 'seal') G.Render.drawSeal(ctx, o, t);
       else if (o.type === 'portal') G.Render.drawPortal(ctx, o, t);
+      else if (o.type === 'chest') G.Render.drawChest(ctx, o, t);
     }
   }
   function drawFront(ctx, t) {

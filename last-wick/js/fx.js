@@ -61,6 +61,9 @@ G.FX = (function () {
           ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (p.kind === 'ember' ? k : 1), 0, 7); ctx.fill();
           glow(ctx, p.x, p.y, p.size * 6, p.c, a * 0.5);
         }
+      } else if (p.kind === 'streak') {  // wind streak: thin line along velocity, fades in and out
+        ctx.globalAlpha = Math.sin(Math.PI * p.t / p.life) * (p.a || 0.5); ctx.strokeStyle = rgba(p.c, 1); ctx.lineWidth = p.size; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * 0.09, p.y - p.vy * 0.09); ctx.stroke();
       } else if (p.kind === 'smoke') {
         ctx.globalAlpha = k * (p.a || 0.35); ctx.fillStyle = rgba(p.c, 1);
         ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (1.6 - k * 0.6), 0, 7); ctx.fill();

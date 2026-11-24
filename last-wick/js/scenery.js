@@ -37,14 +37,15 @@ G.Scenery = (function () {
     let x = X, y = Y, rot = 0, sc = 1, a = it.a ?? 1;
     const ph = it.ph || (it.x * 0.013);
     if (it.bob) y += Math.sin(t * it.bob[1] + ph) * it.bob[0] * s;
-    if (it.sway) rot += Math.sin(t * it.sway[1] + ph) * it.sway[0];
+    const wk = G.Wind ? G.Wind.sway() : 1;  // gusts make hanging/standing elements swing harder
+    if (it.sway) rot += Math.sin(t * it.sway[1] * (0.8 + wk * 0.2) + ph) * it.sway[0] * wk;
     if (it.spin) rot += t * it.spin;
     if (it.pulse) sc *= it.pulse[0] + (it.pulse[1] - it.pulse[0]) * (0.5 + 0.5 * Math.sin(t * it.pulse[2] + ph));
     if (it.flicker) a *= it.flicker[0] + (it.flicker[1] - it.flicker[0]) * (0.5 + 0.5 * Math.sin(t * it.flicker[2] + ph) * Math.sin(t * it.flicker[2] * 2.3 + ph * 2));
     if (it.glow) G.FX.glow(ctx, x + (0.5 - pv[0]) * w, y + (0.5 - pv[1]) * h, it.glow[3] * s, [it.glow[0], it.glow[1], it.glow[2]], (it.glow[4] ?? 0.5) * a);
     ctx.save(); ctx.globalAlpha *= a; if (it.blend) ctx.globalCompositeOperation = it.blend;
     ctx.translate(x, y); if (rot) ctx.rotate(rot); if (sc !== 1) ctx.scale(sc, sc); if (it.flip) ctx.scale(-1, 1);
-    if (it.chain) chainDraw(ctx, img, w, h, pv, it.chain, t + ph);
+    if (it.chain) chainDraw(ctx, img, w, h, pv, wk > 1.05 ? Object.assign({}, it.chain, { amp: (it.chain.amp || 0.05) * wk }) : it.chain, t + ph);
     else ctx.drawImage(img, -pv[0] * w, -pv[1] * h, w, h);
     ctx.restore();
   }

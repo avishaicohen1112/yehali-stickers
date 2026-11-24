@@ -19,6 +19,11 @@ G.Enemies = (function () {
     papersoldier: { w: 46, h: 96, hp: 6, tallow: 8, type: 'lunger', speed: 90, light: [255, 235, 200, 140], ppu: 50 },
     gear: { w: 64, h: 64, hp: 8, tallow: 9, type: 'charger', speed: 70, light: [255, 210, 130, 140], ppu: 50 },
     clockwisp: { w: 50, h: 56, hp: 4, tallow: 6, type: 'floater', speed: 70, light: [255, 215, 140, 220], ppu: 50 },
+    // wind-stage enemies (ART_BRIEF_2 C19-C22)
+    gustwraith: { w: 56, h: 80, hp: 5, tallow: 7, type: 'floater', speed: 50, light: [190, 225, 255, 160], ppu: 50 },
+    windmoth: { w: 56, h: 44, hp: 3, tallow: 4, type: 'diver', speed: 150, light: [255, 150, 90, 120], ppu: 50 },
+    anchorgrub: { w: 54, h: 40, hp: 6, tallow: 6, type: 'walker', speed: 40, light: [255, 140, 70, 110], ppu: 50 },
+    barkthrower: { w: 50, h: 70, hp: 4, tallow: 5, type: 'shooter', light: [255, 170, 90, 140], ppu: 50 },
     wraith: { w: 60, h: 90, hp: 8, tallow: 12, type: 'blinker', speed: 0, light: [255, 90, 60, 200], ppu: 50 },
   };
   class Enemy {
@@ -146,6 +151,18 @@ G.Enemies = (function () {
       this.vx = approach(this.vx, dp < 420 ? sign(dxp) * this.d.speed : 0, 60 * dt);
       if (room.moveX(this, (this.vx + this.kbx) * dt)) this.vx *= -1;
       room.moveY(this, this.vy * dt);
+      if (this.kind === 'gustwraith') {  // telegraphed blast that shoves the hero away
+        if (this.state !== 'windup' && dp < 480 && this.st > 2.6) { this.state = 'windup'; this.st = 0; }
+        if (this.state === 'windup') {
+          this.anim = 'windup'; this.facing = sign(dxp) || 1;
+          if (Math.random() < 0.6) G.FX.spawn({ x: this.cx + rand(-60, 60), y: this.cy + rand(-60, 60), vx: (this.cx - p.cx) * 0.02, vy: 0, life: 0.4, size: 1.5, kind: 'streak', c: [200, 230, 255], a: 0.6, add: true });
+          if (this.st > 0.7) {
+            this.state = 'idle'; this.st = 0; G.Sound.sfx('swoop', { pitch: 0.6 });
+            for (let i = 0; i < 24; i++) G.FX.spawn({ x: this.cx, y: this.cy + rand(-40, 40), vx: this.facing * rand(500, 900), vy: rand(-60, 60), life: 0.6, size: 1.6, kind: 'streak', c: [210, 235, 255], a: 0.8, add: true });
+            if (dp < 520 && Math.abs(dyp) < 160 && !p.dead) { p.vx = this.facing * 900; p.vy = Math.min(p.vy, -260); p.recoilT = 0.25; }
+          }
+        }
+      }
     }
     gunAI(dt, room, p, dxp, dyp, dp, see) {
       this.facing = sign(dxp) || 1;

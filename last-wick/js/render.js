@@ -236,6 +236,26 @@ G.Render = (function () {
     } else { c.fillStyle = '#1a1520'; c.beginPath(); c.ellipse(o.x, o.y - 45, 30, 45, 0, 0, 7); c.fill(); c.fillStyle = '#e8dcc8'; c.beginPath(); c.arc(o.x, o.y - 95, 20, 0, 7); c.fill(); }
     if (G.Objects.nearest() === o) G.UI.prompt(c, o.x, o.y - 175, G.T('talk'));
   }
+  // chest: painted base + lid (assets from ART_BRIEF_2 R01-R03 -> props chest_<kind>_base / _lid); vector stand-in until then
+  function drawChest(c, o, t) {
+    const B = window.PROPS['chest_' + o.kind + '_base'], L = window.PROPS['chest_' + o.kind + '_lid'];
+    const ib = B && G.Assets.get('prop_chest_' + o.kind + '_base'), il = L && G.Assets.get('prop_chest_' + o.kind + '_lid');
+    const ang = -o.k * 1.9 * (o.k < 1 ? 1 : 1) + (o.opening > 0.3 && o.opening < 0.6 ? Math.sin((o.opening - 0.3) * 30) * 0.05 : 0);
+    if (ib && il) {
+      c.drawImage(ib, o.x - B.ax, o.y - B.ay, B.w, B.h);
+      c.save(); c.translate(o.x - B.ax + 6, o.y - B.ay + 4); c.rotate(ang); c.drawImage(il, -6, -L.h + 4, L.w, L.h); c.restore();
+    } else {
+      const w = o.kind === 'rare' ? 96 : 84, h = 50, x = o.x - w / 2, y = o.y - h;
+      const wood = o.kind === 'iron' ? '#2b2a33' : '#3a2a22', trim = o.kind === 'rare' ? '#d8b25a' : '#77706a';
+      c.fillStyle = wood; c.fillRect(x, y, w, h); c.fillStyle = trim; c.fillRect(x, y + 8, w, 5); c.fillRect(x + 8, y, 6, h); c.fillRect(x + w - 14, y, 6, h);
+      if (o.k > 0) { G.FX.glow(c, o.x, y + 4, 70 * o.k, [255, 210, 140], 0.6 * o.k); }
+      c.save(); c.translate(x, y); c.rotate(ang);
+      c.fillStyle = wood; c.beginPath(); c.moveTo(0, 0); c.lineTo(w, 0); c.quadraticCurveTo(w, -24, w / 2, -26); c.quadraticCurveTo(0, -24, 0, 0); c.fill();
+      c.fillStyle = trim; c.fillRect(8, -24, 6, 24); c.fillRect(w - 14, -24, 6, 24); c.fillRect(w / 2 - 5, -8, 10, 10);
+      c.restore();
+    }
+    if (G.Objects.nearest() === o) G.UI.prompt(c, o.x, o.y - 120, G.T('open'));
+  }
   function drawLore(c, o, t) {
     if (!drawPropAt('tablet', o.x, o.y + 2)) { c.fillStyle = '#29242c'; c.fillRect(o.x - 24, o.y - 70, 48, 70); }
     G.FX.light(o.x, o.y - 50, 140, [200, 210, 255], 0.6);
@@ -304,6 +324,6 @@ G.Render = (function () {
   return {
     ctx, cv, cam, AREA, get VW() { return VW; }, VH, get scale() { return scale; }, resize,
     camUpdate, ambient, roomLights, drawFlames, drawBG, drawProps, drawTerrain, drawWater, drawLighting, drawFog,
-    drawBench, drawNPC, drawLore, drawPortal, drawBrazier, drawGate, drawSeal, drawPickup, drawCinder, drawPropAt
+    drawBench, drawNPC, drawChest, drawLore, drawPortal, drawBrazier, drawGate, drawSeal, drawPickup, drawCinder, drawPropAt
   };
 })();
