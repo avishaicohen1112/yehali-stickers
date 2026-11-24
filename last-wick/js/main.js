@@ -85,7 +85,12 @@ G.Main = (function () {
     const tr = trans; const vx = player.vx, vy = player.vy;
     enterRoom(tr.id, tr.x, tr.y, true);
     if (tr.dir === 'P') { player.vx = 0; player.vy = 0; save(); }
-    if (tr.dir === 'N') { player.vy = Math.min(vy, -1050); }
+    if (tr.dir === 'N') {   // coming up through a floor hole: a full launch (not cut short by a released jump) and a fresh double jump,
+      player.vy = Math.min(vy, -1150); player.cut = true; player.djumped = false; player.airDashed = false;
+      // ... drifting toward the nearer edge of the hole so you land on the floor beside it instead of dropping back
+      const r = room, tx = Math.floor(player.cx / TILE), ty = Math.floor((player.y + player.h) / TILE) + 1; let l = 0, rr = 0;
+      while (l < 12 && r.tile(tx - l, ty) !== '#') l++; while (rr < 12 && r.tile(tx + rr, ty) !== '#') rr++;
+      player.upDir = l <= rr ? -1 : 1; player.vx = player.upDir * 300; player.upAssist = 0.6; }
     if (tr.dir === 'E' || tr.dir === 'W') { player.vy = Math.min(player.vy, 0); }
     trans = null; fade.target = 0; fade.speed = 4;
   }
@@ -234,7 +239,7 @@ G.Main = (function () {
     // player light
     if (player.tip) { const S = G.state; const k = player.dead ? Math.max(0, 1 - player.deadT) : 0.6 + 0.4 * S.hp / S.hpMax; G.FX.light(player.tip.x, player.tip.y - 10, (360 + Math.sin(t * 13) * 8) * k * (player.focusing ? 1.3 : 1), [255, 170, 90], 1); }
     for (const e of enemies) e.update(dt, room, player);
-    enemies = enemies.filter(e => !(e.dead && !e.isBoss && e.deadT > 0.5));
+    enemies = enemies.filter(e => !(e.dead && !e.isBoss && e.deadT > 0.85));
     if (boss && boss.dead) enemies = enemies.filter(e => !e.isPart);
     G.Objects.update(dt, room, player);
     // boss

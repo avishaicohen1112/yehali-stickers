@@ -400,7 +400,7 @@ link('q2', 'q3', -9, 4)
 link('q3', 'z1', -9, 4)
 link('z1', 'z2', -9, 4)
 # platforms inside link openings (after carving)
-c3.plat(4, 24, 3)
+# (no ledge inside the c3 shaft: coming up from c5 the hero is launched clear of the hole instead)
 c5.plat(16, 1, 3)
 n1.plat(15, 1, 3)
 

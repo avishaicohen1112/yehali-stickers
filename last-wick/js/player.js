@@ -85,7 +85,8 @@ G.Player = (function () {
           if (this.ground && Math.random() < dt * 18) G.FX.spawn({ x: this.cx + rand(-10, 10), y: this.feet - 2, vx: Wv * rand(0.3, 0.7), vy: rand(-60, -10), life: 0.5, size: rand(4, 8), kind: 'smoke', c: [90, 84, 96], a: 0.3, drag: 2 });
         } else if (this.wallJumpT <= 0 && this.recoilT <= 0) {
           const acc = this.ground ? C.ACC_G : C.ACC_A;
-          this.vx = approach(this.vx, mx * C.RUN, acc * dt);
+          if (this.upAssist > 0 && !this.ground) { this.upAssist -= dt; this.vx = mx ? approach(this.vx, mx * C.RUN, acc * dt) : this.upDir * 300; }   // launched out of a floor hole: keep drifting to its edge unless steered
+          else { this.upAssist = 0; this.vx = approach(this.vx, mx * C.RUN, acc * dt); }
         } else if (this.recoilT > 0) this.vx = approach(this.vx, 0, 2000 * dt);
         // ---- gravity
         const grav = C.GRAV * (this.vy > 0 ? C.FALL_MULT : 1);

@@ -92,17 +92,25 @@ G.Enemies = (function () {
         if (d.type === 'charger' && see && Math.abs(dyp) < 90 && Math.abs(dxp) < 460 && this.st > 0.6) { this.state = 'windup'; this.st = 0; this.facing = sign(dxp) || 1; G.Sound.sfx('boss_roar', { vol: 0.25, pitch: 2.2 }); }
         if (d.type === 'lunger' && see && Math.abs(dyp) < 90 && Math.abs(dxp) < 300 && this.st > 0.8) { this.state = 'windup'; this.st = 0; this.facing = sign(dxp) || 1; }
         if (d.type === 'lunger' && see && Math.abs(dyp) < 90 && Math.abs(dxp) < 600) this.facing = sign(dxp) || this.facing;
+        if (d.type === 'walker') {   // little crawlers stop to look around, and bite when you get close
+          if (see && Math.abs(dyp) < 70 && Math.abs(dxp) < 150 && this.st > 0.7) { this.state = 'windup'; this.st = 0; this.facing = sign(dxp) || 1; }
+          else if (this.st > (this.pauseAt || (this.pauseAt = rand(3, 6)))) { this.state = 'pause'; this.st = 0; this.pauseAt = 0; }
+        }
       } else if (this.state === 'windup') {
         this.anim = 'windup'; vx = 0;
-        if (this.st > (d.type === 'charger' ? 0.45 : 0.4)) { this.state = 'attack'; this.st = 0; if (d.type === 'lunger') { G.Sound.sfx('slash', { pitch: 0.7 }); G.FX.slash(this.cx + this.facing * 55, this.cy - 8, 'side', this.facing, { dur: 0.2, c: [255, 200, 140], follow: this, big: 1.1 }); } }
+        if (this.st > (d.type === 'charger' ? 0.45 : d.type === 'walker' ? 0.35 : 0.4)) { this.state = 'attack'; this.st = 0; if (d.type === 'walker') { this.vy = -260; G.Sound.sfx('slash', { pitch: 1.6, vol: 0.5 }); } if (d.type === 'lunger') { G.Sound.sfx('slash', { pitch: 0.7 }); G.FX.slash(this.cx + this.facing * 55, this.cy - 8, 'side', this.facing, { dur: 0.2, c: [255, 200, 140], follow: this, big: 1.1 }); } }
       } else if (this.state === 'attack') {
         this.anim = 'attack';
         if (d.type === 'charger') { vx = this.facing * 360; if (this.st > 1.3 || room.wallAhead(this, this.facing) || room.edgeAhead(this, this.facing)) { this.state = 'recover'; this.st = 0; } if (Math.random() < 0.3) G.FX.spawn({ x: this.cx, y: this.y + this.h, vx: -this.facing * 80, vy: -40, life: 0.4, size: 6, kind: 'smoke', c: [60, 50, 50], a: 0.4 }); }
+        else if (d.type === 'walker') { vx = this.facing * 300 * Math.max(0, 1 - this.st / 0.4); this.atkBox = { x: this.facing > 0 ? this.cx : this.cx - 60, y: this.y, w: 60, h: this.h };
+          if (overlap(this.atkBox, p.hitbox())) p.damage(1, this.cx);
+          if (this.st > 0.4 && this.ground) { this.state = 'recover'; this.st = 0; this.atkBox = null; } }
         else { vx = this.facing * 520 * Math.max(0, 1 - this.st / 0.3); this.atkBox = { x: this.facing > 0 ? this.cx : this.cx - 90, y: this.y + 20, w: 90, h: 60 };
           if (overlap(this.atkBox, p.hitbox())) p.damage(1, this.cx);
           if (this.st > 0.35) { this.state = 'recover'; this.st = 0; this.atkBox = null; }
           if (room.edgeAhead(this, this.facing)) vx = 0; }
       } else if (this.state === 'recover') { this.anim = 'idle'; vx = 0; if (this.st > 0.6) { this.state = 'walk'; this.st = 0; } }
+      else if (this.state === 'pause') { this.anim = 'idle'; vx = 0; if (this.st > 1.4) { this.state = 'walk'; this.st = 0; if (Math.random() < 0.4) this.facing *= -1; } }
       else this.state = 'walk';
       room.moveX(this, (vx + this.kbx) * dt);
       this.gravity(dt, room);
@@ -135,17 +143,17 @@ G.Enemies = (function () {
       if (Math.abs(this.vx) > 30) this.facing = sign(this.vx);
     }
     shootAI(dt, room, p, dxp, dyp, dp, see) {
-      this.anim = this.state === 'windup' ? 'windup' : 'idle'; this.facing = sign(dxp) || 1;
+      this.anim = this.state === 'windup' ? 'windup' : this.st < 0.35 && this.fired ? 'attack' : 'idle'; this.facing = sign(dxp) || 1;
       if (this.state !== 'windup' && see && dp < 650 && this.st > 2.2) { this.state = 'windup'; this.st = 0; }
       if (this.state === 'windup' && this.st > 0.55) {
-        this.state = 'idle'; this.st = 0; G.Sound.sfx('spore');
+        this.state = 'idle'; this.st = 0; this.fired = true; G.Sound.sfx('spore');
         for (let i = -1; i <= 1; i++) G.Objects.spawnProj({ kind: 'spore', x: this.cx, y: this.y + 10, vx: dxp * 0.9 + i * 170, vy: -620 + Math.abs(i) * 80, g: 1300, r: 14, life: 3, dmg: 1 });
         G.FX.burst(this.cx, this.y + 10, 14, { speed: 200, life: 0.6, size: 6, c: [120, 255, 200], kind: 'smoke', a: 0.3, add: true });
       }
       this.gravity(dt, room);
     }
     floatAI(dt, room, p, dxp, dyp, dp) {
-      this.anim = 'idle';
+      this.anim = dp < 110 ? 'attack' : Math.abs(this.vx) > 25 ? 'walk' : 'idle'; if (Math.abs(this.vx) > 25) this.facing = sign(this.vx);
       const ty = this.hy + Math.sin(this.t * 1.1) * 70;
       this.vy = approach(this.vy, (ty - this.y) * 1.5, 300 * dt);
       this.vx = approach(this.vx, dp < 420 ? sign(dxp) * this.d.speed : 0, 60 * dt);
@@ -167,9 +175,9 @@ G.Enemies = (function () {
     gunAI(dt, room, p, dxp, dyp, dp, see) {
       this.facing = sign(dxp) || 1;
       if (this.state !== 'windup' && see && dp < 760 && this.st > 1.8) { this.state = 'windup'; this.st = 0; }
-      this.anim = this.state === 'windup' ? 'windup' : 'idle';
+      this.anim = this.state === 'windup' ? 'windup' : this.st < 0.35 && this.fired ? 'attack' : 'idle';
       if (this.state === 'windup' && this.st > 0.6) {
-        this.state = 'idle'; this.st = 0; G.Sound.sfx('shard');
+        this.state = 'idle'; this.st = 0; this.fired = true; G.Sound.sfx('shard');
         const a = Math.atan2(dyp - 20, dxp);
         for (let i = -1; i <= 1; i++) G.Objects.spawnProj({ kind: 'shard', x: this.cx + this.facing * 20, y: this.y + 30, vx: Math.cos(a + i * 0.16) * 640, vy: Math.sin(a + i * 0.16) * 640, r: 12, life: 2.5, dmg: 1 });
       }
@@ -201,7 +209,7 @@ G.Enemies = (function () {
     }
     draw(ctx, t) {
       const fx = this.cx, fy = this.y + this.h;
-      let a = this.dead ? Math.max(0, 1 - this.deadT * 2.5) : this.alpha;
+      let a = this.dead ? Math.max(0, 1 - Math.max(0, this.deadT - 0.35) * 2.2) : this.alpha;
       if (a <= 0) return;
       const shake = this.state === 'windup' ? Math.sin(this.t * 60) * 2 : 0;
       const atlas = 'e_' + this.kind;
@@ -213,6 +221,8 @@ G.Enemies = (function () {
       } else if (G.Sprite.meta(atlas)) {
         const m = G.Sprite.meta(atlas); let an = m.anims[this.anim] ? this.anim : (m.anims.idle ? 'idle' : Object.keys(m.anims)[0]);
         if (this.anim === 'walk' && !m.anims.walk && m.anims.fly) an = 'fly';
+        if (this.anim === 'fly' && !m.anims.fly && m.anims.walk) an = 'walk';      // 16-pose sheets: the move cycle is the flight
+        if (this.dead && m.anims.hurt) an = 'hurt';
         if (this.hitT > 0 && m.anims.hurt && !this.dead) an = 'hurt';  // painted 'got hit' pose from the 16-pose sheets (C2)
         const fi = G.Sprite.frameOf(atlas, an, this.animT);
         // painted sheets with few poses get a little procedural life: step bob, hover, breathing
@@ -223,8 +233,9 @@ G.Enemies = (function () {
           else if (an === 'idle' && A.n <= 2) sy *= 1 + Math.sin(this.t * 2.2 + this.x * 0.01) * 0.02; }
         // hit reaction: a quick squash and a lean away from the blow, warm glint instead of a white silhouette
         const hk = this.hitT > 0 ? Math.sin((1 - this.hitT / 0.2) * Math.PI) : 0;
-        const rot = hk * 0.12 * (this.hitDir || 0), sq = 1 - hk * 0.08;
-        G.Sprite.draw(ctx, atlas, an, fi, fx + shake, fy + yo + (this.dead ? this.deadT * 60 : 0), { flip: this.facing < 0, alpha: a, flash: this.flash * 0.45, tint: this.flash > 0.05 ? [255, 190, 120, this.flash * 0.35] : null, ppu: this.d.ppu, sy: sy * sq, rot });
+        let rot = hk * 0.12 * (this.hitDir || 0), sq = 1 - hk * 0.08;
+        if (this.dead) { rot = -(this.facing || 1) * Math.min(1, this.deadT * 2.2) * 1.3; sy = 1; }   // keels over
+        G.Sprite.draw(ctx, atlas, an, fi, fx + shake, fy + yo + (this.dead ? this.deadT * 14 : 0), { flip: this.facing < 0, alpha: a, flash: this.flash * 0.45, tint: this.flash > 0.05 ? [255, 190, 120, this.flash * 0.35] : null, ppu: this.d.ppu, sy: sy * sq, rot });
       } else {
         ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = this.flash > 0 ? '#fff' : '#15121c';
         ctx.beginPath(); ctx.ellipse(fx + shake, this.cy, this.w / 2, this.h / 2, 0, 0, 7); ctx.fill();
