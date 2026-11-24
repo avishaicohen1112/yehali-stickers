@@ -214,7 +214,13 @@ G.Enemies = (function () {
         const m = G.Sprite.meta(atlas); let an = m.anims[this.anim] ? this.anim : (m.anims.idle ? 'idle' : Object.keys(m.anims)[0]);
         if (this.anim === 'walk' && !m.anims.walk && m.anims.fly) an = 'fly';
         const fi = G.Sprite.frameOf(atlas, an, this.animT);
-        G.Sprite.draw(ctx, atlas, an, fi, fx + shake, fy + (this.dead ? this.deadT * 60 : 0), { flip: this.facing < 0, alpha: a, flash: this.flash * 0.85, ppu: this.d.ppu, sy: this.dead ? 1 - this.deadT : 1 });
+        // painted sheets with few poses get a little procedural life: step bob, hover, breathing
+        let yo = 0, sy = this.dead ? 1 - this.deadT : 1;
+        if (m.v === 2 && !this.dead) { const A = m.anims[an];
+          if (an === 'walk' && A.n <= 4) yo = -Math.abs(Math.sin(this.animT * A.fps * Math.PI)) * 3;
+          else if (an === 'fly') yo = Math.sin(this.t * 5 + this.x * 0.01) * 3;
+          else if (an === 'idle' && A.n <= 2) sy *= 1 + Math.sin(this.t * 2.2 + this.x * 0.01) * 0.02; }
+        G.Sprite.draw(ctx, atlas, an, fi, fx + shake, fy + yo + (this.dead ? this.deadT * 60 : 0), { flip: this.facing < 0, alpha: a, flash: this.flash * 0.85, ppu: this.d.ppu, sy });
       } else {
         ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = this.flash > 0 ? '#fff' : '#15121c';
         ctx.beginPath(); ctx.ellipse(fx + shake, this.cy, this.w / 2, this.h / 2, 0, 0, 7); ctx.fill();

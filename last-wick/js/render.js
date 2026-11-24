@@ -229,7 +229,9 @@ G.Render = (function () {
   function drawNPC(c, o, t) {
     const at = 'n_' + o.id;
     if (G.Sprite.meta(at)) {
-      const fi = G.Sprite.frameOf(at, 'idle', t + o.x * 0.01), m = window.ATLAS[at];
+      const m = window.ATLAS[at];
+      if (m.rig && m.rig.head && m.anims.head && m.anims.body) { drawNPCRig(c, o, t, at, m); if (G.Objects.nearest() === o) G.UI.prompt(c, o.x, o.y - 175, G.T('talk')); return; }
+      const fi = G.Sprite.frameOf(at, 'idle', t + o.x * 0.01);
       // painted NPCs come as one pose: give them a slow breath around the feet
       const sy = m.v === 2 && m.anims.idle.n === 1 ? 1 + Math.sin(t * 1.6 + o.x * 0.01) * 0.014 : 1;
       G.Sprite.draw(c, at, 'idle', fi, o.x, o.y + 1, { flip: G.Main.player.cx < o.x, ppu: m.ppu || 50, sy });
@@ -255,6 +257,17 @@ G.Render = (function () {
       c.restore();
     }
     if (G.Objects.nearest() === o) G.UI.prompt(c, o.x, o.y - 120, G.T('open'));
+  }
+  // painted NPC as a two-piece cut-out: breathing body + head that sways, and nods while talking
+  function drawNPCRig(c, o, t, at, m) {
+    const flip = G.Main.player.cx < o.x, f = flip ? -1 : 1, s = (m.ppu || 50) / m.unitPx, ph = o.x * 0.013;
+    const talking = G.UI.modal && G.UI.modal.kind === 'talk' && G.UI.modal.npc === o.id;
+    const br = Math.sin(t * 1.6 + ph), sy = 1 + br * 0.014;
+    const rb = m.rig.body || [0, 0], rh = m.rig.head;
+    G.Sprite.draw(c, at, 'body', 0, o.x + f * rb[0] * s, o.y + 1 + rb[1] * s, { flip, sy, ppu: m.ppu || 50 });
+    const nod = talking ? Math.sin(t * 8) * 0.06 + 0.04 : 0, rot = Math.sin(t * 0.7 + ph) * 0.035 + nod;
+    const hy = o.y + 1 + rh[1] * s * sy + br * 0.8 + (talking ? Math.abs(Math.sin(t * 8)) * -1.5 : 0);
+    G.Sprite.draw(c, at, 'head', 0, o.x + f * rh[0] * s, hy, { flip, rot: f * rot, ppu: m.ppu || 50 });
   }
   function drawLore(c, o, t) {
     if (!drawPropAt('tablet', o.x, o.y + 2)) { c.fillStyle = '#29242c'; c.fillRect(o.x - 24, o.y - 70, 48, 70); }

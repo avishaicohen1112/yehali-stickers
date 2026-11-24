@@ -12,8 +12,8 @@
  "cells": {
   "B02": [
    "full",
-   null,
-   null
+   "head",
+   "body"
   ]
  },
  "scale": {
@@ -29,6 +29,23 @@
     "full"
    ],
    "loop": true
+  },
+  "head": {
+   "f": [
+    "head"
+   ]
+  },
+  "body": {
+   "f": [
+    "body"
+   ]
   }
+ },
+ "rig": {
+  "base": "full",
+  "parts": [
+   "body",
+   "head"
+  ]
  }
 }

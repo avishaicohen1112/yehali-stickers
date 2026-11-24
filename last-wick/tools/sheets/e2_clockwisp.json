@@ -1,0 +1,85 @@
+{
+ "atlas": "e_clockwisp",
+ "sources": {
+  "C2-18": "art_src/C2-18"
+ },
+ "grid": [
+  4,
+  4
+ ],
+ "cells": {
+  "C2-18": [
+   "idle0",
+   "idle1",
+   "idle2",
+   "idle3",
+   "m0",
+   "m1",
+   "m2",
+   "m3",
+   "m4",
+   "m5",
+   "w0",
+   "w1",
+   "a0",
+   "a1",
+   "a2",
+   "hurt"
+  ]
+ },
+ "scale": {
+  "C2-18": [
+   "idle0",
+   60
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "idle0",
+    "idle1",
+    "idle2",
+    "idle3",
+    "idle2",
+    "idle1"
+   ],
+   "fps": 5,
+   "loop": true
+  },
+  "windup": {
+   "f": [
+    "w0",
+    "w1"
+   ],
+   "fps": 6
+  },
+  "attack": {
+   "f": [
+    "a0",
+    "a1",
+    "a2"
+   ],
+   "fps": 10,
+   "loop": true
+  },
+  "hurt": {
+   "f": [
+    "hurt"
+   ]
+  },
+  "walk": {
+   "f": [
+    "m0",
+    "m1",
+    "m2",
+    "m3",
+    "m4",
+    "m5"
+   ],
+   "fps": 8,
+   "loop": true
+  }
+ },
+ "anchorY": "center"
+}

@@ -172,6 +172,21 @@ def build(spec_path, debug=None, outdir=None):
         d['cx'] -= o.get('dx', 0) * g2p; d['feet'] -= o.get('dy', 0) * g2p
         if 'tip' in o: d['tip'] = o['tip']
     if not padded: print(f'  [{name}] nothing built'); return None
+    rig = {}
+    if S.get('rig'):  # cut-out parts (e.g. NPC head/body): find where each part sits inside the full figure
+        base = S['rig']['base']; B = padded[names.index(base)][..., 3]; bo = info[base]
+        for part in S['rig']['parts']:
+            if part not in names: continue
+            Pm = padded[names.index(part)][..., 3]; best = (-1, None, 1)
+            for sc in (0.9, 0.95, 1.0, 1.05, 1.1):
+                T_ = cv2.resize(Pm, None, fx=sc, fy=sc, interpolation=cv2.INTER_AREA)
+                if T_.shape[0] > B.shape[0] or T_.shape[1] > B.shape[1]: continue
+                r = cv2.matchTemplate(B, T_, cv2.TM_CCORR_NORMED); _, v, _, loc = cv2.minMaxLoc(r)
+                if v > best[0]: best = (v, loc, sc)
+            if best[1] is None: continue
+            pi = info[part]; sc = best[2]
+            rig[part] = [round(best[1][0] + pi['cx'] * sc - bo['cx'], 1), round(best[1][1] + pi['feet'] * sc - bo['feet'], 1), round(best[0], 3)]
+        print(f'  [{name}] rig:', rig)
     sheet, pos = pack(padded)
     meta = {'v': 2, 'unitPx': unit, 'scale': 1.0,
             'cell': [int(max(p.shape[1] for p in padded)), int(max(p.shape[0] for p in padded))], 'anims': {}}
@@ -188,6 +203,7 @@ def build(spec_path, debug=None, outdir=None):
         meta['anims'][an] = e
     first = meta['anims'][next(iter(meta['anims']))]
     meta['origin'] = first['o'][0]
+    if rig: meta['rig'] = rig
     out = os.path.join(outdir or os.path.join(ROOT, 'assets/sprites'), name)
     Image.fromarray(np.clip(sheet, 0, 255).astype(np.uint8), 'RGBA').save(out + '.webp', 'WEBP', quality=90, method=5)
     json.dump(meta, open(out + '.json', 'w'), separators=(',', ':'))
@@ -234,5 +250,6 @@ def debug_sheet(name, names, frames, info, S, d):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(); ap.add_argument('spec', nargs='?'); ap.add_argument('--all', action='store_true'); ap.add_argument('--debug'); ap.add_argument('--out')
     a = ap.parse_args()
-    specs = sorted(glob.glob(os.path.join(ROOT, 'tools/sheets/*.json'))) if a.all else [a.spec]
+    # e2_* (full 16-pose enemy sheets) run after e_* (4-pose rows) so they win whenever their source exists
+    specs = sorted(glob.glob(os.path.join(ROOT, 'tools/sheets/*.json')), key=lambda p: (os.path.basename(p).startswith('e2_'), p)) if a.all else [a.spec]
     for s in specs: build(s, a.debug, a.out)

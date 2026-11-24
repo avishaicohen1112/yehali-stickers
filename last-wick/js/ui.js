@@ -121,7 +121,7 @@ G.UI = (function () {
     const d = G.TEXT.npc[npc.id]; const S = G.state;
     const seen = S.talked[npc.id] || 0; const set = d.lines[Math.min(seen, d.lines.length - 1)];
     S.talked[npc.id] = seen + 1;
-    modal = { kind: 'talk', name: d.name, lines: set, i: 0, t: 0, after: d.shop ? () => openShop() : null };
+    modal = { kind: 'talk', npc: npc.id, name: d.name, lines: set, i: 0, t: 0, after: d.shop ? () => openShop() : null };
     G.Sound.sfx('ui_select');
   }
   function lore(id) { modal = { kind: 'talk', name: '', lines: G.TEXT.lore[id], i: 0, t: 0 }; G.Sound.sfx('ui_select'); }
