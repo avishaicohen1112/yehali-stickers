@@ -46,5 +46,47 @@
   "hearth_throne",
   "hearth_bell",
   "hearth_ashpile"
+ ],
+ "shore": [
+  "shore_anchor",
+  "shore_barrel",
+  "shore_pierlamp",
+  "shore_wreck",
+  "shore_shells",
+  "shore_chest"
+ ],
+ "galleon": [
+  "galleon_cannon",
+  "galleon_wheel",
+  "galleon_crates",
+  "galleon_barrels",
+  "galleon_maptable",
+  "galleon_bell",
+  "galleon_prop6",
+  "galleon_prop7"
+ ],
+ "lighthouse": [
+  "lighthouse_lens",
+  "lighthouse_lanterns",
+  "lighthouse_logbook",
+  "lighthouse_oilmachine",
+  "lighthouse_prop4",
+  "lighthouse_prop5"
+ ],
+ "paper": [
+  "paper_papertree",
+  "paper_paperlamp",
+  "paper_bridge",
+  "paper_books",
+  "paper_prop4",
+  "paper_prop5"
+ ],
+ "clock": [
+  "clock_grandclock",
+  "clock_toolbox",
+  "clock_bells",
+  "clock_organ",
+  "clock_prop4",
+  "clock_prop5"
  ]
 }

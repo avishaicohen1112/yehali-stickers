@@ -1212,5 +1212,1357 @@
    128,
    138
   ]
+ },
+ "shore": {
+  "sky": [
+   "#4b2941",
+   "#9c4943",
+   "#392e3f"
+  ],
+  "layers": [
+   {
+    "id": "far",
+    "img": "scn_shore_far",
+    "src": "assets/scn/shore/far.webp",
+    "p": 0.06,
+    "h": 1.12,
+    "tile": true
+   },
+   {
+    "kind": "rays",
+    "color": [
+     226,
+     106,
+     99
+    ],
+    "a": 0.05,
+    "count": 4,
+    "p": 0.15
+   },
+   {
+    "kind": "fog",
+    "color": [
+     226,
+     106,
+     99
+    ],
+    "a": 0.14,
+    "p": 0.15,
+    "speed": 9,
+    "y": 0.45,
+    "h": 0.6
+   },
+   {
+    "id": "sil",
+    "img": "scn_shore_sil",
+    "src": "assets/scn/shore/sil.webp",
+    "p": 0.16,
+    "h": 1.05,
+    "tile": true
+   },
+   {
+    "id": "mid",
+    "img": "scn_shore_mid",
+    "src": "assets/scn/shore/mid.webp",
+    "p": 0.32,
+    "h": 1.0,
+    "tile": true,
+    "items": [
+     {
+      "img": "scn_shore_el_firewave",
+      "src": "assets/scn/shore/el_firewave.webp",
+      "x": 66,
+      "s": 0.81,
+      "y": 828,
+      "pivot": [
+       0.5,
+       1
+      ],
+      "bob": [
+       5,
+       1.1
+      ],
+      "flicker": [
+       0.75,
+       1,
+       3
+      ]
+     },
+     {
+      "img": "scn_shore_el_ropelamp",
+      "src": "assets/scn/shore/el_ropelamp.webp",
+      "x": 206,
+      "s": 1.0,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_shore_el_flag",
+      "src": "assets/scn/shore/el_flag.webp",
+      "x": 264,
+      "s": 1.04,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_shore_el_spark",
+      "src": "assets/scn/shore/el_spark.webp",
+      "x": 419,
+      "s": 0.83,
+      "y": 286,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_shore_el_piece4",
+      "src": "assets/scn/shore/el_piece4.webp",
+      "x": 463,
+      "s": 1.06,
+      "y": 377,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_shore_el_piece5",
+      "src": "assets/scn/shore/el_piece5.webp",
+      "x": 575,
+      "s": 1.03,
+      "y": 444,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_shore_el_firewave",
+      "src": "assets/scn/shore/el_firewave.webp",
+      "x": 644,
+      "s": 0.82,
+      "y": 828,
+      "pivot": [
+       0.5,
+       1
+      ],
+      "bob": [
+       5,
+       1.1
+      ],
+      "flicker": [
+       0.75,
+       1,
+       3
+      ]
+     },
+     {
+      "img": "scn_shore_el_ropelamp",
+      "src": "assets/scn/shore/el_ropelamp.webp",
+      "x": 794,
+      "s": 0.83,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_shore_el_flag",
+      "src": "assets/scn/shore/el_flag.webp",
+      "x": 826,
+      "s": 0.86,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_shore_el_spark",
+      "src": "assets/scn/shore/el_spark.webp",
+      "x": 974,
+      "s": 0.87,
+      "y": 396,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_shore_el_piece4",
+      "src": "assets/scn/shore/el_piece4.webp",
+      "x": 1019,
+      "s": 0.85,
+      "y": 319,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_shore_el_piece5",
+      "src": "assets/scn/shore/el_piece5.webp",
+      "x": 1112,
+      "s": 1.1,
+      "y": 445,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "fog",
+    "color": [
+     226,
+     106,
+     99
+    ],
+    "a": 0.1,
+    "p": 0.5,
+    "speed": 18,
+    "y": 0.62,
+    "h": 0.45,
+    "seed": "b"
+   },
+   {
+    "id": "front",
+    "img": "scn_shore_front",
+    "src": "assets/scn/shore/front.webp",
+    "p": 1.25,
+    "h": 1.0,
+    "front": true
+   }
+  ],
+  "fog": [
+   226,
+   106,
+   99
+  ]
+ },
+ "galleon": {
+  "sky": [
+   "#201e2c",
+   "#312b3f",
+   "#232435"
+  ],
+  "layers": [
+   {
+    "id": "far",
+    "img": "scn_galleon_far",
+    "src": "assets/scn/galleon/far.webp",
+    "p": 0.06,
+    "h": 1.12,
+    "tile": true
+   },
+   {
+    "kind": "rays",
+    "color": [
+     71,
+     65,
+     95
+    ],
+    "a": 0.05,
+    "count": 4,
+    "p": 0.15
+   },
+   {
+    "kind": "fog",
+    "color": [
+     71,
+     65,
+     95
+    ],
+    "a": 0.14,
+    "p": 0.15,
+    "speed": 9,
+    "y": 0.45,
+    "h": 0.6
+   },
+   {
+    "id": "sil",
+    "img": "scn_galleon_sil",
+    "src": "assets/scn/galleon/sil.webp",
+    "p": 0.16,
+    "h": 1.05,
+    "tile": true
+   },
+   {
+    "id": "mid",
+    "img": "scn_galleon_mid",
+    "src": "assets/scn/galleon/mid.webp",
+    "p": 0.32,
+    "h": 1.0,
+    "tile": true,
+    "items": [
+     {
+      "img": "scn_galleon_el_lantern",
+      "src": "assets/scn/galleon/el_lantern.webp",
+      "x": 82,
+      "s": 0.81,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_galleon_el_rope",
+      "src": "assets/scn/galleon/el_rope.webp",
+      "x": 287,
+      "s": 1.06,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_galleon_el_net",
+      "src": "assets/scn/galleon/el_net.webp",
+      "x": 524,
+      "s": 0.85,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_galleon_el_lantern",
+      "src": "assets/scn/galleon/el_lantern.webp",
+      "x": 748,
+      "s": 0.84,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_galleon_el_rope",
+      "src": "assets/scn/galleon/el_rope.webp",
+      "x": 906,
+      "s": 0.81,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_galleon_el_net",
+      "src": "assets/scn/galleon/el_net.webp",
+      "x": 1107,
+      "s": 1.05,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     }
+    ]
+   },
+   {
+    "kind": "fog",
+    "color": [
+     71,
+     65,
+     95
+    ],
+    "a": 0.1,
+    "p": 0.5,
+    "speed": 18,
+    "y": 0.62,
+    "h": 0.45,
+    "seed": "b"
+   },
+   {
+    "id": "front",
+    "img": "scn_galleon_front",
+    "src": "assets/scn/galleon/front.webp",
+    "p": 1.25,
+    "h": 1.0,
+    "front": true
+   }
+  ],
+  "fog": [
+   71,
+   65,
+   95
+  ]
+ },
+ "lighthouse": {
+  "sky": [
+   "#26283b",
+   "#413f50",
+   "#262e40"
+  ],
+  "layers": [
+   {
+    "id": "far",
+    "img": "scn_lighthouse_far",
+    "src": "assets/scn/lighthouse/far.webp",
+    "p": 0.06,
+    "h": 1.12,
+    "tile": true
+   },
+   {
+    "kind": "rays",
+    "color": [
+     102,
+     101,
+     131
+    ],
+    "a": 0.05,
+    "count": 4,
+    "p": 0.15
+   },
+   {
+    "kind": "fog",
+    "color": [
+     102,
+     101,
+     131
+    ],
+    "a": 0.14,
+    "p": 0.15,
+    "speed": 9,
+    "y": 0.45,
+    "h": 0.6
+   },
+   {
+    "id": "sil",
+    "img": "scn_lighthouse_sil",
+    "src": "assets/scn/lighthouse/sil.webp",
+    "p": 0.16,
+    "h": 1.05,
+    "tile": true
+   },
+   {
+    "id": "mid",
+    "img": "scn_lighthouse_mid",
+    "src": "assets/scn/lighthouse/mid.webp",
+    "p": 0.32,
+    "h": 1.0,
+    "tile": true,
+    "items": [
+     {
+      "img": "scn_lighthouse_el_gear",
+      "src": "assets/scn/lighthouse/el_gear.webp",
+      "x": 127,
+      "s": 1.05,
+      "y": 247,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "spin": -0.3
+     },
+     {
+      "img": "scn_lighthouse_el_chain",
+      "src": "assets/scn/lighthouse/el_chain.webp",
+      "x": 260,
+      "s": 1.09,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_lighthouse_el_piece2",
+      "src": "assets/scn/lighthouse/el_piece2.webp",
+      "x": 392,
+      "s": 1.06,
+      "y": 259,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_lighthouse_el_piece3",
+      "src": "assets/scn/lighthouse/el_piece3.webp",
+      "x": 544,
+      "s": 0.99,
+      "y": 281,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_lighthouse_el_gear",
+      "src": "assets/scn/lighthouse/el_gear.webp",
+      "x": 677,
+      "s": 0.83,
+      "y": 285,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "spin": -0.21
+     },
+     {
+      "img": "scn_lighthouse_el_chain",
+      "src": "assets/scn/lighthouse/el_chain.webp",
+      "x": 819,
+      "s": 1.05,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_lighthouse_el_piece2",
+      "src": "assets/scn/lighthouse/el_piece2.webp",
+      "x": 996,
+      "s": 1.03,
+      "y": 460,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_lighthouse_el_piece3",
+      "src": "assets/scn/lighthouse/el_piece3.webp",
+      "x": 1114,
+      "s": 1.06,
+      "y": 362,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "fog",
+    "color": [
+     102,
+     101,
+     131
+    ],
+    "a": 0.1,
+    "p": 0.5,
+    "speed": 18,
+    "y": 0.62,
+    "h": 0.45,
+    "seed": "b"
+   },
+   {
+    "id": "front",
+    "img": "scn_lighthouse_front",
+    "src": "assets/scn/lighthouse/front.webp",
+    "p": 1.25,
+    "h": 1.0,
+    "front": true
+   }
+  ],
+  "fog": [
+   102,
+   101,
+   131
+  ]
+ },
+ "paper": {
+  "sky": [
+   "#b5725b",
+   "#d09276",
+   "#56444a"
+  ],
+  "layers": [
+   {
+    "id": "far",
+    "img": "scn_paper_far",
+    "src": "assets/scn/paper/far.webp",
+    "p": 0.06,
+    "h": 1.12,
+    "tile": true
+   },
+   {
+    "kind": "rays",
+    "color": [
+     255,
+     220,
+     185
+    ],
+    "a": 0.05,
+    "count": 4,
+    "p": 0.15
+   },
+   {
+    "kind": "fog",
+    "color": [
+     255,
+     220,
+     185
+    ],
+    "a": 0.14,
+    "p": 0.15,
+    "speed": 9,
+    "y": 0.45,
+    "h": 0.6
+   },
+   {
+    "id": "sil",
+    "img": "scn_paper_sil",
+    "src": "assets/scn/paper/sil.webp",
+    "p": 0.16,
+    "h": 1.05,
+    "tile": true
+   },
+   {
+    "id": "mid",
+    "img": "scn_paper_mid",
+    "src": "assets/scn/paper/mid.webp",
+    "p": 0.32,
+    "h": 1.0,
+    "tile": true,
+    "items": [
+     {
+      "img": "scn_paper_el_crane",
+      "src": "assets/scn/paper/el_crane.webp",
+      "x": 84,
+      "s": 1.09,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_paper_el_leaf",
+      "src": "assets/scn/paper/el_leaf.webp",
+      "x": 276,
+      "s": 0.85,
+      "y": 505,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       14,
+       0.7
+      ],
+      "sway": [
+       0.08,
+       0.9
+      ]
+     },
+     {
+      "img": "scn_paper_el_ribbon",
+      "src": "assets/scn/paper/el_ribbon.webp",
+      "x": 547,
+      "s": 0.96,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_paper_el_crane",
+      "src": "assets/scn/paper/el_crane.webp",
+      "x": 762,
+      "s": 0.94,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_paper_el_leaf",
+      "src": "assets/scn/paper/el_leaf.webp",
+      "x": 922,
+      "s": 0.92,
+      "y": 188,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       14,
+       0.7
+      ],
+      "sway": [
+       0.08,
+       0.9
+      ]
+     },
+     {
+      "img": "scn_paper_el_ribbon",
+      "src": "assets/scn/paper/el_ribbon.webp",
+      "x": 1178,
+      "s": 1.01,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     }
+    ]
+   },
+   {
+    "kind": "fog",
+    "color": [
+     255,
+     220,
+     185
+    ],
+    "a": 0.1,
+    "p": 0.5,
+    "speed": 18,
+    "y": 0.62,
+    "h": 0.45,
+    "seed": "b"
+   },
+   {
+    "id": "front",
+    "img": "scn_paper_front",
+    "src": "assets/scn/paper/front.webp",
+    "p": 1.25,
+    "h": 1.0,
+    "front": true
+   }
+  ],
+  "fog": [
+   255,
+   220,
+   185
+  ]
+ },
+ "clock": {
+  "sky": [
+   "#403639",
+   "#5f514f",
+   "#2f3847"
+  ],
+  "layers": [
+   {
+    "id": "far",
+    "img": "scn_clock_far",
+    "src": "assets/scn/clock/far.webp",
+    "p": 0.06,
+    "h": 1.12,
+    "tile": true
+   },
+   {
+    "kind": "rays",
+    "color": [
+     149,
+     129,
+     128
+    ],
+    "a": 0.05,
+    "count": 4,
+    "p": 0.15
+   },
+   {
+    "kind": "fog",
+    "color": [
+     149,
+     129,
+     128
+    ],
+    "a": 0.14,
+    "p": 0.15,
+    "speed": 9,
+    "y": 0.45,
+    "h": 0.6
+   },
+   {
+    "id": "sil",
+    "img": "scn_clock_sil",
+    "src": "assets/scn/clock/sil.webp",
+    "p": 0.16,
+    "h": 1.05,
+    "tile": true
+   },
+   {
+    "id": "mid",
+    "img": "scn_clock_mid",
+    "src": "assets/scn/clock/mid.webp",
+    "p": 0.32,
+    "h": 1.0,
+    "tile": true,
+    "items": [
+     {
+      "img": "scn_clock_el_gear",
+      "src": "assets/scn/clock/el_gear.webp",
+      "x": 119,
+      "s": 1.04,
+      "y": 229,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "spin": 0.39
+     },
+     {
+      "img": "scn_clock_el_pendulum",
+      "src": "assets/scn/clock/el_pendulum.webp",
+      "x": 242,
+      "s": 0.96,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "sway": [
+       0.35,
+       1.4
+      ]
+     },
+     {
+      "img": "scn_clock_el_hand",
+      "src": "assets/scn/clock/el_hand.webp",
+      "x": 317,
+      "s": 0.89,
+      "y": 321,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "spin": 0.39
+     },
+     {
+      "img": "scn_clock_el_piece3",
+      "src": "assets/scn/clock/el_piece3.webp",
+      "x": 411,
+      "s": 1.1,
+      "y": 383,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_clock_el_piece4",
+      "src": "assets/scn/clock/el_piece4.webp",
+      "x": 592,
+      "s": 0.92,
+      "y": 293,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_clock_el_gear",
+      "src": "assets/scn/clock/el_gear.webp",
+      "x": 712,
+      "s": 0.99,
+      "y": 315,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "spin": -0.17
+     },
+     {
+      "img": "scn_clock_el_pendulum",
+      "src": "assets/scn/clock/el_pendulum.webp",
+      "x": 761,
+      "s": 0.84,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "sway": [
+       0.35,
+       1.4
+      ]
+     },
+     {
+      "img": "scn_clock_el_hand",
+      "src": "assets/scn/clock/el_hand.webp",
+      "x": 931,
+      "s": 0.96,
+      "y": 285,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "spin": -0.38
+     },
+     {
+      "img": "scn_clock_el_piece3",
+      "src": "assets/scn/clock/el_piece3.webp",
+      "x": 1024,
+      "s": 0.9,
+      "y": 421,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_clock_el_piece4",
+      "src": "assets/scn/clock/el_piece4.webp",
+      "x": 1139,
+      "s": 0.94,
+      "y": 264,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "fog",
+    "color": [
+     149,
+     129,
+     128
+    ],
+    "a": 0.1,
+    "p": 0.5,
+    "speed": 18,
+    "y": 0.62,
+    "h": 0.45,
+    "seed": "b"
+   },
+   {
+    "id": "front",
+    "img": "scn_clock_front",
+    "src": "assets/scn/clock/front.webp",
+    "p": 1.25,
+    "h": 1.0,
+    "front": true
+   }
+  ],
+  "fog": [
+   149,
+   129,
+   128
+  ]
+ },
+ "core": {
+  "sky": [
+   "#8a4d2b",
+   "#cc7c42",
+   "#392d2e"
+  ],
+  "layers": [
+   {
+    "id": "far",
+    "img": "scn_core_far",
+    "src": "assets/scn/core/far.webp",
+    "p": 0.06,
+    "h": 1.12,
+    "tile": true
+   },
+   {
+    "kind": "rays",
+    "color": [
+     255,
+     183,
+     102
+    ],
+    "a": 0.05,
+    "count": 4,
+    "p": 0.15
+   },
+   {
+    "kind": "fog",
+    "color": [
+     255,
+     183,
+     102
+    ],
+    "a": 0.14,
+    "p": 0.15,
+    "speed": 9,
+    "y": 0.45,
+    "h": 0.6
+   },
+   {
+    "id": "sil",
+    "img": "scn_core_sil",
+    "src": "assets/scn/core/sil.webp",
+    "p": 0.16,
+    "h": 1.05,
+    "tile": true
+   },
+   {
+    "id": "mid",
+    "img": "scn_core_mid",
+    "src": "assets/scn/core/mid.webp",
+    "p": 0.32,
+    "h": 1.0,
+    "tile": true,
+    "items": [
+     {
+      "img": "scn_core_el_drop",
+      "src": "assets/scn/core/el_drop.webp",
+      "x": 83,
+      "s": 0.83,
+      "y": 378,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_core_el_sparkle",
+      "src": "assets/scn/core/el_sparkle.webp",
+      "x": 295,
+      "s": 1.04,
+      "y": 388,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_core_el_flame",
+      "src": "assets/scn/core/el_flame.webp",
+      "x": 498,
+      "s": 1.07,
+      "y": 468,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_core_el_drop",
+      "src": "assets/scn/core/el_drop.webp",
+      "x": 744,
+      "s": 0.96,
+      "y": 261,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_core_el_sparkle",
+      "src": "assets/scn/core/el_sparkle.webp",
+      "x": 969,
+      "s": 0.9,
+      "y": 261,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     },
+     {
+      "img": "scn_core_el_flame",
+      "src": "assets/scn/core/el_flame.webp",
+      "x": 1176,
+      "s": 0.94,
+      "y": 252,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "bob": [
+       10,
+       0.8
+      ],
+      "flicker": [
+       0.8,
+       1,
+       2.2
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "fog",
+    "color": [
+     255,
+     183,
+     102
+    ],
+    "a": 0.1,
+    "p": 0.5,
+    "speed": 18,
+    "y": 0.62,
+    "h": 0.45,
+    "seed": "b"
+   },
+   {
+    "id": "front",
+    "img": "scn_core_front",
+    "src": "assets/scn/core/front.webp",
+    "p": 1.25,
+    "h": 1.0,
+    "front": true
+   }
+  ],
+  "fog": [
+   255,
+   183,
+   102
+  ]
  }
 }

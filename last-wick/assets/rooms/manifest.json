@@ -1090,5 +1090,572 @@
     "f": false
    }
   ]
+ },
+ "e1": {
+  "img": "assets/rooms/e1.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "shore_barrel",
+    "x": 125,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": true
+   },
+   {
+    "p": "shore_anchor",
+    "x": 1275,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "shore_pierlamp",
+    "x": 825,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   }
+  ]
+ },
+ "e2": {
+  "img": "assets/rooms/e2.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "shore_pierlamp",
+    "x": 2825,
+    "y": 956,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "shore_chest",
+    "x": 575,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": true
+   },
+   {
+    "p": "shore_shells",
+    "x": 125,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "shore_shells",
+    "x": 925,
+    "y": 906,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "shore_chest",
+    "x": 1325,
+    "y": 856,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "shore_anchor",
+    "x": 1675,
+    "y": 706,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   }
+  ]
+ },
+ "e3": {
+  "img": "assets/rooms/e3.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "shore_shells",
+    "x": 425,
+    "y": 756,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   },
+   {
+    "p": "shore_chest",
+    "x": 2025,
+    "y": 756,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": true
+   }
+  ]
+ },
+ "k1": {
+  "img": "assets/rooms/k1.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "galleon_barrels",
+    "x": 1275,
+    "y": 556,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "galleon_cannon",
+    "x": 1825,
+    "y": 556,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "galleon_bell",
+    "x": 375,
+    "y": 556,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "galleon_barrels",
+    "x": 2275,
+    "y": 556,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   }
+  ]
+ },
+ "k2": {
+  "img": "assets/rooms/k2.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "galleon_crates",
+    "x": 1625,
+    "y": 556,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "galleon_barrels",
+    "x": 125,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "galleon_barrels",
+    "x": 625,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": true
+   }
+  ]
+ },
+ "k3": {
+  "img": "assets/rooms/k3.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "galleon_barrels",
+    "x": 625,
+    "y": 706,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "galleon_barrels",
+    "x": 1525,
+    "y": 706,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "galleon_prop6",
+    "x": 1075,
+    "y": 706,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "galleon_bell",
+    "x": 275,
+    "y": 706,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   }
+  ]
+ },
+ "l1": {
+  "img": "assets/rooms/l1.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "lighthouse_lanterns",
+    "x": 1875,
+    "y": 1106,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "lighthouse_prop5",
+    "x": 125,
+    "y": 1106,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "lighthouse_prop4",
+    "x": 1425,
+    "y": 1106,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   },
+   {
+    "p": "lighthouse_lanterns",
+    "x": 875,
+    "y": 1106,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   }
+  ]
+ },
+ "l2": {
+  "img": "assets/rooms/l2.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "lighthouse_oilmachine",
+    "x": 925,
+    "y": 1956,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   },
+   {
+    "p": "lighthouse_lens",
+    "x": 325,
+    "y": 1956,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   }
+  ]
+ },
+ "l3": {
+  "img": "assets/rooms/l3.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "lighthouse_prop4",
+    "x": 1625,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "lighthouse_prop4",
+    "x": 975,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   },
+   {
+    "p": "lighthouse_logbook",
+    "x": 125,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   },
+   {
+    "p": "lighthouse_logbook",
+    "x": 475,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   }
+  ]
+ },
+ "p1": {
+  "img": "assets/rooms/p1.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "paper_bridge",
+    "x": 375,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "paper_papertree",
+    "x": 1625,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": true
+   },
+   {
+    "p": "paper_books",
+    "x": 1225,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   }
+  ]
+ },
+ "p2": {
+  "img": "assets/rooms/p2.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "paper_papertree",
+    "x": 525,
+    "y": 1056,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": true
+   },
+   {
+    "p": "paper_bridge",
+    "x": 175,
+    "y": 1056,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   },
+   {
+    "p": "paper_paperlamp",
+    "x": 1075,
+    "y": 1156,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "paper_bridge",
+    "x": 2125,
+    "y": 1456,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "paper_paperlamp",
+    "x": 1675,
+    "y": 1456,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   }
+  ]
+ },
+ "p3": {
+  "img": "assets/rooms/p3.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "paper_paperlamp",
+    "x": 725,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "paper_paperlamp",
+    "x": 1775,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "paper_prop5",
+    "x": 275,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": true
+   },
+   {
+    "p": "paper_prop5",
+    "x": 1075,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   }
+  ]
+ },
+ "q1": {
+  "img": "assets/rooms/q1.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "clock_prop5",
+    "x": 325,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   },
+   {
+    "p": "clock_bells",
+    "x": 2075,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "clock_prop4",
+    "x": 1325,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "clock_organ",
+    "x": 925,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   }
+  ]
+ },
+ "q2": {
+  "img": "assets/rooms/q2.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "clock_prop5",
+    "x": 525,
+    "y": 2406,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "clock_prop5",
+    "x": 875,
+    "y": 2406,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   }
+  ]
+ },
+ "q3": {
+  "img": "assets/rooms/q3.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "clock_grandclock",
+    "x": 925,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   },
+   {
+    "p": "clock_grandclock",
+    "x": 275,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   },
+   {
+    "p": "clock_prop5",
+    "x": 1625,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   }
+  ]
  }
 }

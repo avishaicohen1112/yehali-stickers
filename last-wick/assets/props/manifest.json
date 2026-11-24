@@ -473,5 +473,229 @@
   "h": 84.5,
   "ax": 75.2,
   "ay": 84.5
+ },
+ "shore_anchor": {
+  "img": "assets/props/shore_anchor.webp",
+  "w": 156.5,
+  "h": 190.0,
+  "ax": 78.2,
+  "ay": 190.0
+ },
+ "shore_barrel": {
+  "img": "assets/props/shore_barrel.webp",
+  "w": 125.0,
+  "h": 164.5,
+  "ax": 62.5,
+  "ay": 164.5
+ },
+ "shore_pierlamp": {
+  "img": "assets/props/shore_pierlamp.webp",
+  "w": 143.5,
+  "h": 184.5,
+  "ax": 71.8,
+  "ay": 184.5
+ },
+ "shore_wreck": {
+  "img": "assets/props/shore_wreck.webp",
+  "w": 181.0,
+  "h": 152.5,
+  "ax": 90.5,
+  "ay": 152.5
+ },
+ "shore_shells": {
+  "img": "assets/props/shore_shells.webp",
+  "w": 164.5,
+  "h": 82.5,
+  "ax": 82.2,
+  "ay": 82.5
+ },
+ "shore_chest": {
+  "img": "assets/props/shore_chest.webp",
+  "w": 168.0,
+  "h": 125.0,
+  "ax": 84.0,
+  "ay": 125.0
+ },
+ "galleon_cannon": {
+  "img": "assets/props/galleon_cannon.webp",
+  "w": 172.0,
+  "h": 146.0,
+  "ax": 86.0,
+  "ay": 146.0
+ },
+ "galleon_wheel": {
+  "img": "assets/props/galleon_wheel.webp",
+  "w": 150.5,
+  "h": 180.5,
+  "ax": 75.2,
+  "ay": 180.5
+ },
+ "galleon_crates": {
+  "img": "assets/props/galleon_crates.webp",
+  "w": 129.0,
+  "h": 142.5,
+  "ax": 64.5,
+  "ay": 142.5
+ },
+ "galleon_barrels": {
+  "img": "assets/props/galleon_barrels.webp",
+  "w": 128.5,
+  "h": 138.0,
+  "ax": 64.2,
+  "ay": 138.0
+ },
+ "galleon_maptable": {
+  "img": "assets/props/galleon_maptable.webp",
+  "w": 123.5,
+  "h": 188.0,
+  "ax": 61.8,
+  "ay": 188.0
+ },
+ "galleon_bell": {
+  "img": "assets/props/galleon_bell.webp",
+  "w": 121.5,
+  "h": 166.5,
+  "ax": 60.8,
+  "ay": 166.5
+ },
+ "galleon_prop6": {
+  "img": "assets/props/galleon_prop6.webp",
+  "w": 189.5,
+  "h": 173.5,
+  "ax": 94.8,
+  "ay": 173.5
+ },
+ "galleon_prop7": {
+  "img": "assets/props/galleon_prop7.webp",
+  "w": 116.5,
+  "h": 190.0,
+  "ax": 58.2,
+  "ay": 190.0
+ },
+ "lighthouse_lens": {
+  "img": "assets/props/lighthouse_lens.webp",
+  "w": 133.0,
+  "h": 190.0,
+  "ax": 66.5,
+  "ay": 190.0
+ },
+ "lighthouse_lanterns": {
+  "img": "assets/props/lighthouse_lanterns.webp",
+  "w": 80.5,
+  "h": 165.5,
+  "ax": 40.2,
+  "ay": 165.5
+ },
+ "lighthouse_logbook": {
+  "img": "assets/props/lighthouse_logbook.webp",
+  "w": 79.5,
+  "h": 165.5,
+  "ax": 39.8,
+  "ay": 165.5
+ },
+ "lighthouse_oilmachine": {
+  "img": "assets/props/lighthouse_oilmachine.webp",
+  "w": 100.5,
+  "h": 166.0,
+  "ax": 50.2,
+  "ay": 166.0
+ },
+ "lighthouse_prop4": {
+  "img": "assets/props/lighthouse_prop4.webp",
+  "w": 134.0,
+  "h": 141.5,
+  "ax": 67.0,
+  "ay": 141.5
+ },
+ "lighthouse_prop5": {
+  "img": "assets/props/lighthouse_prop5.webp",
+  "w": 170.5,
+  "h": 158.0,
+  "ax": 85.2,
+  "ay": 158.0
+ },
+ "paper_papertree": {
+  "img": "assets/props/paper_papertree.webp",
+  "w": 153.0,
+  "h": 162.0,
+  "ax": 76.5,
+  "ay": 162.0
+ },
+ "paper_paperlamp": {
+  "img": "assets/props/paper_paperlamp.webp",
+  "w": 96.5,
+  "h": 190.0,
+  "ax": 48.2,
+  "ay": 190.0
+ },
+ "paper_bridge": {
+  "img": "assets/props/paper_bridge.webp",
+  "w": 208.0,
+  "h": 115.5,
+  "ax": 104.0,
+  "ay": 115.5
+ },
+ "paper_books": {
+  "img": "assets/props/paper_books.webp",
+  "w": 181.5,
+  "h": 132.5,
+  "ax": 90.8,
+  "ay": 132.5
+ },
+ "paper_prop4": {
+  "img": "assets/props/paper_prop4.webp",
+  "w": 180.0,
+  "h": 129.0,
+  "ax": 90.0,
+  "ay": 129.0
+ },
+ "paper_prop5": {
+  "img": "assets/props/paper_prop5.webp",
+  "w": 193.5,
+  "h": 132.5,
+  "ax": 96.8,
+  "ay": 132.5
+ },
+ "clock_grandclock": {
+  "img": "assets/props/clock_grandclock.webp",
+  "w": 86.5,
+  "h": 190.0,
+  "ax": 43.2,
+  "ay": 190.0
+ },
+ "clock_toolbox": {
+  "img": "assets/props/clock_toolbox.webp",
+  "w": 145.0,
+  "h": 119.0,
+  "ax": 72.5,
+  "ay": 119.0
+ },
+ "clock_bells": {
+  "img": "assets/props/clock_bells.webp",
+  "w": 125.5,
+  "h": 168.5,
+  "ax": 62.8,
+  "ay": 168.5
+ },
+ "clock_organ": {
+  "img": "assets/props/clock_organ.webp",
+  "w": 127.5,
+  "h": 168.5,
+  "ax": 63.8,
+  "ay": 168.5
+ },
+ "clock_prop4": {
+  "img": "assets/props/clock_prop4.webp",
+  "w": 119.5,
+  "h": 169.5,
+  "ax": 59.8,
+  "ay": 169.5
+ },
+ "clock_prop5": {
+  "img": "assets/props/clock_prop5.webp",
+  "w": 157.0,
+  "h": 181.0,
+  "ax": 78.5,
+  "ay": 181.0
  }
 }
