@@ -30,7 +30,7 @@ G.Render = (function () {
     lc.width = Math.ceil(W / 3); lc.height = Math.ceil(H / 3);
     vignette = document.createElement('canvas'); vignette.width = 256; vignette.height = 256;
     const v = vignette.getContext('2d'), g = v.createRadialGradient(128, 128, 60, 128, 128, 182);
-    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(0.7, 'rgba(0,0,0,0.25)'); g.addColorStop(1, 'rgba(0,0,0,0.85)'); v.fillStyle = g; v.fillRect(0, 0, 256, 256);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(0.62, 'rgba(0,0,0,0.3)'); g.addColorStop(1, 'rgba(0,0,0,0.9)'); v.fillStyle = g; v.fillRect(0, 0, 256, 256);
   }
   function hole() {
     if (holeSprite) return holeSprite;

@@ -147,6 +147,8 @@ G.Scenery = (function () {
     ctx.restore();
   }
   function images() { const out = []; if (!window.SCENES) return out; for (const a in window.SCENES) for (const L of window.SCENES[a].layers) { if (L.img) out.push([L.img, L.src]); if (L.items) for (const it of L.items) { if (it.img && it.src) out.push([it.img, it.src]); if (it.frames) it.frames.imgs.forEach((k, i) => out.push([k, it.frames.srcs[i]])); if (it.parts) for (const q of it.parts) out.push([q.img, q.src]); } } return out; }
-  function drawFront(ctx, room, cam, VW, VH, t) { return draw(ctx, room, cam, VW, VH, t, true); }
+  // the painted foreground frame is retired: on wide/phone screens it hid the play area and showed the room through it.
+  // the screen edges are darkened by the vignette instead
+  function drawFront() { return false; }
   return { draw, drawFront, images, elementDraw };
 })();
