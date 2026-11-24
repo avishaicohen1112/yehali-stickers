@@ -42,9 +42,9 @@ G.Enemies = (function () {
     hitbox() { return this.dead || this.alpha < 0.5 ? null : { x: this.x + 6, y: this.y + 6, w: this.w - 12, h: this.h - 10 }; }
     hurt(dmg, dx, dy) {
       if (this.dead) return false;
-      this.hp -= dmg; this.flash = 1; G.Sound.sfx('hit', { pitch: rand(0.9, 1.15) });
+      this.hp -= dmg; this.flash = 1; this.hitT = 0.2; this.hitDir = dx || 0; G.Sound.sfx('hit', { pitch: rand(0.9, 1.15) });
       const kb = this.d.type === 'shooter' || this.d.type === 'gunner' ? 0 : 1;
-      this.kbx = dx * 380 * kb; if (dy && this.d.type !== 'walker') this.vy = dy * 250 * kb;
+      this.kbx = dx * 240 * kb;  // a short shove, eased out (no teleport-like jump) if (dy && this.d.type !== 'walker') this.vy = dy * 250 * kb;
       if (this.state === 'windup' && this.d.type !== 'charger') { this.state = 'recover'; this.st = 0; }
       if (this.hp <= 0) this.die(dx, dy);
       return true;
@@ -60,11 +60,11 @@ G.Enemies = (function () {
       this.vy = -300; this.kbx = (dx || 0) * 300;
     }
     update(dt, room, p) {
-      this.t += dt; this.animT += dt; this.st += dt; this.flash = Math.max(0, this.flash - dt * 6);
+      this.t += dt; this.animT += dt; this.st += dt; this.flash = Math.max(0, this.flash - dt * 9);
       if (this.dead) { this.deadT += dt; return; }
       const d = this.d, dxp = p.cx - this.cx, dyp = p.cy - this.cy, dp = Math.hypot(dxp, dyp);
       const see = dp < 560 && !p.dead && room.los(this.cx, this.cy, p.cx, p.cy);
-      this.kbx = approach(this.kbx, 0, 2400 * dt);
+      this.kbx = approach(this.kbx, 0, 1300 * dt); this.hitT = Math.max(0, (this.hitT || 0) - dt);
       switch (d.type) {
         case 'walker': case 'charger': case 'lunger': this.walkAI(dt, room, p, dxp, dyp, see); break;
         case 'flyer': this.flyAI(dt, room, p, dxp, dyp, dp, see); break;
@@ -213,6 +213,7 @@ G.Enemies = (function () {
       } else if (G.Sprite.meta(atlas)) {
         const m = G.Sprite.meta(atlas); let an = m.anims[this.anim] ? this.anim : (m.anims.idle ? 'idle' : Object.keys(m.anims)[0]);
         if (this.anim === 'walk' && !m.anims.walk && m.anims.fly) an = 'fly';
+        if (this.hitT > 0 && m.anims.hurt && !this.dead) an = 'hurt';  // painted 'got hit' pose from the 16-pose sheets (C2)
         const fi = G.Sprite.frameOf(atlas, an, this.animT);
         // painted sheets with few poses get a little procedural life: step bob, hover, breathing
         let yo = 0, sy = this.dead ? 1 - this.deadT : 1;
@@ -220,7 +221,10 @@ G.Enemies = (function () {
           if (an === 'walk' && A.n <= 4) yo = -Math.abs(Math.sin(this.animT * A.fps * Math.PI)) * 3;
           else if (an === 'fly') yo = Math.sin(this.t * 5 + this.x * 0.01) * 3;
           else if (an === 'idle' && A.n <= 2) sy *= 1 + Math.sin(this.t * 2.2 + this.x * 0.01) * 0.02; }
-        G.Sprite.draw(ctx, atlas, an, fi, fx + shake, fy + yo + (this.dead ? this.deadT * 60 : 0), { flip: this.facing < 0, alpha: a, flash: this.flash * 0.85, ppu: this.d.ppu, sy });
+        // hit reaction: a quick squash and a lean away from the blow, warm glint instead of a white silhouette
+        const hk = this.hitT > 0 ? Math.sin((1 - this.hitT / 0.2) * Math.PI) : 0;
+        const rot = hk * 0.12 * (this.hitDir || 0), sq = 1 - hk * 0.08;
+        G.Sprite.draw(ctx, atlas, an, fi, fx + shake, fy + yo + (this.dead ? this.deadT * 60 : 0), { flip: this.facing < 0, alpha: a, flash: this.flash * 0.45, tint: this.flash > 0.05 ? [255, 190, 120, this.flash * 0.35] : null, ppu: this.d.ppu, sy: sy * sq, rot });
       } else {
         ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = this.flash > 0 ? '#fff' : '#15121c';
         ctx.beginPath(); ctx.ellipse(fx + shake, this.cy, this.w / 2, this.h / 2, 0, 0, 7); ctx.fill();

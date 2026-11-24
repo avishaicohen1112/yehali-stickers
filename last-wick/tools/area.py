@@ -26,7 +26,7 @@ AREAS = {
        ['bigshroom', 'lotus', 'ferns', 'mothstatue', 'pot', 'lantern']),
  'G': ('nave', [('chandelier', 'hang'), ('banner', 'hang'), ('weed', 'hang'), ('candle', 'ground')],
        ['pillar', 'lamp', 'angel', 'bell', 'pew', 'font']),
- 'H': ('spire', [('crystal', 'float'), ('glasslamp', 'hang'), ('shard', 'spin'), ('stars', 'hang')],
+ 'H': ('spire', [('crystal', 'skip'), ('glasslamp', 'hang'), ('shard', 'skip'), ('stars', 'hang')],
        ['crystals', 'nunstatue', 'lens', 'mirror', 'orb', 'shelf']),
  'I': ('hearth', [('cage', 'hang'), ('smoke', 'drift'), ('ember', 'float'), ('flag', 'hang')],
        ['ashstatue', 'brazier', 'column', 'throne', 'bell', 'ashpile']),
@@ -116,8 +116,10 @@ def element_items(els, area, layer_w, layer_h):
     for rep in range(2):
         for nm, kind, (w, h) in els:
             if kind == 'skip': continue
+            small = kind in ('float', 'drift', 'spin')   # free-floating things read as distant and small, never as stuck objects
             x = float(xs[k % len(xs)] * layer_w + rng.uniform(-40, 40)); k += 1
-            it = {'img': f'scn_{area}_el_{nm}', 'src': f'assets/scn/{area}/el_{nm}.webp', 'x': round(x), 's': round(float(rng.uniform(0.8, 1.1)), 2)}
+            sc = float(rng.uniform(0.8, 1.1)) if not small else min(1.0, 110 / max(w, h)) * float(rng.uniform(0.8, 1.1))
+            it = {'img': f'scn_{area}_el_{nm}', 'src': f'assets/scn/{area}/el_{nm}.webp', 'x': round(x), 's': round(sc, 2)}
             if kind in ('hang', 'pendulum'):
                 it.update(y=0, pivot=[0.5, 0], chain={'segs': 8, 'amp': 0.05 if kind == 'hang' else 0.0, 'speed': 0.9})
                 if kind == 'pendulum': it.pop('chain'); it['sway'] = [0.35, 1.4]

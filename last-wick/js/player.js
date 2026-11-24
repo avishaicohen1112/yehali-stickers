@@ -236,14 +236,14 @@ G.Player = (function () {
     damage(n, fromX, hazard) {
       if (this.dead || (!hazard && this.inv > 0)) return false;
       const S = G.state; S.hp -= n; this.focusing = false; this.focusT = 0; this.dashT = 0; this.sitting = false;
-      G.Sound.sfx('hurt'); G.FX.stop(0.16); G.FX.shake(12, 0.3); G.FX.flash('#ffffff', 0.35, 0.35);
+      G.Sound.sfx('hurt'); G.FX.stop(0.12); G.FX.shake(10, 0.28); G.FX.flash('#5a1408', 0.22, 0.3);
       G.FX.burst(this.cx, this.cy, 26, { speed: 520, life: 0.6, size: 3, c: [20, 18, 30], kind: 'chunk', g: 1200, add: false });
       G.FX.burst(this.cx, this.cy, 14, { speed: 420, life: 0.35, size: 3, c: [255, 250, 240], kind: 'spark' });
       this.inv = C.HURT_INV;
       if (S.hp <= 0) { S.hp = 0; this.die(); return true; }
       if (!hazard) {
         const dir = fromX === undefined || fromX === null ? -this.facing : sign(this.cx - fromX) || -this.facing;
-        this.vx = dir * 420; this.vy = -520; this.lock = 0.22; this.recoilT = 0; this.hurtT = 0.3; this.atkT = 0;
+        this.vx = dir * 320; this.vy = -430; this.lock = 0.2; this.recoilT = 0; this.hurtT = 0.3; this.atkT = 0;
       }
       return true;
     }
@@ -307,7 +307,7 @@ G.Player = (function () {
       this.tip = tip;
       if (this.hazardT > 0) return;
       if (this.ground && G.Render.groundShadow) G.Render.groundShadow(ctx, fx, fy - 1, 26);
-      G.Sprite.draw(ctx, 'wick', this.anim, fi, fx, fy + yo, { flip, sy, rot, alpha: blink ? 0.45 : 1, flash: this.hurtT > 0.2 ? 0.8 : 0 });
+      G.Sprite.draw(ctx, 'wick', this.anim, fi, fx, fy + yo, { flip, sy, rot, alpha: blink ? 0.45 : 1, flash: this.hurtT > 0.22 ? 0.35 : 0, tint: this.hurtT > 0.12 ? [255, 70, 40, 0.35] : null });
     }
     drawCrane(ctx) {  // stand-in paper crane until ART_BRIEF_2 sends the painted one (4 wing frames)
       const x = this.cx, y = this.feet + 6, f = Math.sin(this.flameT * 9) * 26;

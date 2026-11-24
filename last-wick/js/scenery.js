@@ -105,7 +105,7 @@ G.Scenery = (function () {
   }
   // painted layers are pushed back in depth (darker, flatter, softer) so the playable ground and characters read
   // clearly in front of them. L.dim overrides the default per layer: [brightness, saturation, blur px].
-  const DEPTH = { far: [0.62, 0.8, 1.2], sil: [0.48, 0.7, 0.8], mid: [0.56, 0.78, 0.6], front: [0.32, 0.6, 0] };
+  const DEPTH = { far: [0.62, 0.8, 1.2], sil: [0.48, 0.7, 0.8], mid: [0.56, 0.78, 0.6], front: [0.16, 0.35, 1.2] };
   const depthCache = {};
   function depthImg(L) {
     const im = G.Assets.get(L.img); if (!im) return null;
