@@ -97,7 +97,17 @@ def analyse(fr, ref_h):
     core = (lab == big) if n > 1 else core > 0
     cys, cxs = np.nonzero(core)
     cx = float(np.median(cxs))
-    # tip: top of the core, then climb the thin wick right above it
+    # tip (hero): find the ivory wax head first, then the topmost dark pixel of the wick just above it
+    rgb = fr[..., :3]
+    headm = ((rgb[..., 0] > 185) & (rgb[..., 1] > 145) & (rgb[..., 0] - rgb[..., 2] > 25) & (al > 200)).astype(np.uint8)
+    hn, hl, hs, _ = cv2.connectedComponentsWithStats(headm, 8)
+    if hn > 1 and hs[1:, cv2.CC_STAT_AREA].max() > ref_h * ref_h * 0.02:
+        hb = 1 + int(np.argmax(hs[1:, cv2.CC_STAT_AREA])); hx, hy, hw, hh = hs[hb, :4]
+        x0, x1 = max(0, hx - hw // 6), min(fr.shape[1], hx + hw + hw // 6)
+        col = A[:hy + hh // 4, x0:x1]; yy, xx = np.nonzero(col)
+        if len(yy):
+            ty = int(yy.min()); return {'feet': feet, 'cx': cx, 'cy': float(np.mean(cys)), 'tip': [float(x0 + np.median(xx[yy <= ty + 1])), float(ty)]}
+    # fallback: top of the core, then climb the thin wick right above it
     top = int(cys.min()); tx = float(np.median(cxs[cys < top + max(2, k // 2)]))
     win = int(ref_h * 0.07)
     x0, x1 = max(0, int(tx) - win), min(fr.shape[1], int(tx) + win + 1)
