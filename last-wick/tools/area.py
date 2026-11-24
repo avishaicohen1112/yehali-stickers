@@ -162,7 +162,8 @@ def build(letter, rooms=False):
         L[key] = dict(L.get(key, {}), id=key, img=f'scn_{area}_{key}', src=f'assets/scn/{area}/{key}.webp', p=par, h=h, tile=tile); done.append(key)
     p = src(letter + '4')
     if p:
-        a = keyed(p); save_webp(a, os.path.join(out, 'front.webp'), h=900)
+        from framefade import fade
+        a = fade(keyed(p)); save_webp(a, os.path.join(out, 'front.webp'), h=900)
         L['front'] = {'id': 'front', 'img': f'scn_{area}_front', 'src': f'assets/scn/{area}/front.webp', 'p': 1.25, 'h': 1.0, 'front': True}; done.append('front')
     p = src(letter + '5')
     if p:

@@ -297,11 +297,21 @@ G.Render = (function () {
     const hy = o.y + 1 + rh[1] * s * sy + br * 0.8 + (talking ? Math.abs(Math.sin(t * 8)) * -1.5 : 0);
     G.Sprite.draw(c, at, 'head', 0, o.x + f * rh[0] * s, hy, { flip, rot: f * rot, ppu: m.ppu || 50 });
   }
+  // lore is read from something that belongs to the place (a lectern in the wax crypts, a statue in the gardens...),
+  // painted with that area's own props, so it sits in the world like the rest of the set; a soft warm shimmer marks it
+  const LORE_PROP = { crypts: ['crypts_lectern', 0.82], gardens: ['gardens_mothstatue', 0.72], nave: ['nave_angel', 0.7], spire: ['spire_shelf', 0.72],
+    hearth: ['hearth_ashstatue', 0.7], shore: ['shore_anchor', 0.62], galleon: ['galleon_maptable', 0.7], lighthouse: ['lighthouse_prop4', 0.72],
+    paper: ['paper_books', 0.72], clock: ['clock_grandclock', 0.7], core: ['core_plinth', 0.85] };
   function drawLore(c, o, t) {
-    if (!drawPropAt('tablet', o.x, o.y + 10, 0.9)) { c.fillStyle = '#29242c'; c.fillRect(o.x - 24, o.y - 70, 48, 70); }
-    G.FX.light(o.x, o.y - 50, 140, [200, 210, 255], 0.6);
-    G.FX.glow(c, o.x, o.y - 50, 50, [180, 200, 255], 0.25 + Math.sin(t * 2) * 0.08);
-    if (G.Objects.nearest() === o) G.UI.prompt(c, o.x, o.y - 120, G.T('read'));
+    const L = LORE_PROP[o.area], P = L && window.PROPS[L[0]];
+    const ok = L && drawPropAt(L[0], o.x, o.y + 6, L[1]);
+    const top = ok ? P.h * L[1] : 100;
+    if (!ok && !drawPropAt('tablet', o.x, o.y + 10, 0.9)) { c.fillStyle = '#29242c'; c.fillRect(o.x - 24, o.y - 70, 48, 70); }
+    G.FX.light(o.x, o.y - top * 0.6, 110, [255, 200, 140], 0.35);
+    // a few slow motes rising off it: "there is something here"
+    for (let i = 0; i < 3; i++) { const k = (t * 0.35 + i / 3) % 1, mx = o.x + Math.sin(t * 1.3 + i * 2.1) * 14, my = o.y - top * 0.55 - k * 60;
+      G.FX.glow(c, mx, my, 9, [255, 214, 160], 0.5 * Math.sin(k * Math.PI)); }
+    if (G.Objects.nearest() === o) G.UI.prompt(c, o.x, o.y - top - 26, G.T('read'));
   }
   function drawBrazier(c, o, t, n) {
     if (!drawPropAt('brazier', o.x, o.y + 4)) { c.fillStyle = '#2a2026'; c.fillRect(o.x - 110, o.y - 90, 220, 90); }

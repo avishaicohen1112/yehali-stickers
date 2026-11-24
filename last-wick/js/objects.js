@@ -97,7 +97,7 @@ G.Objects = (function () {
       const x = e.x * TILE, y = e.y * TILE;
       if (e.t === 'bench') add({ type: 'bench', x, y, w: 120, kind: e.kind || 'bench' });
       else if (e.t === 'npc') add({ type: 'npc', id: e.id, x, y, w: 110, talkI: 0 });
-      else if (e.t === 'lore') add({ type: 'lore', text: e.text, x, y, w: 90 });
+      else if (e.t === 'lore') add({ type: 'lore', text: e.text, x, y, w: 90, area: room.area });
       else if (e.t === 'pickup') { const id = e.id || e.kind; if (!S.picked[id]) add({ type: 'pickup', kind: e.kind, id, x, y: y - 50, t: 0 }); }
       else if (e.t === 'brazier') add({ type: 'brazier', x, y });
       else if (e.t === 'chest') { const done = !!S.picked[e.id]; add({ type: 'chest', id: e.id, kind: e.kind || 'small', give: e.give, tallow: e.tallow ?? 25, x, y, w: 110, open: done, k: done ? 1 : 0, opening: 0 }); }

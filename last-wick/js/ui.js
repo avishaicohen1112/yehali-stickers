@@ -2,13 +2,14 @@
 // HUD, menus, dialogue, cards
 G.UI = (function () {
   const R = () => G.Render, I = G.Input;
-  const HE = '"Frank Ruhl Libre", "David", serif', EN = '"Cinzel", "Times New Roman", serif';
+  const HE = '"Noto Serif Hebrew", "Frank Ruhl Libre", "David", serif', EN = '"Cinzel", "Times New Roman", serif';
+  const HT = HE;   // one family for everything: titles just use a heavier cut
   let toasts = [], tallowShow = 0, tallowDisp = 0;
   let card = null;      // area / boss title card {lines, t, dur, kind}
   let modal = null;     // dialogue / lore / ability / shop / pause / map
   let taps = [];        // clickable regions this frame
   function text(c, s, x, y, o = {}) {
-    c.save(); c.font = `${o.w || 400} ${o.size || 28}px ${o.en ? EN : HE}`; c.textAlign = o.align || 'center'; c.textBaseline = o.base || 'middle';
+    c.save(); c.font = `${o.w || 400} ${o.size || 28}px ${o.en ? EN : o.title ? HT : HE}`; c.textAlign = o.align || 'center'; c.textBaseline = o.base || 'middle';
     c.direction = o.en ? 'ltr' : 'rtl';
     if (o.spacing) c.letterSpacing = o.spacing + 'px';
     if (o.shadow !== false) { c.shadowColor = 'rgba(0,0,0,0.85)'; c.shadowBlur = o.blur ?? 12; }
@@ -33,6 +34,12 @@ G.UI = (function () {
     c.strokeStyle = 'rgba(232,206,165,0.32)'; c.lineWidth = 1.5; c.beginPath(); c.roundRect(x + 7, y + 7, w - 14, h - 14, 13); c.stroke();
     const D = G.Assets.get('prop_ui_divider'); if (D) { const dw = Math.min(w * 0.5, 420), dh = dw * D.height / D.width; c.globalAlpha = 0.9; c.drawImage(D, x + (w - dw) / 2, y - dh * 0.45, dw, dh); }
     c.restore();
+  }
+  // a feathered pool of shadow behind text: reads as the text sitting in the dark, not as a box pasted on the picture
+  function shade(c, x, y, rx, ry, a) {
+    c.save(); c.translate(x, y); c.scale(1, ry / rx);
+    const g = c.createRadialGradient(0, 0, 0, 0, 0, rx); g.addColorStop(0, `rgba(6,4,8,${a})`); g.addColorStop(0.55, `rgba(6,4,8,${a * 0.75})`); g.addColorStop(1, 'rgba(6,4,8,0)');
+    c.fillStyle = g; c.beginPath(); c.arc(0, 0, rx, 0, 7); c.fill(); c.restore();
   }
   // ---------------- HUD ----------------
   function hud(c, t) {
@@ -97,11 +104,12 @@ G.UI = (function () {
     }
   }
   function prompt(c, x, y, s) {
-    const tt = performance.now() / 1000;
-    const yy = y + Math.sin(tt * 3) * 3; c.save(); c.font = `600 20px ${HE}`; const w = c.measureText(s).width + 34;
-    c.globalAlpha = 0.82; c.fillStyle = 'rgba(12,9,14,0.7)'; c.beginPath(); c.roundRect(x - w / 2, yy - 17, w, 34, 17); c.fill();
-    c.strokeStyle = 'rgba(240,214,170,0.35)'; c.lineWidth = 1; c.stroke(); c.restore();
-    text(c, s, x, yy + 1, { size: 20, w: 600, c: '#f4e6cf', blur: 0, a: 0.95 });
+    if (modal) return;
+    const tt = performance.now() / 1000, yy = y + Math.sin(tt * 3) * 3;
+    c.save(); c.font = `400 22px ${HE}`; const w = c.measureText(s).width; c.restore();
+    shade(c, x, yy, w * 0.75 + 30, 26, 0.55);
+    text(c, s, x, yy + 1, { size: 22, c: '#f6e9d3', blur: 6, a: 0.96 });
+    G.FX.glow(c, x, yy - 20, 10, [255, 210, 150], 0.35 + Math.sin(tt * 3) * 0.1);
   }
   function toast(s, dur = 2.6) { toasts.push({ s, t: 0, dur }); }
   function tallowPing() { tallowShow = 2; }
@@ -114,18 +122,18 @@ G.UI = (function () {
     const a = k < 0.2 ? k / 0.2 : k > 0.75 ? (1 - k) / 0.25 : 1; const VW = R().VW, VH = R().VH;
     if (card.kind === 'world') {
       const vg = c.createRadialGradient(VW / 2, VH * 0.27, 10, VW / 2, VH * 0.27, VW * 0.32); vg.addColorStop(0, `rgba(0,0,0,${0.32 * a})`); vg.addColorStop(1, 'rgba(0,0,0,0)');
-      c.fillStyle = vg; c.fillRect(0, 0, VW, VH * 0.6);
+      c.fillStyle = vg; c.fillRect(0, 0, VW, VH);
       text(c, card.l2, VW / 2, VH * 0.2, { size: 15, en: true, a: a * 0.7, spacing: 10, c: '#e2cfae' });
-      text(c, card.l1, VW / 2, VH * 0.27, { size: 54, w: 700, a, blur: 24, c: '#f6ead6' });
+      text(c, card.l1, VW / 2, VH * 0.27, { size: 54, w: 600, title: true, a, blur: 24, c: '#f6ead6' });
       ornament(c, VW / 2, VH * 0.27 + 40, 340, a * 0.9);
     } else if (card.kind === 'area') {
-      text(c, card.l1, VW / 2, VH * 0.22, { size: 40, w: 700, a: a * 0.95, blur: 20, c: '#f6ead6' });
+      text(c, card.l1, VW / 2, VH * 0.22, { size: 40, w: 600, title: true, a: a * 0.95, blur: 20, c: '#f6ead6' });
       ornament(c, VW / 2, VH * 0.22 + 30, 260, a * 0.85);
       text(c, card.l2, VW / 2, VH * 0.22 + 54, { size: 13, en: true, a: a * 0.65, spacing: 8, c: '#e2cfae' });
     } else {
       const y = VH * 0.74;
       text(c, card.l2, VW / 2, y - 40, { size: 15, en: true, a: a * 0.75, spacing: 9, c: '#e2cfae' });
-      text(c, card.l1, VW / 2, y + 4, { size: 58, w: 900, a, blur: 26, c: '#f6e4cc' });
+      text(c, card.l1, VW / 2, y + 4, { size: 58, w: 600, title: true, a, blur: 26, c: '#f6e4cc' });
       ornament(c, VW / 2, y + 44, 380, a);
     }
   }
@@ -138,6 +146,12 @@ G.UI = (function () {
     G.Sound.sfx('ui_select');
   }
   function lore(id) { modal = { kind: 'talk', name: '', lines: G.TEXT.lore[id], i: 0, t: 0 }; G.Sound.sfx('ui_select'); }
+  function advanceTalk(m) {
+    if (modal !== m || m.t < 0.2) return;
+    const full = m.lines[m.i] || ''; if (m.t * 55 < full.length) { m.t = full.length / 55 + 0.21; return; }   // first tap: show the whole line
+    m.i++; m.t = 0; G.Sound.sfx('ui_move');
+    if (m.i >= m.lines.length) { modal = null; if (m.after) m.after(); }
+  }
   function ability(kind, cb) { modal = { kind: 'ability', ab: kind, t: 0, cb }; G.Sound.sfx('ability'); G.Sound.duck(0.2, 4); }
   function openShop() { modal = { kind: 'shop', sel: 0, t: 0, msg: '' }; }
   function pause() { modal = { kind: 'pause', sel: 0, t: 0 }; G.Sound.sfx('ui_select'); }
@@ -148,10 +162,8 @@ G.UI = (function () {
     if (!modal) return false;
     modal.t += dt; const m = modal;
     if (m.kind === 'talk') {
-      if (m.t > 0.25 && (confirmP() || I.tap())) {
-        m.i++; m.t = 0; G.Sound.sfx('ui_move');
-        if (m.i >= m.lines.length) { modal = null; if (m.after) m.after(); }
-      }
+      m.T = (m.T || 0) + dt;
+      if (m.t > 0.2 && confirmP()) advanceTalk(m);
     } else if (m.kind === 'ability') {
       if (m.t > 1.4 && (confirmP() || I.tap())) { modal = null; G.Sound.sfx('ui_select'); if (m.cb) m.cb(); }
     } else if (m.kind === 'shop') {
@@ -200,22 +212,30 @@ G.UI = (function () {
   function drawModal(c) {
     const VW = R().VW, VH = R().VH; const m = modal; if (!m) return;
     if (m.kind === 'talk') {
-      const w = Math.min(980, VW - 60), x = (VW - w) / 2, por = m.npc && G.Sprite.has('n_' + m.npc, 'head') ? 150 : 0;
-      const tw = w - 90 - por, lines = wrap(c, m.lines[m.i] || '', tw, 28), h = Math.max(160, 74 + lines.length * 42 + (m.name ? 30 : 0)), y = VH - h - 28;
-      panel(c, x, y, w, h, 0.9);
-      if (por) { G.FX.glow(c, x + por / 2 + 20, y + h / 2, 90, [255, 200, 140], 0.25);   // speaker portrait (painted head)
-        const at = 'n_' + m.npc, M = window.ATLAS[at]; G.Sprite.draw(c, at, 'head', 0, x + por / 2 + 22, y + h / 2 + 52 + Math.sin(m.t * 2) * 2, { ppu: (M.ppu || 50) * 1.6 }); }
-      const rx = x + w - 44; let ty = y + 46;
-      if (m.name) { text(c, m.name, rx, ty, { size: 27, w: 700, c: '#f0cf98', align: 'right', blur: 0 }); ty += 42; }
-      lines.forEach((l, k) => text(c, l, rx, ty + k * 42, { size: 28, align: 'right', c: '#efe4d3', blur: 0 }));
-      if (m.t > 0.4) G.FX.flame(c, x + por + 40, y + h - 26, 2.4, m.t * 1.3, { glow: 0.6 });
-      tapRegion(0, 0, VW, VH, () => { m.i++; m.t = 0; if (m.i >= m.lines.length) { modal = null; if (m.after) m.after(); } });
+      // no box: the bottom of the screen sinks into shadow and the words rise out of it, revealed like a candle-lit page
+      const A = Math.min(1, (m.T || 0) * 3.5), full = m.lines[m.i] || '', shown = full.slice(0, Math.floor(m.t * 55));
+      const tw = Math.min(900, VW - 220), lines = wrap(c, full, tw, 31), LH = 48;
+      const blockH = lines.length * LH + (m.name ? 62 : 0), y0 = VH - 70 - blockH;
+      const g = c.createLinearGradient(0, y0 - 120, 0, VH); g.addColorStop(0, 'rgba(5,4,7,0)'); g.addColorStop(0.45, `rgba(5,4,7,${0.62 * A})`); g.addColorStop(1, `rgba(5,4,7,${0.86 * A})`);
+      c.fillStyle = g; c.fillRect(0, y0 - 120, VW, VH - y0 + 120);
+      let ty = y0;
+      if (m.name) {
+        text(c, m.name, VW / 2, ty + 4, { size: 34, title: true, w: 600, c: '#f3cf92', blur: 14, a: A });
+        ornament(c, VW / 2, ty + 34, 300, A * 0.9);
+        ty += 62;
+      }
+      // reveal the line letter by letter, keeping each wrapped line in place
+      let left = shown.length;
+      lines.forEach((l, k) => { const part = l.slice(0, Math.max(0, left)); left -= l.length + 1;
+        if (part) text(c, part, VW / 2 + (c.measureText ? 0 : 0), ty + k * LH + 20, { size: 31, c: '#f2e8d8', blur: 10, a: A, align: 'center' }); });
+      if (shown.length >= full.length) G.FX.flame(c, VW / 2, VH - 30, 2.2, m.T * 1.3, { glow: 0.5 });
+      tapRegion(0, 0, VW, VH, () => advanceTalk(m));
     } else if (m.kind === 'ability') {
       const a = Math.min(1, m.t * 1.5); const ab = G.TEXT.abil[m.ab];
       c.fillStyle = `rgba(0,0,0,${0.75 * a})`; c.fillRect(0, 0, VW, VH);
       G.FX.glow(c, VW / 2, VH * 0.4, 400 * a, [255, 170, 90], 0.5 * a);
       G.FX.flame(c, VW / 2, VH * 0.42, 14 * a, m.t * 1.2, { glow: 1.5 });
-      text(c, ab[0], VW / 2, VH * 0.56, { size: 72, w: 900, a });
+      text(c, ab[0], VW / 2, VH * 0.56, { size: 72, w: 600, title: true, a });
       ornament(c, VW / 2, VH * 0.56 + 54, 480, a);
       text(c, ab[1], VW / 2, VH * 0.56 + 100, { size: 30, a: a * 0.9 });
       if (ab[2]) text(c, ab[2], VW / 2, VH * 0.56 + 150, { size: 24, a: a * 0.6, c: '#d9b88f' });
@@ -223,7 +243,7 @@ G.UI = (function () {
     } else if (m.kind === 'shop') {
       const items = G.TEXT.shop, w = Math.min(900, VW - 60), h = 120 + items.length * 74 + 80, x = (VW - w) / 2, y = (VH - h) / 2;
       panel(c, x, y, w, h, 0.93);
-      text(c, G.T('shop_title'), VW / 2, y + 44, { size: 40, w: 700, c: '#f0d9b5' }); ornament(c, VW / 2, y + 78, 360);
+      text(c, G.T('shop_title'), VW / 2, y + 44, { size: 40, w: 600, title: true, c: '#f0d9b5' }); ornament(c, VW / 2, y + 78, 360);
       items.forEach((it, i) => {
         const iy = y + 120 + i * 74, sold = G.state.shop[it.id], sel = m.sel === i;
         if (sel) { c.fillStyle = 'rgba(255,200,140,0.1)'; c.fillRect(x + 30, iy - 30, w - 60, 64); }
@@ -238,7 +258,7 @@ G.UI = (function () {
       text(c, String(G.state.tallow), x + 70, y + 44, { size: 26, align: 'left', en: true, c: '#e8d2ae' });
     } else if (m.kind === 'pause') {
       c.fillStyle = 'rgba(0,0,0,0.7)'; c.fillRect(0, 0, VW, VH);
-      text(c, G.T('paused'), VW / 2, VH * 0.18, { size: 64, w: 700 }); ornament(c, VW / 2, VH * 0.18 + 50, 360);
+      text(c, G.T('paused'), VW / 2, VH * 0.18, { size: 64, w: 600, title: true }); ornament(c, VW / 2, VH * 0.18 + 50, 360);
       const opts = [G.T('resume'), G.T('mapt'), G.T('sound') + ': ' + (G.Sound.muted ? G.T('off') : G.T('on')), G.T('quit')];
       opts.forEach((o, i) => { const yy = VH * 0.32 + i * 64; text(c, o, VW / 2, yy, { size: 34, c: m.sel === i ? '#ffe2b8' : '#cfc4b4' }); if (m.sel === i) { G.FX.flame(c, VW / 2 + 150, yy + 12, 3, m.t, {}); } tapRegion(VW / 2 - 200, yy - 28, 400, 56, () => { m.sel = i; pauseSelect(i); }); });
       const keys = I.isTouch ? G.TEXT.keys_touch : G.TEXT.keys;
@@ -256,7 +276,7 @@ G.UI = (function () {
     for (const id in W.rooms) { const r = W.rooms[id]; if (r.world !== curW || (anyV && !S.visited[id])) continue; x0 = Math.min(x0, r.gx); y0 = Math.min(y0, r.gy); x1 = Math.max(x1, r.gx + r.w); y1 = Math.max(y1, r.gy + r.h); }
     const sc = Math.min(16, (VW - 120) / (x1 - x0), (VH - 170) / (y1 - y0));
     const ox = (VW - (x1 - x0) * sc) / 2 - x0 * sc, oy = 120 + (VH - 200 - (y1 - y0) * sc) / 2 - y0 * sc;
-    text(c, W.worlds[curW].name, VW / 2, 60, { size: 46, w: 700 }); ornament(c, VW / 2, 98, 260);
+    text(c, W.worlds[curW].name, VW / 2, 60, { size: 46, w: 600, title: true }); ornament(c, VW / 2, 98, 260);
     const AC = { crypts: '#c8956a', gardens: '#7fd1b0', nave: '#7f9ee0', spire: '#c4a0f0', hearth: '#e07050', shore: '#ff9a5a', galleon: '#a898e0', lighthouse: '#ffc070', paper: '#efe2c8', clock: '#e0c070', core: '#ffb060', theatre: '#e06a7a' };
     for (const id in W.rooms) {
       if (!S.visited[id]) continue; const r = W.rooms[id]; if (r.world !== curW) continue;
@@ -273,11 +293,12 @@ G.UI = (function () {
     tapRegion(0, 0, VW, VH, () => { modal = null; });
   }
   function drawToasts(c) {
-    const VW = R().VW, VH = R().VH;
-    toasts.forEach((t, i) => { const a = Math.min(1, t.t * 4, (t.dur - t.t) * 2), y = VH * 0.82 - i * 46;
-      c.save(); c.font = `600 21px ${HE}`; const w = c.measureText(t.s).width + 56; c.globalAlpha = a * 0.85; c.fillStyle = 'rgba(12,9,14,0.75)';
-      c.beginPath(); c.roundRect(VW / 2 - w / 2, y - 19, w, 38, 19); c.fill(); c.strokeStyle = 'rgba(240,214,170,0.3)'; c.lineWidth = 1; c.stroke(); c.restore();
-      text(c, t.s, VW / 2, y + 1, { size: 21, w: 600, a, c: '#f4e6cf', blur: 0 }); });
+    const VW = R().VW, VH = R().VH; let y = VH * 0.8;
+    for (const t of toasts) { const a = Math.min(1, t.t * 4, (t.dur - t.t) * 2);
+      const ls = wrap(c, t.s, Math.min(900, VW - 240), 25); c.save(); c.font = `400 25px ${HE}`; const w = Math.max(...ls.map(l => c.measureText(l).width)); c.restore();
+      const hh = (ls.length - 1) * 38; shade(c, VW / 2, y - hh / 2, w * 0.7 + 60, 34 + hh * 0.7, 0.6 * a);
+      ls.forEach((l, k) => text(c, l, VW / 2, y - hh + k * 38 + 1, { size: 25, a, c: '#f6e9d3', blur: 8 }));
+      y -= hh + 52; }
   }
   return { clearTaps: () => { taps = []; }, hud, prompt, toast, tallowPing, areaCard, worldCard, bossCard, drawCard, talk, lore, ability, openShop, pause, map, update, drawModal, drawToasts, handleTap, tapRegion, text, ornament, panel, wrap,
     get modal() { return modal; }, set modal(v) { modal = v; }, get card() { return card; }, HE, EN };

@@ -88,7 +88,13 @@ G.Scenery = (function () {
       const ox = L.tile ? -(cam.x * p) : -(kx * Math.max(0, dw - VW));
       const oy = L.front ? (L.y || 0) * VH - (cam.y * (p - 1)) % VH * 0 : -(ky * (dh - VH)) + (L.y || 0) * VH;
       ctx.save(); if (L.alpha !== undefined) ctx.globalAlpha = L.alpha; if (L.blend) ctx.globalCompositeOperation = L.blend;
-      if (im) {
+      if (im && L.front) {
+        // frame pieces keep their painted proportions: on a wide screen the left half hugs the left edge and the right half
+        // the right edge (the middle of the art is empty anyway), instead of stretching the whole picture sideways
+        const fs = dh / im.height, fw = im.width * fs, hw = im.width / 2;
+        if (fw <= VW) { ctx.drawImage(im, 0, 0, hw, im.height, 0, oy, fw / 2, dh); ctx.drawImage(im, hw, 0, hw, im.height, VW - fw / 2, oy, fw / 2, dh); }
+        else ctx.drawImage(im, (VW - fw) / 2, oy, fw, dh);
+      } else if (im) {
         if (L.tile) {  // mirrored tiling: every other copy is flipped, so the seams always match
           let x0 = ox % dw; if (x0 > 0) x0 -= dw; let k = Math.round((x0 - ox) / dw);
           for (let x = x0; x < VW; x += dw, k++) { if (k & 1) { ctx.save(); ctx.translate(x + dw, oy); ctx.scale(-1, 1); ctx.drawImage(im, 0, 0, dw + 1, dh); ctx.restore(); } else ctx.drawImage(im, x, oy, dw + 1, dh); } }

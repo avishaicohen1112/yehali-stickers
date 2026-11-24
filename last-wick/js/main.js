@@ -27,6 +27,8 @@ G.Main = (function () {
     return out;
   }
   function preloadAll() {
+    // canvas text only uses a web font once it is loaded: ask for the faces up front so the first dialogue isn't in a fallback font
+    try { for (const f of ['400 31px "Noto Serif Hebrew"', '600 34px "Noto Serif Hebrew"', '700 34px "Noto Serif Hebrew"', '500 15px "Cinzel"']) document.fonts.load(f, 'אב'); } catch (e) { }
     for (const a in window.ATLAS) G.Assets.load(a, 'assets/sprites/' + a + '.webp');
     for (const p in window.PROPS) G.Assets.load('prop_' + p, window.PROPS[p].img);
     for (const [k, src] of G.Scenery.images()) if (src) G.Assets.load(k, src);
@@ -215,6 +217,8 @@ G.Main = (function () {
     G.state.time += dt;
     G.FX.clearLights();
     Rn.roomLights(room, t);
+    // a room that needs an ability you don't have yet says so (once per visit), instead of leaving you jumping at a wall
+    if (room.hint && !G.state.abil[room.hint.need] && !room.hintShown && (room.hintT = (room.hintT || 0) + dt) > 3.5) { room.hintShown = true; G.UI.toast(G.T(room.hint.text), 7); }
     player.update(dt, room);
     // player light
     if (player.tip) { const S = G.state; const k = player.dead ? Math.max(0, 1 - player.deadT) : 0.6 + 0.4 * S.hp / S.hpMax; G.FX.light(player.tip.x, player.tip.y - 10, (360 + Math.sin(t * 13) * 8) * k * (player.focusing ? 1.3 : 1), [255, 170, 90], 1); }
@@ -286,7 +290,7 @@ G.Main = (function () {
     if (controlsOpen) {
       G.UI.panel(ctx, VW / 2 - 360, VH * 0.2, 720, VH * 0.62, 0.95);
       const keys = G.Input.isTouch ? G.TEXT.keys_touch : G.TEXT.keys;
-      G.UI.text(ctx, G.T('controls'), VW / 2, VH * 0.2 + 50, { size: 40, w: 700 });
+      G.UI.text(ctx, G.T('controls'), VW / 2, VH * 0.2 + 50, { size: 40, w: 600, title: true });
       keys.forEach((k, i) => { const y = VH * 0.2 + 120 + i * 46; G.UI.text(ctx, k[0], VW / 2 - 40, y, { size: 26, align: 'right', c: '#f0d9b5', en: /^[A-Za-z]/.test(k[0]) }); G.UI.text(ctx, k[1], VW / 2 + 300, y, { size: 26, align: 'right', a: 0.8 }); });
       G.UI.tapRegion(0, 0, VW, VH, () => { controlsOpen = false; });
     }
@@ -328,7 +332,7 @@ G.Main = (function () {
     Rn.drawFog(room, t);
     ctx.restore();
     if (G.FX.S.flashA > 0) { ctx.globalAlpha = G.FX.S.flashA; ctx.fillStyle = G.FX.S.flashC; ctx.fillRect(0, 0, VW, VH); ctx.globalAlpha = 1; }
-    if (player.dead) { const a = Math.min(1, player.deadT * 0.8); G.UI.text(ctx, G.T('died'), VW / 2, VH * 0.42, { size: 56, a: a * 0.9 }); G.UI.text(ctx, G.T('died2'), VW / 2, VH * 0.42 + 60, { size: 26, a: a * 0.6 }); }
+    if (player.dead) { const a = Math.min(1, player.deadT * 0.8); G.UI.text(ctx, G.T('died'), VW / 2, VH * 0.42, { size: 56, w: 600, title: true, a: a * 0.9 }); G.UI.text(ctx, G.T('died2'), VW / 2, VH * 0.42 + 60, { size: 26, a: a * 0.6 }); }
     if (!G.UI.modal || G.UI.modal.kind === 'talk') G.UI.hud(ctx, t);
     G.UI.drawCard(ctx, 1 / 60);
     G.UI.drawToasts(ctx);

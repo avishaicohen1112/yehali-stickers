@@ -6,7 +6,7 @@ G.World = (function () {
     constructor(id) {
       const d = W.rooms[id]; Object.assign(this, d); this.id = id;
       this.pw = this.w * TILE; this.ph = this.h * TILE;
-      this.rows = d.rows; this.over = {}; this.crane = (d.ents || []).some(e => e.t === 'crane'); // dynamic overrides ("x,y" -> char) for gates
+      this.rows = d.rows; this.over = {}; this.crane = (d.ents || []).some(e => e.t === 'crane'); this.hint = (d.ents || []).find(e => e.t === 'hint') || null; // dynamic overrides ("x,y" -> char) for gates
     }
     tile(tx, ty) {
       const k = tx + ',' + ty; if (this.over[k]) return this.over[k];

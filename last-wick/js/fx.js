@@ -148,7 +148,7 @@ G.FX = (function () {
   return {
     parts, lights: () => lights, S,
     spawn, burst, update, drawParts, slash, thrust, drawSlashes, ring, drawRings, glow, flame,
-    light(x, y, r, c, i = 1) { lights.push({ x, y, r, c, i }); },
+    light(x, y, r, c, i = 1) { for (const l of lights) if (l.x === x && l.y === y && l.r === r) return; lights.push({ x, y, r, c, i }); },   // objects add lights while drawing: while the game is paused (dialogue, hit-stop) they must not pile up
     clearLights() { lights = []; },
     shake(a, t) { if (a >= S.shake) { S.shake = a; S.shakeT = t; } },
     stop(t) { S.stop = Math.max(S.stop, t); },

@@ -171,7 +171,7 @@ n4.ent('boss', 18, 18, kind='angler').ent('gate', 43, 14, h=4, id='g_angler')
 s1 = room('s1', 'spire', 96, -48, 16, 40, 'פיר הזכוכית')
 s1.carve(4, 1, 8, 38).carve(12, 4, 4, 4).fill(10, 8, 6, 1)
 s1.fill(4, 30, 2, 1).fill(10, 22, 2, 1).fill(4, 14, 2, 1)
-s1.ent('lore', 8, 40, text='lore_shaft')
+s1.ent('lore', 11, 39, text='lore_shaft').ent('hint', 0, 0, need='wall', text='hint_wall')
 
 s2 = room('s2', 'spire', 112, -60, 48, 22, 'אולמות הבדולח')
 s2.carve(1, 1, 46, 19).fill(1, 1, 6, 4).fill(42, 7, 6, 2).fill(1, 20, 47, 2)
