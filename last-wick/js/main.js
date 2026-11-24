@@ -19,7 +19,8 @@ G.Main = (function () {
 
   // ---------- asset loading ----------
   function roomImg(id) { const a = window.ROOMART[id]; if (a && a.img) G.Assets.load('room_' + id, a.img); }
-  function areaImgs(area) { const b = window.BGS[area]; if (b) for (const L of b.layers) G.Assets.load('bg_' + area + '_' + L.id, L.img); }
+  function areaImgs(area) { const b = window.BGS[area]; if (b) for (const L of b.layers) G.Assets.load('bg_' + area + '_' + L.id, L.img);
+    if (window.SCENES && window.SCENES[area]) G.Assets.load('rockfill_' + area, 'assets/scn/' + area + '/rockfill.webp'); }
   function neighbors(id) {
     const r = window.WORLD.rooms[id], out = [];
     for (const k in window.WORLD.rooms) { if (k === id) continue; const o = window.WORLD.rooms[k];
@@ -44,7 +45,9 @@ G.Main = (function () {
     roomImg(id); areaImgs(room.area); for (const n of neighbors(id)) { roomImg(n); areaImgs(window.WORLD.rooms[n].area); }
     enemies = []; boss = null; G.FX.reset(); G.Objects.build(room); G.Main.bossCam = null; G.Wind.enter(room);
     // closer camera everywhere (hero ~1/6 of the screen); the giant-boss stages pull back so the whole fight fits
-    Rn.setZoom(room.area === 'theatre' && room.id !== 't1' ? 900 : 700);
+    // narrow rooms (a shaft, a small chapel): zoom in a little so the room, not the rock around it, fills the screen
+    const asp = innerWidth / Math.max(1, innerHeight), narrow = Math.max(580, Math.min(700, (room.pw + 260) / asp));
+    Rn.setZoom(room.area === 'theatre' && room.id !== 't1' ? 900 : narrow);
     for (const e of room.ents) {
       if (e.t === 'enemy') { const en = new G.Enemies.Enemy(e.kind, e.x, e.y); enemies.push(en); }
       if (e.t === 'boss' && !G.state.bosses[e.kind]) { boss = G.Bosses.create(e.kind, e.x, e.y); if (boss) enemies.push(boss); }

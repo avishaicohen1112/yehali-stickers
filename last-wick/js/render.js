@@ -20,7 +20,7 @@ G.Render = (function () {
     hearth: { amb: [10, 4, 4], dark: 0.42, sky: ['#0c0606', '#2a0e08', '#050202'], fog: [200, 70, 30], rock: '#070404', mote: { c: [255, 110, 50], kind: 'ember', n: 40, vy: -50 } },
     theatre: { amb: [10, 4, 6], dark: 0.36, sky: ['#120608', '#3a0c14', '#070204'], fog: [255, 200, 150], rock: '#0a0507', mote: { c: [255, 225, 170], kind: 'mote', n: 22, vy: -10 } },
   };
-  let vignette = null, holeSprite = null;
+  let vignette = null, holeSprite = null; const rockPat = {};
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const ww = innerWidth, wh = innerHeight;
@@ -63,7 +63,8 @@ G.Render = (function () {
   function ambient(dt, room) {
     const A = AREA[room.area]; ambT += dt; const m = A.mote;
     if (Math.random() < dt * m.n * 0.4) {
-      G.FX.spawn({ x: cam.x + rand(-100, VW + 100), y: cam.y + rand(0, VH + 50), vx: rand(-15, 15), vy: m.vy * rand(0.5, 1.5), life: rand(4, 8), size: rand(1, m.kind === 'ember' ? 2.6 : 2.2), kind: m.kind === 'ember' ? 'mote' : 'mote', ph: rand(7), a: rand(0.4, 0.9), c: m.c, add: true });
+      const x0 = Math.max(cam.x - 100, 0), x1 = Math.min(cam.x + VW + 100, room.pw), y0 = Math.max(cam.y, 0), y1 = Math.min(cam.y + VH + 50, room.ph);   // only in the room's air, never over the rock around it
+      if (x1 > x0 && y1 > y0) G.FX.spawn({ x: rand(x0, x1), y: rand(y0, y1), vx: rand(-15, 15), vy: m.vy * rand(0.5, 1.5), life: rand(4, 8), size: rand(1, m.kind === 'ember' ? 2.6 : 2.2), kind: m.kind === 'ember' ? 'mote' : 'mote', ph: rand(7), a: rand(0.4, 0.9), c: m.c, add: true });
     }
   }
   // ---- background
@@ -144,7 +145,11 @@ G.Render = (function () {
   function drawTerrain(room) {
     const art = window.ROOMART[room.id]; const A = AREA[room.area];
     // outside room = rock
-    ctx.fillStyle = A.rock;
+    // outside the room: the same deep rock the room's walls are painted with, so a narrow room sits in solid stone
+    const rf = G.Assets.get('rockfill_' + room.area);
+    if (rf) { if (!rockPat[room.area]) rockPat[room.area] = ctx.createPattern(rf, 'repeat');
+      const pt = rockPat[room.area]; pt.setTransform(new DOMMatrix([1, 0, 0, 1, -150 - cam.x, -150 - cam.y])); ctx.fillStyle = pt; }
+    else ctx.fillStyle = A.rock;
     if (cam.x < 0) ctx.fillRect(0, 0, -cam.x, VH);
     if (cam.x + VW > room.pw) ctx.fillRect(room.pw - cam.x, 0, VW, VH);
     if (cam.y < 0) ctx.fillRect(0, 0, VW, -cam.y);

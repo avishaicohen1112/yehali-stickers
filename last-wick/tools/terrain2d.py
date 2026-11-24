@@ -16,7 +16,7 @@ import world, terrain as T2
 
 ROOT = os.path.join(os.path.dirname(__file__), '..'); OUT = os.environ.get('ROOM_OUT', os.path.join(ROOT, 'assets', 'rooms')); ART = os.environ.get('ART_DIR', os.path.join(ROOT, 'assets', 'art'))
 T = T2.T
-KIT_DEFAULT = {'anchor_top': 0.45, 'anchor_bottom': 0.25, 'trim_scale': 1.0, 'rock_scale': 1.0, 'deep': [8, 7, 10], 'rim': [230, 200, 160], 'darken': 0.92, 'tex_mul': 0.42}
+KIT_DEFAULT = {'anchor_top': 0.45, 'anchor_bottom': 0.25, 'trim_scale': 1.0, 'rock_scale': 1.0, 'deep': [8, 7, 10], 'rim': [230, 200, 160], 'darken': 0.62, 'tex_mul': 0.42}
 
 def load(path):
     if not os.path.exists(path): return None
@@ -175,6 +175,18 @@ def paint(r):
     img[..., :3] = np.where(A3 > 0, (img[..., :3] * a + np.array(K['rim'], np.float32) * g3 * (1 - a)) / np.maximum(A3, 1e-4), 0)
     img[..., 3:4] = np.clip(A3, 0, 1) * 255
     return Image.fromarray(np.clip(img, 0, 255).astype(np.uint8), 'RGBA')
+
+def rockfill(area):
+    """the deep-rock look as a small tileable texture: the game fills everything outside a room with it, so a narrow
+    room sits inside a thick stone wall instead of a black void (same formula as deep rock inside paint())"""
+    K = kit(area); r = K['rock'][..., :3]
+    rgb = r * K['tex_mul'] * (1 - K['darken']) + np.array(K['deep'], np.float32) * 0.6
+    d = os.path.join(ROOT, 'assets', 'scn', area); os.makedirs(d, exist_ok=True)
+    Image.fromarray(np.clip(rgb, 0, 255).astype(np.uint8), 'RGB').save(os.path.join(d, 'rockfill.webp'), 'WEBP', quality=82, method=5)
+
+if __name__ == '__main__' and sys.argv[1:2] == ['--rockfill']:
+    for a in sorted(os.listdir(ART)): rockfill(a); print('rockfill', a)
+    sys.exit()
 
 if __name__ == '__main__':
     ids = sys.argv[1:] or list(world.R.keys())
