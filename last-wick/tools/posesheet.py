@@ -151,7 +151,7 @@ def build(spec_path, debug=None, outdir=None):
         if not os.path.exists(p):  # any extension will do (art_src/A02 -> A02.png / .webp / .jpg)
             c = sorted(glob.glob(os.path.splitext(p)[0] + '.*')); p = c[0] if c else p
         if not os.path.exists(p): print(f'  [{name}] missing source {src}: {path} - skipped'); continue
-        a = remove_bg(load_rgba(p))
+        a = remove_bg(load_rgba(p)); a[a[..., 3] < 8] = 0   # drop near-invisible fringe pixels left by the image model's own keying
         cols, rows = S.get('grids', {}).get(src, S.get('grid', [4, 4]))
         cells = cut_cells(a, cols, rows); names = S['cells'][src]
         raw = {}
