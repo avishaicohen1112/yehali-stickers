@@ -9,13 +9,13 @@ G.Main = (function () {
 
   function freshState() {
     return { room: 'c1', benchRoom: 'c1', benchX: 6 * TILE, benchY: 15 * TILE, hp: 5, hpMax: 5, soul: 0, soulMax: 99, tallow: 0, needle: 1, spellMul: 1,
-      abil: { dash: false, djump: false, wall: false, spell: false, glide: false, shadow: false }, bosses: {}, picked: {}, visited: {}, talked: {}, shop: {}, cinder: null,
+      abil: { dash: false, djump: true, wall: false, spell: false, glide: false, shadow: false }, bosses: {}, picked: {}, visited: {}, talked: {}, shop: {}, cinder: null,
       deaths: 0, time: 0, lastArea: null, muted: false, started: false };
   }
   G.state = freshState();
   function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
   function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(G.state)); } catch (e) { } }
-  function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) { G.state = Object.assign(freshState(), s); return true; } } catch (e) { } return false; }
+  function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) { G.state = Object.assign(freshState(), s); G.state.abil.djump = true; return true; } } catch (e) { } return false; }
 
   // ---------- asset loading ----------
   function roomImg(id) { const a = window.ROOMART[id]; if (a && a.img) G.Assets.load('room_' + id, a.img); }
@@ -141,7 +141,7 @@ G.Main = (function () {
       G.Objects.lockArena(room, false);
       enemies = enemies.filter(e => e !== boss);
       if (boss.kind === 'firstflame') { setMode('ending'); G.Sound.music('victory'); save(); return; }
-      const reward = { waxmother: 'heart', whale: 'vessel', lanternqueen: 'heart', puppeteer: 'spellup', director: 'moon', knight: 'dash', moth: 'djump', angler: 'wall', vesper: 'moon', choir: 'heart', colossus: 'spellup', extinguisher: 'hearthlit', leviathan: 'glide', captain: 'shadow', keeper: 'heart', paperking: 'vessel', clockmaker: 'heart' }[boss.kind];
+      const reward = { waxmother: 'heart', whale: 'vessel', lanternqueen: 'heart', puppeteer: 'spellup', director: 'moon', knight: 'dash', moth: 'heart', angler: 'wall', vesper: 'moon', choir: 'heart', colossus: 'spellup', extinguisher: 'hearthlit', leviathan: 'glide', captain: 'shadow', keeper: 'heart', paperking: 'vessel', clockmaker: 'heart' }[boss.kind];
       for (const k in room.over) delete room.over[k]; G.Objects.build(room);
       if (boss.kind === 'vesper') G.Objects.openSeals(room);
       G.UI.toast(G.T('boss_defeated'), 3);
@@ -263,7 +263,7 @@ G.Main = (function () {
     const VW = Rn.VW, VH = Rn.VH;
     const im = G.Assets.get('bg_crypts_far') || null;
     const tb = G.Assets.get('title_bg');
-    if (tb) { const s = Math.max(VW / tb.width, VH / tb.height) * 1.06; const ox = (VW - tb.width * s) / 2 + Math.sin(t * 0.1) * 15, oy = (VH - tb.height * s) / 2; ctx.drawImage(tb, ox, oy, tb.width * s, tb.height * s); G.FX.flame(ctx, ox + 523.0 * s, oy + 521.6 * s + 4, 6 * s, t, { glow: 1.2 }); }
+    if (tb) { const s = Math.max(VW / tb.width, VH / tb.height) * 1.06; const ox = (VW - tb.width * s) / 2 + Math.sin(t * 0.1) * 15, oy = (VH - tb.height * s) / 2; ctx.drawImage(tb, ox, oy, tb.width * s, tb.height * s); G.FX.flame(ctx, ox + 471.1 * s, oy + 652.1 * s + 4, 7 * s, t, { glow: 1.2 }); }
     else { Rn.drawBG({ area: 'crypts', pw: VW + 400, ph: VH }, t); }
     const g = ctx.createRadialGradient(VW / 2, VH * 0.42, 50, VW / 2, VH * 0.45, VW * 0.7); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.75)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);

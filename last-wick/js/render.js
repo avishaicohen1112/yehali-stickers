@@ -64,7 +64,7 @@ G.Render = (function () {
   // ---- background
   function drawBG(room, t) {
     const A = AREA[room.area];
-    if (G.Scenery.draw(ctx, room, cam, VW, VH, t)) return;
+    if (G.Scenery.draw(ctx, room, cam, VW, VH, t)) { haze(room); return; }
     const bg = window.BGS[room.area];
     const g = ctx.createLinearGradient(0, 0, 0, VH); g.addColorStop(0, A.sky[0]); g.addColorStop(0.55, A.sky[1]); g.addColorStop(1, A.sky[2]);
     ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
@@ -206,8 +206,21 @@ G.Render = (function () {
     // colored light tint (additive)
     for (const l of L) { const x = l.x - cam.x, y = l.y - cam.y; if (x < -l.r || y < -l.r || x > VW + l.r || y > VH + l.r) continue; G.FX.glow(ctx, x, y, l.r * 0.8, l.c, 0.13 * l.i); }
   }
+  // one air for the whole picture: a soft veil of the area's own colour between the painted background and the
+  // playfield, so the separately painted layers melt into each other instead of reading as stacked stickers
+  function haze(room) {
+    const S = window.SCENES && window.SCENES[room.area], c = (S && S.fog) || AREA[room.area].fog;
+    const g = ctx.createLinearGradient(0, 0, 0, VH); g.addColorStop(0, rgba(c, 0.10)); g.addColorStop(0.6, rgba(c, 0.06)); g.addColorStop(1, rgba(c, 0.16));
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH); ctx.restore();
+    ctx.fillStyle = 'rgba(6,5,10,0.16)'; ctx.fillRect(0, 0, VW, VH);
+  }
+  // final colour grade over everything (terrain, props, characters): same light and hue for every element in the area
+  function grade(room) {
+    const S = window.SCENES && window.SCENES[room.area], c = (S && S.fog) || AREA[room.area].fog;
+    ctx.save(); ctx.globalCompositeOperation = 'soft-light'; ctx.fillStyle = rgba(c, 0.28); ctx.fillRect(0, 0, VW, VH); ctx.restore();
+  }
   function drawFog(room, t) {
-    const A = AREA[room.area];
+    const A = AREA[room.area]; grade(room);
     const g = ctx.createLinearGradient(0, VH * 0.55, 0, VH); g.addColorStop(0, rgba(A.fog, 0)); g.addColorStop(1, rgba(A.fog, 0.10));
     ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
     ctx.drawImage(vignette, 0, 0, VW, VH);

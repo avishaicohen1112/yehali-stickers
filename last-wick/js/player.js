@@ -3,7 +3,7 @@
 G.Player = (function () {
   const C = {
     RUN: 340, ACC_G: 5200, ACC_A: 3400, GRAV: 2500, FALL_MULT: 1.4, MAXFALL: 1050, JUMP: 940, DJUMP: 840,
-    COYOTE: 0.1, BUFFER: 0.13, DASH_V: 1000, DASH_T: 0.19, DASH_CD: 0.42, WALL_SLIDE: 230, WJ_VX: 470, WJ_VY: 900,
+    COYOTE: 0.13, BUFFER: 0.16, DASH_V: 1000, DASH_T: 0.19, DASH_CD: 0.42, WALL_SLIDE: 230, WJ_VX: 470, WJ_VY: 900,
     ATK_T: 0.29, ATK_CD: 0.36, POGO: 830, HURT_INV: 1.35, FOCUS_T: 0.85, SPELL_COST: 33, HEAL_COST: 33
   };
   class Player {
@@ -125,8 +125,7 @@ G.Player = (function () {
         this.atkT = C.ATK_T; this.atkCd = C.ATK_CD; this.atkHit = new Set(); this.atkAlt = !this.atkAlt;
         G.Sound.sfx('slash', { pitch: rand(0.9, 1.1) });
         const o = this.atkDir === 'up' ? [0, -62] : this.atkDir === 'down' ? [0, 58] : [this.facing * 52, -2];
-        if (this.atkDir === 'side') G.FX.thrust(this.cx + this.facing * 18, this.cy - 4, this.facing, { follow: this, delay: 0.075, len: 135 });
-        else G.FX.slash(this.cx + o[0], this.cy + o[1], this.atkDir, this.facing, { follow: this, big: 1 });
+        G.FX.slash(this.cx + o[0], this.cy + o[1], this.atkDir, this.facing, { follow: this, big: this.atkDir === 'side' ? 1.05 : 1 });
       }
       if (this.atkT > 0) {
         this.atkT -= dt;
@@ -139,6 +138,15 @@ G.Player = (function () {
       room.shadowPass = this.dashT > 0 && A.shadow;
       const hx = room.moveX(this, this.vx * dt);
       if (hx && this.dashT > 0) { this.dashT = 0; }
+      // ledge assist: reaching a ledge by a hair -> lift the hero onto it instead of sliding down its face
+      if (hx && !this.ground && this.vy > -420 && !this.wall) {
+        const ex = hx > 0 ? this.x + this.w + 2 : this.x - 2;
+        for (let up = 6; up <= 30; up += 6) {
+          if (room.solidAt(ex, this.feet - 3) && !room.solidAt(ex, this.feet - up - 3) && !room.solidAt(ex, this.y - up + 2) && !room.solidAt(ex, this.cy - up) && !room.solidAt(this.cx, this.y - up)) {
+            this.y -= up; this.vy = Math.min(this.vy, -60); room.moveX(this, hx * 8); break;
+          }
+        }
+      }
       if (hx) this.vx = 0;
       const hy = room.moveY(this, this.vy * dt, dropThrough);
       // never end a shadow dash inside a shadow gate: keep dashing through

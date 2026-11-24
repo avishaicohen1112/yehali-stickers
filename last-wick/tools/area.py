@@ -154,7 +154,11 @@ def build(letter, rooms=False):
     for n, key, par, h, tile in ((2, 'sil', 0.24, 1.22, True), (3, 'mid', 0.42, 1.15, True)):
         p = src(f'{letter}{n}')
         if not p: continue
-        a = keyed(p); save_webp(make_tileable(a, 0.08), os.path.join(out, key + '.webp'), h=900)
+        a = keyed(p); a = make_tileable(a, 0.08)
+        hh = a.shape[0]; ramp = np.ones(hh, np.float32); f = int(hh * 0.1)
+        ramp[:f] = np.linspace(0, 1, f) ** 1.5; ramp[-f // 2:] = np.linspace(1, 0.35, f // 2)   # no hard cut at the layer's top/bottom
+        a[..., 3] *= ramp[:, None]
+        save_webp(a, os.path.join(out, key + '.webp'), h=900)
         L[key] = dict(L.get(key, {}), id=key, img=f'scn_{area}_{key}', src=f'assets/scn/{area}/{key}.webp', p=par, h=h, tile=tile); done.append(key)
     p = src(letter + '4')
     if p:

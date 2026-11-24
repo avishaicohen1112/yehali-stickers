@@ -80,7 +80,9 @@ def drape(img, strip, pts, anchor, seed, flip=False):
         if a1 <= a0: continue
         s = col[a0 - y0:a1 - y0, 0]; d = img[a0:a1, x]
         f = fade.get((x, y), 1.0); f = f * f * (3 - 2 * f)
-        a = s[:, 3:4] / 255.0 * f; da = d[:, 3:4] / 255.0; oa = a + da * (1 - a)
+        # taper = the strip gets shorter towards the run's ends (stays fully opaque, no ghosting)
+        rows = np.arange(a0, a1) - y; keep = (rows < 0) & (rows > -ay * (0.35 + 0.65 * f)) | (rows >= 0) & (rows < (h - ay) * f + 2)
+        a = s[:, 3:4] / 255.0 * keep[:, None]; da = d[:, 3:4] / 255.0; oa = a + da * (1 - a)
         d[:, :3] = np.where(oa > 0, (s[:, :3] * a + d[:, :3] * da * (1 - a)) / np.maximum(oa, 1e-4), 0); d[:, 3:4] = oa * 255
 
 def three_slice(img, w_target):
@@ -161,7 +163,7 @@ def paint(r):
                     if seg.shape[1] < T: seg = spi[:, :T]
                     over(img, seg, xx * T, yy * T + T - sh + 4)
     # soft contact shadow
-    Sf = S.astype(np.float32); sh = np.clip(cv2.GaussianBlur(Sf, (0, 0), 10) * 0.55 + cv2.GaussianBlur(Sf, (0, 0), 42) * 0.4, 0, 0.85)  # rock sits in the scene
+    Sf = S.astype(np.float32); sh = np.clip(cv2.GaussianBlur(Sf, (0, 0), 9) * 0.6 + cv2.GaussianBlur(Sf, (0, 0), 22) * 0.18, 0, 0.75)  # rock sits in the scene
     a = img[..., 3:4] / 255.0; shade = sh[..., None] * (1 - a)
     A2 = a + shade
     img[..., :3] = np.where(A2 > 0, img[..., :3] * a / np.maximum(A2, 1e-4) + np.array(K['deep'], np.float32) * shade / np.maximum(A2, 1e-4), 0)

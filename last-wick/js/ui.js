@@ -242,11 +242,13 @@ G.UI = (function () {
     c.fillStyle = 'rgba(6,5,8,0.92)'; c.fillRect(0, 0, VW, VH);
     let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     const curW = G.Main.room ? G.Main.room.world : 'lumen';
-    for (const id in W.rooms) { const r = W.rooms[id]; if (r.world !== curW) continue; x0 = Math.min(x0, r.gx); y0 = Math.min(y0, r.gy); x1 = Math.max(x1, r.gx + r.w); y1 = Math.max(y1, r.gy + r.h); }
-    const sc = Math.min((VW - 160) / (x1 - x0), (VH - 200) / (y1 - y0));
+    const anyV = Object.keys(W.rooms).some(id => S.visited[id] && W.rooms[id].world === curW);
+    // fit the map to what you have explored, so it is big and readable instead of a tiny dot in a huge frame
+    for (const id in W.rooms) { const r = W.rooms[id]; if (r.world !== curW || (anyV && !S.visited[id])) continue; x0 = Math.min(x0, r.gx); y0 = Math.min(y0, r.gy); x1 = Math.max(x1, r.gx + r.w); y1 = Math.max(y1, r.gy + r.h); }
+    const sc = Math.min(16, (VW - 120) / (x1 - x0), (VH - 170) / (y1 - y0));
     const ox = (VW - (x1 - x0) * sc) / 2 - x0 * sc, oy = 120 + (VH - 200 - (y1 - y0) * sc) / 2 - y0 * sc;
     text(c, W.worlds[curW].name, VW / 2, 60, { size: 46, w: 700 }); ornament(c, VW / 2, 98, 260);
-    const AC = { crypts: '#c8956a', gardens: '#7fd1b0', nave: '#7f9ee0', spire: '#c4a0f0', hearth: '#e07050', shore: '#ff9a5a', galleon: '#a898e0', lighthouse: '#ffc070', paper: '#efe2c8', clock: '#e0c070', core: '#ffb060' };
+    const AC = { crypts: '#c8956a', gardens: '#7fd1b0', nave: '#7f9ee0', spire: '#c4a0f0', hearth: '#e07050', shore: '#ff9a5a', galleon: '#a898e0', lighthouse: '#ffc070', paper: '#efe2c8', clock: '#e0c070', core: '#ffb060', theatre: '#e06a7a' };
     for (const id in W.rooms) {
       if (!S.visited[id]) continue; const r = W.rooms[id]; if (r.world !== curW) continue;
       c.save(); c.translate(ox + r.gx * sc, oy + r.gy * sc);
