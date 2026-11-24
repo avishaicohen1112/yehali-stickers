@@ -1,7 +1,7 @@
 {
  "atlas": "b_knight",
  "sources": {
-  "D01_poses": "art_src/D01_poses"
+  "D01_poses": "art_src/D01-poses"
  },
  "grids": {
   "D01_poses": [

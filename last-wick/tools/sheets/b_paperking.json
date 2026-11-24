@@ -1,7 +1,7 @@
 {
  "atlas": "b_paperking",
  "sources": {
-  "D11_poses": "art_src/D11_poses"
+  "D11_poses": "art_src/D11-poses"
  },
  "grids": {
   "D11_poses": [

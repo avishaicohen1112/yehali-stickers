@@ -1,7 +1,7 @@
 {
  "atlas": "b_clockmaker",
  "sources": {
-  "D12_poses": "art_src/D12_poses"
+  "D12_poses": "art_src/D12-poses"
  },
  "grids": {
   "D12_poses": [

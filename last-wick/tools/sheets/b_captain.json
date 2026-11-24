@@ -1,7 +1,7 @@
 {
  "atlas": "b_captain",
  "sources": {
-  "D09_poses": "art_src/D09_poses"
+  "D09_poses": "art_src/D09-poses"
  },
  "grids": {
   "D09_poses": [

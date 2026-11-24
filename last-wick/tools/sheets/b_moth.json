@@ -1,7 +1,7 @@
 {
  "atlas": "b_moth",
  "sources": {
-  "D02_poses": "art_src/D02_poses"
+  "D02_poses": "art_src/D02-poses"
  },
  "grids": {
   "D02_poses": [

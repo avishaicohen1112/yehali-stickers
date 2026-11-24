@@ -1,7 +1,7 @@
 {
  "atlas": "b_extinguisher",
  "sources": {
-  "D05_poses": "art_src/D05_poses"
+  "D05_poses": "art_src/D05-poses"
  },
  "grids": {
   "D05_poses": [

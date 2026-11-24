@@ -1,7 +1,7 @@
 {
  "atlas": "b_vesper",
  "sources": {
-  "D04_poses": "art_src/D04_poses"
+  "D04_poses": "art_src/D04-poses"
  },
  "grids": {
   "D04_poses": [

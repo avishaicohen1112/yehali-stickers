@@ -1,7 +1,7 @@
 {
  "atlas": "b_angler",
  "sources": {
-  "D03_poses": "art_src/D03_poses"
+  "D03_poses": "art_src/D03-poses"
  },
  "grids": {
   "D03_poses": [

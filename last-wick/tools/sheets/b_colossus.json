@@ -1,7 +1,7 @@
 {
  "atlas": "b_colossus",
  "sources": {
-  "D07_poses": "art_src/D07_poses"
+  "D07_poses": "art_src/D07-poses"
  },
  "grids": {
   "D07_poses": [
