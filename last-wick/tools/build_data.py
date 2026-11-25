@@ -33,6 +33,9 @@ for area, b in bgs.items():
             L.append({'img': f'bg_{area}_{lay["id"]}', 'src': lay['img'], 'p': 0.35, 'h': 1.0, 'tile': True})
             L.append({'kind': 'fog', 'color': FOG[area], 'a': 0.12, 'p': 0.5, 'speed': 18, 'y': 0.62, 'h': 0.45, 'seed': 'b'})
     scenes[area] = {'sky': SKY[area], 'layers': L}
+# the painted foreground frame is retired (scenery.js no longer draws it) and the old 3D backdrops are superseded
+for sc in scenes.values(): sc['layers'] = [l for l in sc['layers'] if not l.get('front')]
+bgs = {a: b for a, b in bgs.items() if a not in scenes}
 rigs = {}
 p = os.path.join(ROOT, 'assets/rigs')
 for f in sorted(glob.glob(os.path.join(p, '*.json'))):
