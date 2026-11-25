@@ -23,6 +23,7 @@ G.FX = (function () {
   function spawn(p) {
     p.life = p.life || 1; p.t = 0; p.vx = p.vx || 0; p.vy = p.vy || 0; p.g = p.g || 0; p.drag = p.drag || 0;
     p.size = p.size || 3; p.c = p.c || [255, 220, 180]; p.rot = p.rot || 0; p.vr = p.vr || 0;
+    if (p.ph === undefined) p.ph = Math.random() * 6.28;   // motes from burst() came without a phase: their drift was NaN and they vanished
     if (parts.length > 900) parts.shift();
     parts.push(p); return p;
   }

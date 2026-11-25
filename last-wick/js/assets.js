@@ -22,6 +22,19 @@ G.Assets = (function () {
 G.Sprite = (function () {
   const tmp = document.createElement('canvas'); const tctx = tmp.getContext('2d');
   function meta(atlas) { return window.ATLAS[atlas]; }
+  // Each frame is cut out of its atlas once into its own small canvas, and drawn from there. Drawing a sub-rect of a
+  // whole atlas makes the browser hold the entire sheet (wick.webp alone is 10 MB decoded, boss sheets up to 24 MB) for
+  // every frame; once a frame's images pass ~32 MB the canvas flushes mid-frame and the frame time jumps 5-10x.
+  const cut = {};   // atlas -> { im, used, f: { 'x,y,w,h': canvas } }
+  function frameImg(atlas, im, x, y, w, h) {
+    let A = cut[atlas]; if (!A || A.im !== im) A = cut[atlas] = { im, used: true, f: {} };
+    A.used = true;
+    const k = x + ',' + y + ',' + w + ',' + h; let c = A.f[k];
+    if (!c) { c = document.createElement('canvas'); c.width = Math.max(1, w); c.height = Math.max(1, h); c.getContext('2d').drawImage(im, x, y, w, h, 0, 0, w, h); A.f[k] = c; }
+    return c;
+  }
+  // called on room change: forget the cut frames of sheets that weren't drawn since the last call (memory stays bounded)
+  function trim() { for (const a in cut) { if (!cut[a].used) delete cut[a]; else cut[a].used = false; } }
   function frameOf(atlas, anim, t, loopOverride) {
     const m = meta(atlas); if (!m) return 0; const a = m.anims[anim]; if (!a) return 0;
     const f = Math.floor(t * a.fps);
@@ -44,16 +57,17 @@ G.Sprite = (function () {
     if (o.rot) ctx.rotate(o.rot);
     ctx.scale(o.flip ? -s : s, s * (o.sy || 1));
     if (o.alpha !== undefined) ctx.globalAlpha *= o.alpha;
+    const fim = frameImg(atlas, im, f[0], f[1], cw, ch);
     if (o.flash > 0 || o.tint) {
       if (tmp.width < cw || tmp.height < ch) { tmp.width = Math.max(tmp.width, cw); tmp.height = Math.max(tmp.height, ch); }
       tctx.clearRect(0, 0, cw, ch); tctx.globalCompositeOperation = 'source-over';
-      tctx.drawImage(im, f[0], f[1], cw, ch, 0, 0, cw, ch);
+      tctx.drawImage(fim, 0, 0);
       tctx.globalCompositeOperation = 'source-atop';
       if (o.tint) { tctx.globalAlpha = o.tint[3]; tctx.fillStyle = `rgb(${o.tint[0]},${o.tint[1]},${o.tint[2]})`; tctx.fillRect(0, 0, cw, ch); }
       if (o.flash > 0) { tctx.globalAlpha = o.flash; tctx.fillStyle = '#fff'; tctx.fillRect(0, 0, cw, ch); }
       tctx.globalAlpha = 1;
       ctx.drawImage(tmp, 0, 0, cw, ch, -ox, -oy, cw, ch);
-    } else ctx.drawImage(im, f[0], f[1], cw, ch, -ox, -oy, cw, ch);
+    } else ctx.drawImage(fim, -ox, -oy, cw, ch);
     ctx.restore();
     return true;
   }
@@ -68,5 +82,5 @@ G.Sprite = (function () {
     return { x: x + (o.flip ? -dx : dx), y: y + dy };
   }
   function has(atlas, anim) { const m = meta(atlas); return !!(m && m.anims[anim]); }
-  return { draw, frameOf, animDur, meta, point, has };
+  return { draw, frameOf, animDur, meta, point, has, trim };
 })();

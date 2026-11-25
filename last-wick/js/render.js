@@ -20,7 +20,7 @@ G.Render = (function () {
     hearth: { amb: [10, 4, 4], dark: 0.42, sky: ['#0c0606', '#2a0e08', '#050202'], fog: [200, 70, 30], rock: '#070404', mote: { c: [255, 110, 50], kind: 'ember', n: 40, vy: -50 } },
     theatre: { amb: [10, 4, 6], dark: 0.36, sky: ['#120608', '#3a0c14', '#070204'], fog: [255, 200, 150], rock: '#0a0507', mote: { c: [255, 225, 170], kind: 'mote', n: 22, vy: -10 } },
   };
-  let vignette = null, holeSprite = null; const rockPat = {};
+  let vignette = null, holeSprite = null; const rockPat = {}, sealPat = {};
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const ww = innerWidth, wh = innerHeight;
@@ -162,6 +162,39 @@ G.Render = (function () {
     }
     for (const f of propFlames) G.FX.flame(ctx, f[0], f[1], f[2], t + f[3] * 0.01, { glow: 0.9 });
   }
+  // The painted room (up to 3800x1500 = 23 MB decoded) is cut into tiles once, and only the tiles on screen are drawn.
+  // Drawing the whole picture every frame made each frame reference ~40-50 MB of images (room + backdrop layers +
+  // sprite sheets); past ~32 MB the canvas flushes mid-frame and frame cost jumps from ~2 ms to ~20-40 ms.
+  const TS = 256, TP = 2;   // tile size; neighbour pixels kept around each tile so filtering across a seam is exact
+  let tileSet = null;
+  function roomTile(T, i, j) {
+    const k = j * T.cols + i; let q = T.t[k]; if (q) return q;
+    const W = T.im.width, H = T.im.height, x0 = i * TS, y0 = j * TS, w = Math.min(TS, W - x0), h = Math.min(TS, H - y0);
+    const sx = Math.max(0, x0 - TP), sy = Math.max(0, y0 - TP), ex = Math.min(W, x0 + w + TP), ey = Math.min(H, y0 + h + TP);
+    const c = document.createElement('canvas'); c.width = ex - sx; c.height = ey - sy;
+    c.getContext('2d').drawImage(T.im, sx, sy, c.width, c.height, 0, 0, c.width, c.height);
+    // the part drawn: the tile plus one neighbour pixel on each side (when there is one), so no pixel inside the tile
+    // is filtered against the clamped edge of its source rect
+    const l = Math.min(1, x0 - sx), t = Math.min(1, y0 - sy), r = Math.min(1, ex - x0 - w), b = Math.min(1, ey - y0 - h);
+    return (T.t[k] = { c, x0, y0, w, h, sx: x0 - sx - l, sy: y0 - sy - t, sw: w + l + r, sh: h + t + b, l, t });
+  }
+  function drawTiled(im, key, X, Y, sc) {
+    if (!tileSet || tileSet.key !== key || tileSet.im !== im) tileSet = { key, im, cols: Math.ceil(im.width / TS), rows: Math.ceil(im.height / TS), t: [] };
+    const T = tileSet, s = TS * sc, M = (G.FX.S.shakeT > 0 ? G.FX.S.shake : 0) + 2;   // M: margin for the screen shake offset
+    const i0 = Math.max(0, Math.floor((-X - M) / s)), i1 = Math.min(T.cols - 1, Math.floor((VW - X + M) / s));
+    const j0 = Math.max(0, Math.floor((-Y - M) / s)), j1 = Math.min(T.rows - 1, Math.floor((VH - Y + M) / s));
+    // each tile is clipped to the device pixels whose centres fall inside it, so every screen pixel is painted by exactly
+    // one tile and sampled exactly as the whole picture would be: no seams, no double-blended edges
+    const m = ctx.getTransform(), ax = m.a, ex = m.e, ay = m.d, ey = m.f;
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+      const q = roomTile(T, i, j), dx = X + q.x0 * sc, dy = Y + q.y0 * sc;
+      const L = Math.round(ax * dx + ex), R = Math.round(ax * (dx + q.w * sc) + ex), Tp = Math.round(ay * dy + ey), B = Math.round(ay * (dy + q.h * sc) + ey);
+      if (R <= L || B <= Tp) continue;
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.beginPath(); ctx.rect(L, Tp, R - L, B - Tp); ctx.clip(); ctx.setTransform(m);
+      ctx.drawImage(q.c, q.sx, q.sy, q.sw, q.sh, dx - q.l * sc, dy - q.t * sc, q.sw * sc, q.sh * sc);
+      ctx.restore();
+    }
+  }
   function drawTerrain(room) {
     const art = window.ROOMART[room.id]; const A = AREA[room.area];
     // outside room = rock
@@ -177,7 +210,7 @@ G.Render = (function () {
     const im = art && G.Assets.get('room_' + room.id);
     if (im) {
       const pad = art.pad || 0, sc = art.scale || 1;
-      ctx.drawImage(im, -pad - cam.x, -pad - cam.y, im.width * sc, im.height * sc);
+      drawTiled(im, room.id, -pad - cam.x, -pad - cam.y, sc);
     } else {
       const x0 = Math.floor(cam.x / TILE), y0 = Math.floor(cam.y / TILE);
       for (let ty = y0; ty <= y0 + VH / TILE + 1; ty++) for (let tx = x0; tx <= x0 + VW / TILE + 1; tx++) {
@@ -373,7 +406,7 @@ G.Render = (function () {
     const x = o.tx * TILE - 6, y = o.ty * TILE, w = o.w * TILE + 12, h = TILE, area = G.Main.room && G.Main.room.area;
     const rf = area && G.Assets.get('rockfill_' + area);
     c.save(); c.beginPath(); c.roundRect(x, y + 2, w, h - 2, 10);
-    if (rf) { const pt = c.createPattern(rf, 'repeat'); c.fillStyle = pt; c.fill(); c.fillStyle = 'rgba(255,240,220,0.12)'; c.fill(); }
+    if (rf) { const pt = sealPat[area] || (sealPat[area] = c.createPattern(rf, 'repeat')); c.fillStyle = pt; c.fill(); c.fillStyle = 'rgba(255,240,220,0.12)'; c.fill(); }
     else { c.fillStyle = '#2a2228'; c.fill(); }
     c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = 3; c.stroke();
     // wax poured over the top edge, drips hanging down the face

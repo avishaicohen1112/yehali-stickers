@@ -76,6 +76,7 @@ G.Scenery = (function () {
   // draw all layers for a room; cam: {x,y}; VW/VH view size; room: {pw,ph,area}
   function draw(ctx, room, cam, VW, VH, t, front) {
     const S = window.SCENES && window.SCENES[room.area]; if (!S) return false;
+    if (!front) drawN++;
     if (!front) { const g = ctx.createLinearGradient(0, 0, 0, VH); const sk = S.sky || ['#000', '#111', '#000'];
     g.addColorStop(0, sk[0]); g.addColorStop(0.55, sk[1]); g.addColorStop(1, sk[2]); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH); }
     const roomX = Math.max(0, room.pw - VW), roomY = Math.max(0, room.ph - VH);
@@ -128,14 +129,18 @@ G.Scenery = (function () {
   // painted layers are pushed back in depth (darker, flatter, softer) so the playable ground and characters read
   // clearly in front of them. L.dim overrides the default per layer: [brightness, saturation, blur px].
   const DEPTH = { far: [0.62, 0.8, 1.2], sil: [0.48, 0.7, 0.8], mid: [0.56, 0.78, 0.6], front: [0.16, 0.35, 1.2] };
-  const depthCache = {};
+  // the pushed-back copies are kept while in use; copies of other areas' layers are dropped once the cache passes ~48 MB
+  // (every area visited used to stay in memory for good: ~13 MB per area, too much for a phone)
+  const depthCache = {}; let depthBytes = 0, drawN = 0;
   function depthImg(L) {
     const im = G.Assets.get(L.img); if (!im) return null;
     const d = L.dim || DEPTH[L.id]; if (!d) return im;
-    const k = L.img + d.join(','); if (depthCache[k]) return depthCache[k];
+    const k = L.img + d.join(','), e = depthCache[k]; if (e) { e.used = drawN; return e.c; }
     const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d');
     x.filter = `brightness(${d[0]}) saturate(${d[1]})${d[2] ? ` blur(${d[2]}px)` : ''}`; x.drawImage(im, 0, 0);
-    return (depthCache[k] = c);
+    const bytes = c.width * c.height * 4; depthBytes += bytes;
+    if (depthBytes > 48e6) for (const j in depthCache) { const o = depthCache[j]; if (drawN - o.used > 120) { depthBytes -= o.bytes; o.c.width = o.c.height = 0; delete depthCache[j]; } }
+    depthCache[k] = { c, used: drawN, bytes }; return c;
   }
   function drawRays(ctx, room, cam, VW, VH, t, L) {
     const seed = hashStr(room.id || room.area); ctx.save(); ctx.globalCompositeOperation = 'lighter';

@@ -44,7 +44,7 @@ G.Main = (function () {
     const prev = room ? room.id : null;
     room = new G.World.Room(id); G.state.room = id; G.state.visited[id] = true;
     roomImg(id); areaImgs(room.area); for (const n of neighbors(id)) { roomImg(n); areaImgs(window.WORLD.rooms[n].area); }
-    enemies = []; boss = null; G.FX.reset(); G.Objects.build(room); G.Main.bossCam = null; G.Wind.enter(room);
+    enemies = []; boss = null; G.FX.reset(); G.Objects.build(room); G.Main.bossCam = null; G.Wind.enter(room); G.Sprite.trim();
     // closer camera everywhere (hero ~1/6 of the screen); the giant-boss stages pull back so the whole fight fits
     // narrow rooms (a shaft, a small chapel): zoom in a little so the room, not the rock around it, fills the screen
     const asp = innerWidth / Math.max(1, innerHeight), narrow = Math.max(580, Math.min(700, (room.pw + 260) / asp));
@@ -175,6 +175,9 @@ G.Main = (function () {
     const id = params.get('room'); const r = window.WORLD.rooms[id];
     let x = (+params.get('x') || r.w / 2) * TILE, y = (+params.get('y') || 0) * TILE;
     const tmp = new G.World.Room(id); if (!params.get('y')) { for (let ty = 1; ty < r.h; ty++) if (tmp.solid(Math.floor(x / TILE), ty) && !tmp.solid(Math.floor(x / TILE), ty - 1)) { y = ty * TILE; } }
+    // no floor in that column (a shaft): stand on the nearest real floor instead of on top of the room's ceiling
+    if (!y) { const c = Math.floor(x / TILE); for (let d = 1; d < r.w && !y; d++) for (const tx of [c + d, c - d]) {
+      if (tx < 0 || tx >= r.w) continue; for (let ty = r.h - 1; ty > 2; ty--) if (tmp.solid(tx, ty) && !tmp.solid(tx, ty - 1) && !tmp.solid(tx, ty - 2)) { y = ty * TILE; x = tx * TILE + TILE / 2; break; } if (y) break; } }
     startPlay(id, x, y, false);
   }
 
