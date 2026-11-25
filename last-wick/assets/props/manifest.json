@@ -891,5 +891,208 @@
   "h": 60.0,
   "ax": 56.8,
   "ay": 30.0
+ },
+ "chest_wreck_base": {
+  "img": "assets/props/chest_wreck_base.webp",
+  "w": 112.0,
+  "h": 64.0,
+  "ax": 56.0,
+  "ay": 64.0
+ },
+ "chest_wreck_lid": {
+  "img": "assets/props/chest_wreck_lid.webp",
+  "w": 117.0,
+  "h": 57.0,
+  "ax": 58.5,
+  "ay": 57.0
+ },
+ "chest_wreck_open": {
+  "img": "assets/props/chest_wreck_open.webp",
+  "w": 115.0,
+  "h": 106.5,
+  "ax": 57.5,
+  "ay": 106.5
+ },
+ "chest_anchor_base": {
+  "img": "assets/props/chest_anchor_base.webp",
+  "w": 106.0,
+  "h": 64.0,
+  "ax": 53.0,
+  "ay": 64.0
+ },
+ "chest_anchor_lid": {
+  "img": "assets/props/chest_anchor_lid.webp",
+  "w": 114.0,
+  "h": 51.5,
+  "ax": 57.0,
+  "ay": 51.5
+ },
+ "chest_anchor_open": {
+  "img": "assets/props/chest_anchor_open.webp",
+  "w": 111.0,
+  "h": 109.0,
+  "ax": 55.5,
+  "ay": 109.0
+ },
+ "chest_paper_base": {
+  "img": "assets/props/chest_paper_base.webp",
+  "w": 123.0,
+  "h": 64.0,
+  "ax": 61.5,
+  "ay": 64.0
+ },
+ "chest_paper_lid": {
+  "img": "assets/props/chest_paper_lid.webp",
+  "w": 133.0,
+  "h": 67.5,
+  "ax": 66.5,
+  "ay": 67.5
+ },
+ "chest_paper_open": {
+  "img": "assets/props/chest_paper_open.webp",
+  "w": 134.5,
+  "h": 134.5,
+  "ax": 67.2,
+  "ay": 134.5
+ },
+ "chest_clock_base": {
+  "img": "assets/props/chest_clock_base.webp",
+  "w": 119.0,
+  "h": 64.0,
+  "ax": 59.5,
+  "ay": 64.0
+ },
+ "chest_clock_lid": {
+  "img": "assets/props/chest_clock_lid.webp",
+  "w": 128.0,
+  "h": 72.0,
+  "ax": 64.0,
+  "ay": 72.0
+ },
+ "chest_clock_open": {
+  "img": "assets/props/chest_clock_open.webp",
+  "w": 122.0,
+  "h": 128.0,
+  "ax": 61.0,
+  "ay": 128.0
+ },
+ "loot_drop0": {
+  "img": "assets/props/loot_drop0.webp",
+  "w": 9.5,
+  "h": 12.0,
+  "ax": 4.8,
+  "ay": 6.0
+ },
+ "loot_drop1": {
+  "img": "assets/props/loot_drop1.webp",
+  "w": 11.5,
+  "h": 15.0,
+  "ax": 5.8,
+  "ay": 7.5
+ },
+ "loot_drop2": {
+  "img": "assets/props/loot_drop2.webp",
+  "w": 13.5,
+  "h": 18.0,
+  "ax": 6.8,
+  "ay": 9.0
+ },
+ "loot_drop3": {
+  "img": "assets/props/loot_drop3.webp",
+  "w": 16.0,
+  "h": 22.0,
+  "ax": 8.0,
+  "ay": 11.0
+ },
+ "loot_drop4": {
+  "img": "assets/props/loot_drop4.webp",
+  "w": 18.5,
+  "h": 26.0,
+  "ax": 9.2,
+  "ay": 13.0
+ },
+ "loot_heart": {
+  "img": "assets/props/loot_heart.webp",
+  "w": 39.5,
+  "h": 40.0,
+  "ax": 19.8,
+  "ay": 20.0
+ },
+ "loot_scroll": {
+  "img": "assets/props/loot_scroll.webp",
+  "w": 44.5,
+  "h": 40.0,
+  "ax": 22.2,
+  "ay": 20.0
+ },
+ "loot_key": {
+  "img": "assets/props/loot_key.webp",
+  "w": 27.5,
+  "h": 44.0,
+  "ax": 13.8,
+  "ay": 22.0
+ },
+ "chest_wood_base": {
+  "img": "assets/props/chest_wood_base.webp",
+  "w": 100.0,
+  "h": 64.0,
+  "ax": 50.0,
+  "ay": 64.0
+ },
+ "chest_wood_lid": {
+  "img": "assets/props/chest_wood_lid.webp",
+  "w": 102.0,
+  "h": 44.0,
+  "ax": 51.0,
+  "ay": 44.0
+ },
+ "chest_wood_open": {
+  "img": "assets/props/chest_wood_open.webp",
+  "w": 99.0,
+  "h": 106.0,
+  "ax": 49.5,
+  "ay": 106.0
+ },
+ "chest_iron_base": {
+  "img": "assets/props/chest_iron_base.webp",
+  "w": 104.5,
+  "h": 64.0,
+  "ax": 52.2,
+  "ay": 64.0
+ },
+ "chest_iron_lid": {
+  "img": "assets/props/chest_iron_lid.webp",
+  "w": 113.5,
+  "h": 72.5,
+  "ax": 56.8,
+  "ay": 72.5
+ },
+ "chest_iron_open": {
+  "img": "assets/props/chest_iron_open.webp",
+  "w": 103.0,
+  "h": 110.5,
+  "ax": 51.5,
+  "ay": 110.5
+ },
+ "chest_rare_base": {
+  "img": "assets/props/chest_rare_base.webp",
+  "w": 110.5,
+  "h": 64.0,
+  "ax": 55.2,
+  "ay": 64.0
+ },
+ "chest_rare_lid": {
+  "img": "assets/props/chest_rare_lid.webp",
+  "w": 117.0,
+  "h": 67.5,
+  "ax": 58.5,
+  "ay": 67.5
+ },
+ "chest_rare_open": {
+  "img": "assets/props/chest_rare_open.webp",
+  "w": 106.5,
+  "h": 108.5,
+  "ax": 53.2,
+  "ay": 108.5
  }
 }

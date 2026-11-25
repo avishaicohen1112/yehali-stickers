@@ -110,3 +110,47 @@ def bosses():
 
 if __name__ == '__main__' and len(sys.argv) > 1 and sys.argv[1] == 'bosses':
     bosses()
+
+
+def biggest(pc):
+    """keep only the largest blob (drops stray bits of a neighbouring piece's glow/flame)"""
+    m = (pc[..., 3] > 40).astype(np.uint8); n, lab, st, _ = cv2.connectedComponentsWithStats(cv2.dilate(m, np.ones((9, 9), np.uint8)), 8)
+    if n <= 2: return pc
+    k = 1 + int(np.argmax(st[1:, cv2.CC_STAT_AREA])); pc = pc.copy(); pc[lab != k] = 0; return pc
+
+
+def chests():
+    """R01-R03 chest sheets (rows: base, lid, open) -> props chest_<kind>_base/_lid/_open; R04 loot -> loot_*"""
+    man = json.load(open(os.path.join(PROPS, 'manifest.json')))
+    for sid, kinds in (('R01', ['wood', 'iron', 'rare']), ('R02', ['wreck', 'anchor']), ('R03', ['paper', 'clock'])):
+        p = src(sid)
+        if not p: continue
+        a = keyed(p).astype(np.float32); a[a[..., 3] < 24] = 0; boxes = split(a, 16, min_area=3000)
+        if len(boxes) != len(kinds) * 3:   # glows joined neighbours: fall back to the sheet's even grid (3 columns x rows)
+            H, W = a.shape[:2]; n = len(kinds); boxes = []
+            for r in range(n):
+                for c in range(3):
+                    x0, y0, x1, y1 = c * W // 3, r * H // n, (c + 1) * W // 3, (r + 1) * H // n
+                    sub = a[y0:y1, x0:x1, 3] > 40; ys, xs = np.nonzero(sub)
+                    boxes.append([x0 + xs.min(), y0 + ys.min(), xs.max() - xs.min() + 1, ys.max() - ys.min() + 1])
+            print(f'  {sid}: grid split')
+        for i, k in enumerate(kinds):
+            row = sorted(boxes[i * 3:i * 3 + 3], key=lambda b: b[0])
+            pcs = [trim(biggest(a[b[1]:b[1] + b[3], b[0]:b[0] + b[2]].copy()))[0] for b in row]
+            kk = 64 / pcs[0].shape[0] * 2          # base is 64 game px tall; lid/open keep the sheet scale
+            for nm, pc in zip(('base', 'lid', 'open'), pcs):
+                e, _ = save(pc, f'chest_{k}_{nm}', pc.shape[0] * kk / 2); man[f'chest_{k}_{nm}'] = e
+        print(sid, kinds)
+    p = src('R04')
+    if p:
+        a = keyed(p).astype(np.float32); a[a[..., 3] < 24] = 0; boxes = split(a, 16, min_area=800)
+        names = ['loot_drop0', 'loot_drop1', 'loot_drop2', 'loot_drop3', 'loot_drop4', 'loot_heart', 'loot_scroll', 'loot_key']
+        hs = [12, 15, 18, 22, 26, 40, 40, 44]
+        for nm, hh, b in zip(names, hs, boxes):
+            pc, _ = trim(a[b[1]:b[1] + b[3], b[0]:b[0] + b[2]].copy()); e, _ = save(pc, nm, hh); e['ay'] = round(e['h'] / 2, 1); man[nm] = e
+        print('R04', len(boxes))
+    json.dump(man, open(os.path.join(PROPS, 'manifest.json'), 'w'), indent=1)
+
+
+if __name__ == '__main__' and len(sys.argv) > 1 and sys.argv[1] == 'chests':
+    chests()

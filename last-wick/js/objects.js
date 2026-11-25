@@ -81,6 +81,8 @@ G.Objects = (function () {
     const DI = window.PROPS.item_drop && G.Assets.get('prop_item_drop'), DP = window.PROPS.item_drop;
     for (const c of coins) {
       G.FX.glow(ctx, c.x, c.y, c.r * 4, [255, 200, 120], 0.35);
+      const ln = 'loot_drop' + (c.v === 5 ? 4 : ((c.x * 7 | 0) % 3)), LP = window.PROPS[ln], LI = LP && G.Assets.get('prop_' + ln);   // R04 wax drops in a few sizes
+      if (LI) { ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(Math.sin(c.t * 3 + c.x) * 0.35); ctx.drawImage(LI, -LP.w / 2, -LP.h * 0.6, LP.w, LP.h); ctx.restore(); continue; }
       if (DI) { const s = c.r / 9; ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(Math.sin(c.t * 3 + c.x) * 0.4); ctx.drawImage(DI, -DP.w * s / 2, -DP.h * s * 0.6, DP.w * s, DP.h * s); ctx.restore(); continue; }
       ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(Math.sin(c.t * 3 + c.x) * 0.4);
       const g = ctx.createRadialGradient(-c.r * 0.3, -c.r * 0.4, 1, 0, 0, c.r * 1.2); g.addColorStop(0, '#fffaf0'); g.addColorStop(0.5, '#f0d9b0'); g.addColorStop(1, '#a8794a');
@@ -172,7 +174,7 @@ G.Objects = (function () {
     if (o.k > 0) G.FX.light(o.x, o.y - 40, 160 + o.k * 120, [255, 200, 120], o.k);
     if (!o.opening) return;
     const t0 = o.opening; o.opening += dt;
-    if (o.opening > 0.3) o.k = Math.min(1, o.k + dt * 3.2);
+    if (o.opening > 0.3) o.k = Math.min(1, o.k + dt * 2.6);
     if (t0 < 0.42 && o.opening >= 0.42) {
       G.Sound.sfx('heal', { pitch: 1.2 }); G.FX.flash('#ffe6b8', 0.12, 0.3);
       G.FX.burst(o.x, o.y - 40, 26, { speed: 320, life: 0.8, size: 3, c: [255, 215, 150], kind: 'ember', angle: -Math.PI / 2, spread: 0.9 });

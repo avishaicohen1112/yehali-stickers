@@ -277,24 +277,28 @@ G.Render = (function () {
     if (G.Objects.nearest() === o) G.UI.prompt(c, o.x, o.y - 175, G.T('talk'));
   }
   // chest: painted base + lid (assets from ART_BRIEF_2 R01-R03 -> props chest_<kind>_base / _lid); vector stand-in until then
+  // painted chests (R01-R03): closed = base + lid; opening = lid lifts and tips back on its hinge; then the painted open chest
+  const CHEST_KIND = { small: 'wood' };
   function drawChest(c, o, t) {
-    const B = window.PROPS['chest_' + o.kind + '_base'], L = window.PROPS['chest_' + o.kind + '_lid'];
-    const ib = B && G.Assets.get('prop_chest_' + o.kind + '_base'), il = L && G.Assets.get('prop_chest_' + o.kind + '_lid');
-    const ang = -o.k * 1.9 * (o.k < 1 ? 1 : 1) + (o.opening > 0.3 && o.opening < 0.6 ? Math.sin((o.opening - 0.3) * 30) * 0.05 : 0);
-    if (ib && il) {
-      c.drawImage(ib, o.x - B.ax, o.y - B.ay, B.w, B.h);
-      c.save(); c.translate(o.x - B.ax + 6, o.y - B.ay + 4); c.rotate(ang); c.drawImage(il, -6, -L.h + 4, L.w, L.h); c.restore();
+    const k = CHEST_KIND[o.kind] || o.kind, B = window.PROPS['chest_' + k + '_base'], L = window.PROPS['chest_' + k + '_lid'], O = window.PROPS['chest_' + k + '_open'];
+    const ib = B && G.Assets.get('prop_chest_' + k + '_base'), il = L && G.Assets.get('prop_chest_' + k + '_lid'), io = O && G.Assets.get('prop_chest_' + k + '_open');
+    if (ib && il && io) {
+      groundShadow(c, o.x, o.y - 2, B.w * 0.55);
+      if (o.k >= 0.999) { c.drawImage(io, o.x - O.w / 2, o.y - O.h + 2, O.w, O.h); G.FX.glow(c, o.x, o.y - B.h * 0.8, 50, [255, 200, 130], 0.35 + Math.sin(t * 2) * 0.08); }
+      else {
+        // a closed chest breathes a little light from under the lid; while opening it rattles, then the lid swings
+        const rattle = o.opening > 0 && o.opening < 0.3 ? Math.sin(o.opening * 90) * 1.5 : 0;
+        c.drawImage(ib, o.x - B.w / 2 + rattle, o.y - B.h + 2, B.w, B.h);
+        const hx = o.x + B.w / 2 - 6, hy = o.y - B.h + 8, ang = -o.k * 1.25;   // hinge at the back top edge
+        if (o.k > 0) G.FX.glow(c, o.x, hy, 40 + o.k * 50, [255, 210, 140], 0.7 * o.k);
+        c.save(); c.translate(hx + rattle, hy); c.rotate(ang); c.drawImage(il, -L.w + 6, -L.h + 10, L.w, L.h); c.restore();
+        if (!o.open) G.FX.glow(c, o.x, o.y - B.h + 10, 22, [255, 200, 130], 0.12 + 0.06 * Math.sin(t * 2.4 + o.x));
+      }
     } else {
-      const w = o.kind === 'rare' ? 96 : 84, h = 50, x = o.x - w / 2, y = o.y - h;
-      const wood = o.kind === 'iron' ? '#2b2a33' : '#3a2a22', trim = o.kind === 'rare' ? '#d8b25a' : '#77706a';
-      c.fillStyle = wood; c.fillRect(x, y, w, h); c.fillStyle = trim; c.fillRect(x, y + 8, w, 5); c.fillRect(x + 8, y, 6, h); c.fillRect(x + w - 14, y, 6, h);
-      if (o.k > 0) { G.FX.glow(c, o.x, y + 4, 70 * o.k, [255, 210, 140], 0.6 * o.k); }
-      c.save(); c.translate(x, y); c.rotate(ang);
-      c.fillStyle = wood; c.beginPath(); c.moveTo(0, 0); c.lineTo(w, 0); c.quadraticCurveTo(w, -24, w / 2, -26); c.quadraticCurveTo(0, -24, 0, 0); c.fill();
-      c.fillStyle = trim; c.fillRect(8, -24, 6, 24); c.fillRect(w - 14, -24, 6, 24); c.fillRect(w / 2 - 5, -8, 10, 10);
-      c.restore();
+      const w = 84, h = 50, x = o.x - w / 2, y = o.y - h;
+      c.fillStyle = '#3a2a22'; c.fillRect(x, y, w, h); c.fillStyle = '#77706a'; c.fillRect(x, y + 8, w, 5);
     }
-    if (G.Objects.nearest() === o) G.UI.prompt(c, o.x, o.y - 120, G.T('open'));
+    if (G.Objects.nearest() === o) G.UI.prompt(c, o.x, o.y - 110, G.T('open'));
   }
   // painted NPC as a two-piece cut-out: breathing body + head that sways, and nods while talking
   function drawNPCRig(c, o, t, at, m) {

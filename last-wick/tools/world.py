@@ -393,6 +393,16 @@ arena('tD', 40, -30, 36, 18, 'puppeteer', 45, lambda r: r.plat(3, 11, 4).plat(29
 arena('tE', 80, 0, 36, 18, 'director', 56, lambda r: r.plat(10, 12, 5).plat(21, 12, 5))
 p1.ent('portal', 26, 16, to='t1', tx=6, ty=17, id='p_theatre', req='clockmaker')
 
+
+# chests around the worlds (painted per world: R01 lumen, R02 sea, R03 dream)
+c4.ent('chest', 17, 9, id='chest_c4', kind='wood', tallow=30)
+g3.ent('chest', 31, 25, id='chest_g3', kind='wood', tallow=35)
+s3.ent('chest', 17, 24, id='chest_s3', kind='iron', tallow=45)
+h1.ent('chest', 12, 32, id='chest_h1', kind='iron', tallow=50)
+e1.ent('chest', 28, 16, id='chest_e1', kind='wreck', tallow=45)
+k1.ent('chest', 8, 11, id='chest_k1', kind='anchor', tallow=55)
+p2.ent('chest', 6, 26, id='chest_p2', kind='paper', tallow=55)
+q1.ent('chest', 7, 16, id='chest_q1', kind='clock', tallow=60)
 link('p2', 'p3', -2, 4)
 link('p2', 'q1', 15, 4)
 link('q1', 'q2', 18, 4)
