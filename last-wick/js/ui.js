@@ -422,8 +422,8 @@ G.UI = (function () {
       text(c, col.name, cx, y + 104, { size: 24, w: 600, title: true, c: '#f0cf98', blur: 0 }); ornament(c, cx, y + 124, Math.min(200, cw - 30), 0.7);
       col.col.forEach((e, ri) => { const yy = y + 158 + ri * 36, sel = m.c === ci && m.r === ri, here = G.Main.room && G.Main.room.id === e.id;
         if (sel) { c.fillStyle = 'rgba(255,200,140,0.12)'; c.beginPath(); c.roundRect(cx - cw / 2 + 10, yy - 16, cw - 20, 32, 8); c.fill(); }
-        const ic = e.kind === 'bench' ? '🕯' : e.done ? '✓' : '✕';
-        text(c, ic, cx + cw / 2 - 30, yy, { size: 16, c: e.kind === 'boss' ? (e.done ? '#bfa46a' : '#ff7a5a') : '#ffd08a', blur: 0 });
+        const ic = e.kind === 'bench' ? 'mapem_' + e.area : e.done ? 'mapic_bossdone' : 'mapic_boss';
+        if (!icon(c, ic, cx + cw / 2 - 30, yy, 26)) text(c, e.kind === 'bench' ? '🕯' : '✕', cx + cw / 2 - 30, yy, { size: 16, c: '#ffd08a', blur: 0 });
         text(c, e.label + (here ? '  •' : ''), cx + cw / 2 - 52, yy, { size: 19, align: 'right', c: sel ? '#ffe2b8' : e.kind === 'boss' ? '#d9b8a8' : AC[e.area] || '#d6cab8', blur: 0 });
         tapRegion(cx - cw / 2 + 10, yy - 16, cw - 20, 32, () => { m.c = ci; m.r = ri; goTravel(e); }); });
     });
@@ -431,6 +431,18 @@ G.UI = (function () {
   }
   // ---------- map ----------
   const MAPC = { crypts: '#d9a274', gardens: '#7fd8b4', nave: '#86a6ea', spire: '#c9a6f4', hearth: '#e98058', shore: '#ff9f60', galleon: '#b0a2ea', lighthouse: '#ffc878', paper: '#f2e6cc', clock: '#e6c878', core: '#ffb868', theatre: '#ea7484' };
+  function icon(c, name, x, y, size, a = 1) {   // painted map icon / emblem, centred
+    const P = window.PROPS[name], im = P && G.Assets.get('prop_' + name); if (!im) return false;
+    const k = size / Math.max(P.w, P.h); c.save(); c.globalAlpha *= a; c.drawImage(im, x - P.w * k / 2, y - P.h * k / 2, P.w * k, P.h * k); c.restore(); return true;
+  }
+  function frame9(c, x, y, w, h, d) {   // the painted map frame, corners kept, edges stretched
+    const im = G.Assets.get('prop_ui_mapframe'); if (!im) return false;
+    const W = im.width, H = im.height, s = Math.round(H * 0.17);
+    const sx = [0, s, W - s, W], sy = [0, s, H - s, H], dx = [x, x + d, x + w - d, x + w], dy = [y, y + d, y + h - d, y + h];
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { if (i === 1 && j === 1) continue;
+      c.drawImage(im, sx[i], sy[j], sx[i + 1] - sx[i], sy[j + 1] - sy[j], dx[i], dy[j], dx[i + 1] - dx[i], dy[j + 1] - dy[j]); }
+    return true;
+  }
   function touching(a, b) { return a.gx <= b.gx + b.w && a.gx + a.w >= b.gx && a.gy <= b.gy + b.h && a.gy + a.h >= b.gy; }
   function drawMap(c, m) {
     const VW = R().VW, VH = R().VH, S = G.state, W = window.WORLD, t = m.t;
@@ -443,8 +455,11 @@ G.UI = (function () {
     const ghosts = all.filter(([id, r]) => !S.visited[id] && shown.some(([, o]) => touching(o, r)));   // the next rooms you could walk into
     const B = shown.length ? shown.concat(ghosts) : all; let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     for (const [, r] of B) { x0 = Math.min(x0, r.gx); y0 = Math.min(y0, r.gy); x1 = Math.max(x1, r.gx + r.w); y1 = Math.max(y1, r.gy + r.h); }
-    const sc = Math.min(13, (VW - 160) / (x1 - x0), (VH - 250) / (y1 - y0));
-    const ox = (VW - (x1 - x0) * sc) / 2 - x0 * sc, oy = 135 + (VH - 245 - (y1 - y0) * sc) / 2 - y0 * sc;
+    const fx = 36, fy = 122, fw = VW - 72, fh = VH - 122 - 74, fd = Math.min(78, fh * 0.16);   // painted frame around the map
+    c.fillStyle = 'rgba(30,24,22,0.55)'; c.beginPath(); c.roundRect(fx + fd * 0.5, fy + fd * 0.5, fw - fd, fh - fd, 10); c.fill();
+    const ix = fx + fd * 0.95, iy = fy + fd * 0.95, iw = fw - fd * 1.9, ih = fh - fd * 1.9;
+    const sc = Math.min(13, iw / (x1 - x0), ih / (y1 - y0));
+    const ox = ix + (iw - (x1 - x0) * sc) / 2 - x0 * sc, oy = iy + (ih - (y1 - y0) * sc) / 2 - y0 * sc;
     // title + worlds
     text(c, W.worlds[curW].name, VW / 2, 56, { size: 44, w: 600, title: true, c: '#f6e6cc' });
     text(c, W.worlds[curW].en, VW / 2, 92, { size: 13, en: true, spacing: 8, a: 0.6, c: '#e2cfae' }); ornament(c, VW / 2, 110, 280, 0.8);
@@ -454,7 +469,8 @@ G.UI = (function () {
     // unexplored neighbours: a faint dashed outline with a question mark
     c.save(); c.setLineDash([6, 6]); c.strokeStyle = 'rgba(230,210,180,0.22)'; c.lineWidth = 1.5;
     for (const [, r] of ghosts) { c.beginPath(); c.roundRect(ox + r.gx * sc, oy + r.gy * sc, r.w * sc, r.h * sc, 6); c.stroke();
-      text(c, '?', ox + (r.gx + r.w / 2) * sc, oy + (r.gy + r.h / 2) * sc, { size: Math.min(30, sc * 3), a: 0.3, blur: 0 }); }
+      const gx = ox + (r.gx + r.w / 2) * sc, gy = oy + (r.gy + r.h / 2) * sc;
+      if (!icon(c, 'mapic_unknown', gx, gy, Math.min(30, Math.max(16, Math.min(r.w, r.h) * sc * 0.5)), 0.45)) text(c, '?', gx, gy, { size: Math.min(30, sc * 3), a: 0.3, blur: 0 }); }
     c.restore();
     // explored rooms: dark slab with a soft glow of the area colour, the walkable shape inside, a clean outline
     for (const [id, r] of shown) {
@@ -467,29 +483,34 @@ G.UI = (function () {
       c.fill(); c.restore();
       c.strokeStyle = col; c.globalAlpha = 0.85; c.lineWidth = 1.6; c.beginPath(); c.roundRect(X, Y, cw, ch, 5); c.stroke(); c.globalAlpha = 1;
       for (const e of r.ents) { const ex = X + e.x * sc, ey = Y + (e.y - 1) * sc;
-        if (e.t === 'bench') { G.FX.glow(c, ex, ey, 16, [255, 190, 110], 0.7); G.FX.flame(c, ex, ey + 4, 1.5, t + e.x, { glow: 0.4 }); }
-        else if (e.t === 'boss') { const done = S.bosses[e.kind]; c.fillStyle = done ? 'rgba(190,160,100,0.5)' : 'rgba(140,30,20,0.9)'; c.beginPath(); c.arc(ex, ey - 4, 9, 0, 7); c.fill();
-          text(c, done ? '✓' : '✕', ex, ey - 3, { size: 13, c: done ? '#2a2016' : '#ffd8c8', blur: 0, w: 700 }); }
-        else if (e.t === 'chest' && !S.picked[e.id]) { c.fillStyle = '#f0c060'; c.save(); c.translate(ex, ey); c.rotate(Math.PI / 4); c.fillRect(-4, -4, 8, 8); c.restore(); }
+        const isz = Math.max(22, Math.min(32, sc * 2.6));
+        if (e.t === 'bench') { G.FX.glow(c, ex, ey - 4, 18, [255, 190, 110], 0.6); if (!icon(c, 'mapic_bench', ex, ey - 6, isz)) G.FX.flame(c, ex, ey + 4, 1.5, t + e.x, { glow: 0.4 }); }
+        else if (e.t === 'boss') { const done = S.bosses[e.kind];
+          if (!icon(c, done ? 'mapic_bossdone' : 'mapic_boss', ex, ey - 6, isz * 1.05, done ? 0.8 : 1)) { c.fillStyle = done ? 'rgba(190,160,100,0.5)' : 'rgba(140,30,20,0.9)'; c.beginPath(); c.arc(ex, ey - 4, 9, 0, 7); c.fill(); } }
+        else if (e.t === 'chest' && !S.picked[e.id]) { if (!icon(c, 'mapic_chest', ex, ey - 4, isz * 0.8)) { c.fillStyle = '#f0c060'; c.fillRect(ex - 4, ey - 4, 8, 8); } }
+        else if (e.t === 'portal') icon(c, 'mapic_portal', ex, ey - 8, isz);
         else if (e.t === 'pickup' && !S.picked[e.id]) { G.FX.glow(c, ex, ey, 10, [255, 250, 230], 0.9); } }
     }
     // area names over their explored rooms
     const areas = {}; for (const [, r] of shown) { const a = areas[r.area] = areas[r.area] || { x: 0, y: 0, n: 0 }; a.x += r.gx + r.w / 2; a.y += r.gy + r.h / 2; a.n++; }
-    for (const k in areas) { const a = areas[k]; text(c, W.areas[k].name, ox + a.x / a.n * sc, oy + a.y / a.n * sc, { size: 18, w: 600, c: MAPC[k], blur: 10, a: 0.95 }); }
+    for (const k in areas) { const a = areas[k], ax = ox + a.x / a.n * sc, ay = oy + a.y / a.n * sc;
+      icon(c, 'mapem_' + k, ax, ay - 22, 40, 0.95); text(c, W.areas[k].name, ax, ay + 12, { size: 18, w: 600, c: MAPC[k], blur: 10, a: 0.95 }); }
     // you are here
     const room = G.Main.room, p = G.Main.player;
     if (room && p && room.world === curW) { const px = ox + (room.gx + p.cx / TILE) * sc, py = oy + (room.gy + p.cy / TILE) * sc;
-      G.FX.glow(c, px, py, 34 + Math.sin(t * 4) * 6, [255, 190, 110], 0.9); c.fillStyle = '#fff4e0'; c.beginPath(); c.arc(px, py, 5.5, 0, 7); c.fill();
+      G.FX.glow(c, px, py, 34 + Math.sin(t * 4) * 6, [255, 190, 110], 0.9);
+      if (!icon(c, 'mapic_here', px, py - 4 + Math.sin(t * 3) * 2, 26)) { c.fillStyle = '#fff4e0'; c.beginPath(); c.arc(px, py, 5.5, 0, 7); c.fill(); }
       c.strokeStyle = 'rgba(255,230,190,0.8)'; c.lineWidth = 1.5; c.beginPath(); c.arc(px, py, 11 + (t * 14) % 14, 0, 7); c.globalAlpha = 1 - ((t * 14) % 14) / 14; c.stroke(); c.globalAlpha = 1; }
+    frame9(c, fx, fy, fw, fh, fd);
     // legend + travel button
-    const ly = VH - 44; let lx = VW - 60;
-    const leg = [['●', '#fff4e0', 'אתה כאן'], ['🕯', '#ffd08a', 'מזבח'], ['✕', '#ff7a5a', 'בוס'], ['◆', '#f0c060', 'תיבה'], ['?', '#cbbca6', 'לא נחקר']];
-    for (const [ic, cl, lb] of leg) { text(c, ic, lx, ly, { size: 18, c: cl, blur: 0 }); text(c, lb, lx - 16, ly, { size: 17, align: 'right', a: 0.75, blur: 0 }); c.save(); c.font = `400 17px ${HE}`; lx -= c.measureText(lb).width + 64; c.restore(); }
-    const bw = 230, bx = 50, by = VH - 66;
+    const ly = VH - 36; let lx = VW - 60;
+    const leg = [['mapic_here', 'אתה כאן'], ['mapic_bench', 'מזבח'], ['mapic_boss', 'בוס'], ['mapic_bossdone', 'בוס שהובס'], ['mapic_chest', 'תיבה'], ['mapic_unknown', 'לא נחקר']];
+    for (const [ic, lb] of leg) { icon(c, ic, lx, ly, 26); text(c, lb, lx - 20, ly, { size: 17, align: 'right', a: 0.8, blur: 0 }); c.save(); c.font = `400 17px ${HE}`; lx -= c.measureText(lb).width + 62; c.restore(); }
+    const bw = 230, bx = 50, by = VH - 58;
     c.fillStyle = 'rgba(255,200,140,0.14)'; c.beginPath(); c.roundRect(bx, by, bw, 44, 22); c.fill(); c.strokeStyle = 'rgba(240,214,170,0.45)'; c.lineWidth = 1; c.stroke();
     text(c, '✦ ' + G.T('travel') + '  [Enter]', bx + bw / 2, by + 22, { size: 20, c: '#ffe2b8', blur: 0 });
     tapRegion(bx, by, bw, 44, () => travel());
-    text(c, '[Esc] סגירה', VW / 2, VH - 20, { size: 15, a: 0.45, blur: 0 });
+    text(c, '[Esc] סגירה', 50, 46, { size: 17, align: 'left', a: 0.55, blur: 0 });
   }
   function drawToasts(c) {
     if (modal) return;

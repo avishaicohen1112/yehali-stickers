@@ -1444,5 +1444,145 @@
   "h": 187.5,
   "ax": 60.8,
   "ay": 187.5
+ },
+ "ui_mapframe": {
+  "img": "assets/props/ui_mapframe.webp",
+  "w": 791.5,
+  "h": 512.0,
+  "ax": 395.8,
+  "ay": 256.0
+ },
+ "mapic_here": {
+  "img": "assets/props/mapic_here.webp",
+  "w": 30.5,
+  "h": 48.0,
+  "ax": 15.2,
+  "ay": 24.0
+ },
+ "mapic_bench": {
+  "img": "assets/props/mapic_bench.webp",
+  "w": 40.5,
+  "h": 48.0,
+  "ax": 20.2,
+  "ay": 24.0
+ },
+ "mapic_boss": {
+  "img": "assets/props/mapic_boss.webp",
+  "w": 48.5,
+  "h": 48.0,
+  "ax": 24.2,
+  "ay": 24.0
+ },
+ "mapic_bossdone": {
+  "img": "assets/props/mapic_bossdone.webp",
+  "w": 50.0,
+  "h": 48.0,
+  "ax": 25.0,
+  "ay": 24.0
+ },
+ "mapic_chest": {
+  "img": "assets/props/mapic_chest.webp",
+  "w": 59.5,
+  "h": 48.0,
+  "ax": 29.8,
+  "ay": 24.0
+ },
+ "mapic_unknown": {
+  "img": "assets/props/mapic_unknown.webp",
+  "w": 33.5,
+  "h": 48.0,
+  "ax": 16.8,
+  "ay": 24.0
+ },
+ "mapic_portal": {
+  "img": "assets/props/mapic_portal.webp",
+  "w": 52.5,
+  "h": 48.0,
+  "ax": 26.2,
+  "ay": 24.0
+ },
+ "mapem_crypts": {
+  "img": "assets/props/mapem_crypts.webp",
+  "w": 63.5,
+  "h": 64.0,
+  "ax": 31.8,
+  "ay": 32.0
+ },
+ "mapem_gardens": {
+  "img": "assets/props/mapem_gardens.webp",
+  "w": 63.5,
+  "h": 64.0,
+  "ax": 31.8,
+  "ay": 32.0
+ },
+ "mapem_nave": {
+  "img": "assets/props/mapem_nave.webp",
+  "w": 64.0,
+  "h": 64.0,
+  "ax": 32.0,
+  "ay": 32.0
+ },
+ "mapem_spire": {
+  "img": "assets/props/mapem_spire.webp",
+  "w": 63.5,
+  "h": 64.0,
+  "ax": 31.8,
+  "ay": 32.0
+ },
+ "mapem_hearth": {
+  "img": "assets/props/mapem_hearth.webp",
+  "w": 63.5,
+  "h": 64.0,
+  "ax": 31.8,
+  "ay": 32.0
+ },
+ "mapem_shore": {
+  "img": "assets/props/mapem_shore.webp",
+  "w": 64.0,
+  "h": 64.0,
+  "ax": 32.0,
+  "ay": 32.0
+ },
+ "mapem_galleon": {
+  "img": "assets/props/mapem_galleon.webp",
+  "w": 64.0,
+  "h": 64.0,
+  "ax": 32.0,
+  "ay": 32.0
+ },
+ "mapem_lighthouse": {
+  "img": "assets/props/mapem_lighthouse.webp",
+  "w": 63.5,
+  "h": 64.0,
+  "ax": 31.8,
+  "ay": 32.0
+ },
+ "mapem_paper": {
+  "img": "assets/props/mapem_paper.webp",
+  "w": 64.0,
+  "h": 64.0,
+  "ax": 32.0,
+  "ay": 32.0
+ },
+ "mapem_clock": {
+  "img": "assets/props/mapem_clock.webp",
+  "w": 64.0,
+  "h": 64.0,
+  "ax": 32.0,
+  "ay": 32.0
+ },
+ "mapem_core": {
+  "img": "assets/props/mapem_core.webp",
+  "w": 64.0,
+  "h": 64.0,
+  "ax": 32.0,
+  "ay": 32.0
+ },
+ "mapem_theatre": {
+  "img": "assets/props/mapem_theatre.webp",
+  "w": 64.0,
+  "h": 64.0,
+  "ax": 32.0,
+  "ay": 32.0
  }
 }

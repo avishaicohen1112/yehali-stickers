@@ -173,3 +173,14 @@ def giants():
 
 if __name__ == '__main__' and len(sys.argv) > 1 and sys.argv[1] == 'giants':
     giants()
+
+
+def mapui():
+    """M1 map frame, M2 map icons, M3 area emblems -> props (ui_mapframe, mapic_*, mapem_<area>)"""
+    pieces('M1', ['ui_mapframe'], [512])
+    pieces('M2', ['mapic_here', 'mapic_bench', 'mapic_boss', 'mapic_bossdone', 'mapic_chest', 'mapic_unknown', 'mapic_portal'], [48] * 7)
+    pieces('M3', ['mapem_' + a for a in ['crypts', 'gardens', 'nave', 'spire', 'hearth', 'shore', 'galleon', 'lighthouse', 'paper', 'clock', 'core', 'theatre']], [64] * 12)
+
+
+if __name__ == '__main__' and len(sys.argv) > 1 and sys.argv[1] == 'mapui':
+    mapui()
