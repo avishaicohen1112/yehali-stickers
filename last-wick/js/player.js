@@ -86,7 +86,11 @@ G.Player = (function () {
         } else if (this.wallJumpT <= 0 && this.recoilT <= 0) {
           const acc = this.ground ? C.ACC_G : C.ACC_A;
           if (this.upAssist > 0 && !this.ground) { this.upAssist -= dt; this.vx = mx ? approach(this.vx, mx * C.RUN, acc * dt) : this.upDir * 300; }   // launched out of a floor hole: keep drifting to its edge unless steered
-          else { this.upAssist = 0; this.vx = approach(this.vx, mx * C.RUN, acc * dt); }
+          else { this.upAssist = 0;
+            // run: keep the dash key held after a dash (or hold it while walking) to sprint on the ground
+            const sprint = A.dash && I.h('dash') && mx && this.ground && this.dashCd < C.DASH_CD - 0.05 ? 1.5 : 1;
+            this.vx = approach(this.vx, mx * C.RUN * sprint, acc * dt);
+            if (sprint > 1 && Math.random() < dt * 22) G.FX.spawn({ x: this.cx - mx * 14, y: this.feet - 3, vx: -mx * rand(40, 120), vy: rand(-50, -10), life: 0.4, size: rand(4, 7), kind: 'smoke', c: [120, 100, 90], a: 0.28, drag: 3 }); }
         } else if (this.recoilT > 0) this.vx = approach(this.vx, 0, 2000 * dt);
         // ---- gravity
         const grav = C.GRAV * (this.vy > 0 ? C.FALL_MULT : 1);
@@ -149,7 +153,19 @@ G.Player = (function () {
         }
       }
       if (hx) this.vx = 0;
+      const vyB = this.vy, pf = this.y + this.h;
       const hy = room.moveY(this, this.vy * dt, dropThrough);
+      // landing on an enemy's head hurts it and bounces you off (no contact damage for that touch)
+      if (vyB > 120 && !this.dead) for (const e of G.Main.enemies()) {
+        if (e.dead || e.isBoss || !e.hurtbox) continue; const b = e.hurtbox(); if (!b) continue;
+        if (this.x + this.w > b.x + 4 && this.x < b.x + b.w - 4 && pf <= b.y + 18 && this.y + this.h >= b.y - 2) {
+          e.hurt(G.state.needle, 0, 1); this.vy = -C.POGO; this.djumped = false; this.airDashed = false; this.cut = true; this.inv = Math.max(this.inv, 0.22);
+          G.state.soul = Math.min(G.state.soulMax, G.state.soul + 6);
+          G.FX.impact(this.cx, b.y + 4, 0, (e.d && e.d.light) || [255, 210, 160], e.dead ? 1.3 : 1); G.FX.stop(e.dead ? 0.09 : 0.06); G.FX.shake(3, 0.08);
+          G.FX.burst(this.cx, b.y + 2, 6, { speed: 260, life: 0.3, size: 2.2, c: [255, 235, 200], kind: 'spark', angle: -Math.PI / 2, spread: 1.3 });
+          break;
+        }
+      }
       // never end a shadow dash inside a shadow gate: keep dashing through
       if (room.shadowPass && room.touches(this, 'x', 2)) { this.dashT = Math.max(this.dashT, 0.03); }
       room.shadowPass = false;
@@ -267,7 +283,7 @@ G.Player = (function () {
       // idle life: a dance on the dance key (G / ♪), fidgets after a few quiet seconds, dozing off after a long wait
       const I = G.Input, busy = I.h('left') || I.h('right') || I.h('jump') || I.h('attack') || I.h('dash') || I.h('down') || I.h('focus');
       const still = this.ground && !busy && Math.abs(this.vx) < 20 && this.atkT <= 0 && this.dashT <= 0 && !this.focusing && this.hurtT <= 0 && this.lock <= 0;
-      if (I.p('dance') && this.ground) { this.dancing = this.dancing ? 0 : 1; this.danceT = 0; }
+      if (I.p('dance') && this.ground) { this.dancing = (this.dancing + 1) % 4; this.danceT = 0; }   // G cycles three dances, then stops
       if (!still) { if (this.idleT > 24) this.wakeT = 0.4; this.dancing = 0; this.idleT = 0; } else this.idleT += 1 / 60;   // woken up: a startled jolt
       this.wakeT = Math.max(0, (this.wakeT || 0) - 1 / 60); this.waveT = Math.max(0, (this.waveT || 0) - 1 / 60);
       const nb = G.Objects.nearest && G.Objects.nearest();   // greet someone you walk up to
@@ -285,13 +301,13 @@ G.Player = (function () {
       else if (!this.ground) a = this.wall && this.vy > 0 ? 'wall' : this.gliding ? 'glide' : this.djumpT > 0 && this.vy < 0 ? 'djump' : this.vy < 0 ? 'jump' : 'fall';
       else if (this.landT > 0) a = 'land';
       else if (this.windV && Math.abs(this.windV) > 150 && (!this.mx || this.mx * this.windV < 0)) a = this.mx ? 'windwalk' : 'blown';
-      else if (this.dancing) a = Math.floor(this.danceT / 4) % 2 ? 'dance2' : 'dance';
+      else if (this.dancing) a = ['', 'dance', 'dance2', 'dance3'][this.dancing];
       else if (this.wakeT > 0 && Math.abs(this.vx) < 120) a = 'wake';
       else if (Math.abs(this.vx) > 30) a = 'run';
       else if (this.waveT > 0) a = 'wave';
       else a = this.idleT > 34 ? 'sleep' : this.idleT > 24 ? 'hug' : this.idleT > 8 ? 'bored' : 'idle';
       // poses that only the painted (v2) atlas has fall back to the nearest older one
-      if (!G.Sprite.has('wick', a)) a = ({ dance2: 'dance', dance: 'idle', bored: 'idle', sleep: 'sit', hug: 'sit', wake: 'land', wave: 'idle', lever: 'focus', point: 'cast', windwalk: 'run', blown: 'hurt', open: 'focus', glide: 'fall', djump: 'jump', lookup: 'idle', slashup: 'slash', slashdown: 'slash', wall: 'fall', cast: 'focus', sit: 'idle', death: 'hurt' })[a] || a;
+      if (!G.Sprite.has('wick', a)) a = ({ dance3: 'dance2', dance2: 'dance', dance: 'idle', bored: 'idle', sleep: 'sit', hug: 'sit', wake: 'land', wave: 'idle', lever: 'focus', point: 'cast', windwalk: 'run', blown: 'hurt', open: 'focus', glide: 'fall', djump: 'jump', lookup: 'idle', slashup: 'slash', slashdown: 'slash', wall: 'fall', cast: 'focus', sit: 'idle', death: 'hurt' })[a] || a;
       this.setAnim(a);
     }
     draw(ctx) {

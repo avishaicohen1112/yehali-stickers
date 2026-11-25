@@ -8,6 +8,12 @@ G.UI = (function () {
   let card = null;      // area / boss title card {lines, t, dur, kind}
   let modal = null;     // dialogue / lore / ability / shop / pause / map
   let taps = [];        // clickable regions this frame
+  // player settings (saved locally): volumes 0..10, screen shake, mouse buttons for attack/dash
+  const SET = { music: 7, sfx: 9, shake: 1, mouse: 1 };
+  try { Object.assign(SET, JSON.parse(localStorage.getItem('lastwick_settings')) || {}); } catch (e) { }
+  function applySettings() { try { G.Sound.setVolumes(SET.music / 10, SET.sfx / 10); } catch (e) { } I.mouse = !!SET.mouse; G.FX.S.shakeMul = SET.shake ? 1 : 0; }
+  function saveSettings() { try { localStorage.setItem('lastwick_settings', JSON.stringify(SET)); } catch (e) { } applySettings(); }
+  setTimeout(applySettings, 0);
   function text(c, s, x, y, o = {}) {
     c.save(); c.font = `${o.w || 400} ${o.size || 28}px ${o.en ? EN : o.title ? HT : HE}`; c.textAlign = o.align || 'center'; c.textBaseline = o.base || 'middle';
     c.direction = o.en ? 'ltr' : 'rtl';
@@ -105,6 +111,7 @@ G.UI = (function () {
   }
   function prompt(c, x, y, s) {
     if (modal) return;
+    if (!I.isTouch && s[0] === '↑') s = '[' + I.keyName(I.binds().interact[0]) + '] ' + s.slice(2);   // keyboard: show the real key
     const tt = performance.now() / 1000, yy = y + Math.sin(tt * 3) * 3;
     c.save(); c.font = `400 22px ${HE}`; const w = c.measureText(s).width; c.restore();
     shade(c, x, yy, w * 0.75 + 30, 26, 0.55);
@@ -156,6 +163,21 @@ G.UI = (function () {
   function openShop() { modal = { kind: 'shop', sel: 0, t: 0, msg: '' }; }
   function pause() { modal = { kind: 'pause', sel: 0, t: 0 }; G.Sound.sfx('ui_select'); }
   function map() { modal = { kind: 'map', t: 0 }; G.Sound.sfx('ui_move'); }
+  function settings(back) { modal = { kind: 'settings', sel: 0, t: 0, back }; G.Sound.sfx('ui_select'); }
+  function settingRows() {
+    const r = [{ k: 'music' }, { k: 'sfx' }, { k: 'shake' }];
+    if (!I.isTouch) { r.push({ k: 'mouse' }); for (const a of I.ACTIONS) r.push({ k: 'bind', a }); r.push({ k: 'reset' }); }
+    r.push({ k: 'back' }); return r;
+  }
+  function settingAct(row, dir) {   // dir: +1/-1 from left/right, 0 = confirm
+    const S = SET;
+    if (row.k === 'music' || row.k === 'sfx') { S[row.k] = clamp(S[row.k] + (dir || 1), 0, 10); if (!dir && S[row.k] === 10 && dir === 0) { } saveSettings(); G.Sound.sfx('ui_move'); }
+    else if (row.k === 'shake' || row.k === 'mouse') { S[row.k] = S[row.k] ? 0 : 1; saveSettings(); G.Sound.sfx('ui_select'); }
+    else if (row.k === 'bind' && !dir) { I.listen(row.a); G.Sound.sfx('ui_select'); }
+    else if (row.k === 'reset' && !dir) { I.resetBinds(); Object.assign(S, { music: 7, sfx: 9, shake: 1, mouse: 1 }); saveSettings(); G.Sound.sfx('ui_select'); }
+    else if (row.k === 'back' && !dir) closeSettings();
+  }
+  function closeSettings() { const m = modal; modal = m && m.back === 'pause' ? { kind: 'pause', sel: 2, t: 0.3 } : null; G.Sound.sfx('ui_move'); }
   function confirmP() { return I.p('jump') || I.p('attack') || I.p('confirm') || I.p('interact'); }
   function update(dt) {
     for (const t of toasts) t.t += dt; toasts = toasts.filter(t => t.t < t.dur);
@@ -172,6 +194,14 @@ G.UI = (function () {
       if (I.p('up')) { m.sel = (m.sel + n - 1) % n; G.Sound.sfx('ui_move'); }
       if (I.p('pause') || I.p('dash')) { modal = null; return true; }
       if (m.t > 0.2 && confirmP()) buy(m.sel);
+    } else if (m.kind === 'settings') {
+      if (I.listening) return true;   // waiting for the new key
+      const rows = settingRows(), n = rows.length;
+      if (I.p('down')) { m.sel = (m.sel + 1) % n; G.Sound.sfx('ui_move'); }
+      if (I.p('up')) { m.sel = (m.sel + n - 1) % n; G.Sound.sfx('ui_move'); }
+      if (I.p('left') || I.p('right')) { const r = rows[m.sel]; if (r.k === 'music' || r.k === 'sfx') settingAct(r, I.p('right') ? 1 : -1); }
+      if ((I.p('pause') || I.p('map')) && m.t > 0.15) { I.consume('pause'); closeSettings(); return true; }
+      if (m.t > 0.15 && (I.p('jump') || I.p('confirm') || I.p('interact'))) settingAct(rows[m.sel], 0);
     } else if (m.kind === 'pause') {
       const n = 4;
       if (I.p('down')) { m.sel = (m.sel + 1) % n; G.Sound.sfx('ui_move'); }
@@ -187,7 +217,7 @@ G.UI = (function () {
     G.Sound.sfx('ui_select');
     if (i === 0) modal = null;
     else if (i === 1) modal = { kind: 'map', t: 0 };
-    else if (i === 2) { G.Sound.toggleMute(); G.state.muted = G.Sound.muted; }
+    else if (i === 2) settings('pause');
     else if (i === 3) { modal = null; G.Main.toTitle(); }
   }
   function buy(i) {
@@ -259,11 +289,58 @@ G.UI = (function () {
     } else if (m.kind === 'pause') {
       c.fillStyle = 'rgba(0,0,0,0.7)'; c.fillRect(0, 0, VW, VH);
       text(c, G.T('paused'), VW / 2, VH * 0.18, { size: 64, w: 600, title: true }); ornament(c, VW / 2, VH * 0.18 + 50, 360);
-      const opts = [G.T('resume'), G.T('mapt'), G.T('sound') + ': ' + (G.Sound.muted ? G.T('off') : G.T('on')), G.T('quit')];
-      opts.forEach((o, i) => { const yy = VH * 0.32 + i * 64; text(c, o, VW / 2, yy, { size: 34, c: m.sel === i ? '#ffe2b8' : '#cfc4b4' }); if (m.sel === i) { G.FX.flame(c, VW / 2 + 150, yy + 12, 3, m.t, {}); } tapRegion(VW / 2 - 200, yy - 28, 400, 56, () => { m.sel = i; pauseSelect(i); }); });
-      const keys = I.isTouch ? G.TEXT.keys_touch : G.TEXT.keys;
-      keys.forEach((k, i) => { const yy = VH * 0.62 + i * 30; text(c, k[0], VW / 2 - 20, yy, { size: 20, align: 'right', c: '#f0d9b5', en: /^[A-Za-z]/.test(k[0]) }); text(c, k[1], VW / 2 + 20 + 260, yy, { size: 20, align: 'right', a: 0.75 }); });
+      const opts = [G.T('resume'), G.T('mapt'), G.T('settings'), G.T('quit')];
+      opts.forEach((o, i) => { const yy = VH * 0.36 + i * 70; text(c, o, VW / 2, yy, { size: 36, c: m.sel === i ? '#ffe2b8' : '#cfc4b4' }); if (m.sel === i) { G.FX.flame(c, VW / 2 + 150, yy + 12, 3, m.t, {}); G.FX.flame(c, VW / 2 - 150, yy + 12, 3, m.t + 2, {}); } tapRegion(VW / 2 - 200, yy - 30, 400, 60, () => { m.sel = i; pauseSelect(i); }); });
     } else if (m.kind === 'map') drawMap(c, m);
+    else if (m.kind === 'settings') drawSettings(c, m);
+  }
+  const ACT_NAME = { left: 'הליכה שמאלה', right: 'הליכה ימינה', up: 'למעלה (מכה למעלה)', down: 'למטה (מכה למטה באוויר)', jump: 'קפיצה (פעמיים: קפיצה כפולה)',
+    attack: 'מכה', dash: 'זינוק', focus: 'ריפוי (החזקה) / להבה (הקשה)', interact: 'דיבור · קריאה · פתיחה', map: 'מפה', dance: 'ריקוד', pause: 'תפריט' };
+  function drawSettings(c, m) {
+    const VW = R().VW, VH = R().VH, rows = settingRows(), touch = I.isTouch;
+    c.fillStyle = 'rgba(4,3,6,0.72)'; c.fillRect(0, 0, VW, VH);
+    const w = Math.min(1180, VW - 60), h = Math.min(VH - 50, touch ? 420 : 660), x = (VW - w) / 2, y = (VH - h) / 2 + 10;
+    panel(c, x, y, w, h, 0.95);
+    text(c, G.T('settings'), VW / 2, y + 52, { size: 42, w: 600, title: true, c: '#f3dfbf' });
+    // right column (first in Hebrew): sound, shake, mouse, reset, back - left column: the key for every action
+    const colR = touch ? x + w / 2 + 230 : x + w - 50, colW = touch ? 460 : w * 0.38, colL = x + w * 0.56;
+    const rowY = (i) => y + 120 + i * 58;
+    let gi = 0, bi = 0;
+    rows.forEach((r, i) => {
+      const sel = m.sel === i, col = sel ? '#ffe2b8' : '#d6cab8';
+      let ry, rx, rw;
+      if (r.k === 'bind') { ry = y + 112 + bi * 40; rx = colL; rw = colL - (x + 40); bi++;
+        if (sel) { c.fillStyle = 'rgba(255,200,140,0.10)'; c.beginPath(); c.roundRect(x + 30, ry - 18, rw + 20, 36, 8); c.fill(); }
+        text(c, ACT_NAME[r.a], rx, ry, { size: 21, align: 'right', c: col, blur: 0 });
+        const B = I.binds()[r.a], listen = I.listening === r.a;
+        let ks = listen ? 'לחץ על מקש…' : B.map(I.keyName).join('  ·  ');
+        if (!listen && SET.mouse && r.a === 'attack') ks += '  ·  עכבר שמאלי'; if (!listen && SET.mouse && r.a === 'dash') ks += '  ·  עכבר ימני';
+        text(c, ks, x + 50, ry, { size: 20, align: 'left', c: listen ? '#ffd27a' : '#f0d9b5', blur: 0 });
+        tapRegion(x + 30, ry - 18, rw + 20, 36, () => { m.sel = i; settingAct(r, 0); });
+        return;
+      }
+      ry = r.k === 'back' || r.k === 'reset' ? y + h - (r.k === 'back' ? 50 : 110) : rowY(gi++); rx = colR; rw = colW;
+      if (sel) { c.fillStyle = 'rgba(255,200,140,0.10)'; c.beginPath(); c.roundRect(rx - rw, ry - 24, rw + 20, 48, 10); c.fill(); }
+      if (r.k === 'music' || r.k === 'sfx') {
+        text(c, r.k === 'music' ? 'מוזיקה' : 'צלילים', rx, ry, { size: 26, align: 'right', c: col, blur: 0 });
+        const bx = rx - rw + 20, bw = rw * 0.5, v = SET[r.k] / 10;
+        c.fillStyle = 'rgba(255,255,255,0.12)'; c.beginPath(); c.roundRect(bx, ry - 4, bw, 8, 4); c.fill();
+        c.fillStyle = '#e8b878'; c.beginPath(); c.roundRect(bx, ry - 4, bw * v, 8, 4); c.fill();
+        c.fillStyle = '#ffe2b8'; c.beginPath(); c.arc(bx + bw * v, ry, 10, 0, 7); c.fill();
+        tapRegion(bx - 10, ry - 22, bw + 20, 44, () => { m.sel = i; const p = I.tapPos(), sc = R().scale, dpr = R().cv.width / innerWidth, lx = p.x * dpr / sc; SET[r.k] = clamp(Math.round((lx - bx) / bw * 10), 0, 10); saveSettings(); });
+      } else if (r.k === 'shake' || r.k === 'mouse') {
+        text(c, r.k === 'shake' ? 'רעידות מסך' : 'עכבר: שמאלי מכה, ימני זינוק', rx, ry, { size: 24, align: 'right', c: col, blur: 0 });
+        const on = !!SET[r.k], tx = rx - rw + 20;
+        c.fillStyle = on ? 'rgba(232,184,120,0.9)' : 'rgba(255,255,255,0.15)'; c.beginPath(); c.roundRect(tx, ry - 13, 52, 26, 13); c.fill();
+        c.fillStyle = '#fff3e0'; c.beginPath(); c.arc(tx + (on ? 39 : 13), ry, 10, 0, 7); c.fill();
+        tapRegion(rx - rw, ry - 24, rw + 20, 48, () => { m.sel = i; settingAct(r, 0); });
+      } else {
+        text(c, r.k === 'reset' ? 'איפוס לברירת המחדל' : 'חזרה', rx - rw / 2 + 10, ry, { size: 26, c: col, blur: 0 });
+        tapRegion(rx - rw, ry - 24, rw + 20, 48, () => { m.sel = i; settingAct(r, 0); });
+      }
+    });
+    if (touch) G.TEXT.keys_touch.forEach((k, i) => { const yy = rowY(3) + 10 + i * 34; text(c, k[1], colR, yy, { size: 20, align: 'right', a: 0.8, blur: 0 }); text(c, k[0], colR - colW + 20, yy, { size: 20, align: 'left', c: '#f0d9b5', blur: 0 }); });
+    else text(c, 'לשינוי מקש: בחר פעולה ולחץ על המקש החדש', x + w * 0.3, y + h - 30, { size: 17, a: 0.55, blur: 0 });
   }
   let mapCanvas = null, mapInfo = null;
   function drawMap(c, m) {
@@ -300,6 +377,6 @@ G.UI = (function () {
       ls.forEach((l, k) => text(c, l, VW / 2, y - hh + k * 38 + 1, { size: 25, a, c: '#f6e9d3', blur: 8 }));
       y -= hh + 52; }
   }
-  return { clearTaps: () => { taps = []; }, hud, prompt, toast, tallowPing, areaCard, worldCard, bossCard, drawCard, talk, lore, ability, openShop, pause, map, update, drawModal, drawToasts, handleTap, tapRegion, text, ornament, panel, wrap,
+  return { clearTaps: () => { taps = []; }, hud, prompt, toast, tallowPing, areaCard, worldCard, bossCard, drawCard, talk, lore, ability, openShop, pause, map, settings, update, drawModal, drawToasts, handleTap, tapRegion, text, ornament, panel, wrap,
     get modal() { return modal; }, set modal(v) { modal = v; }, get card() { return card; }, HE, EN };
 })();

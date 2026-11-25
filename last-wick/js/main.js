@@ -9,13 +9,13 @@ G.Main = (function () {
 
   function freshState() {
     return { room: 'c1', benchRoom: 'c1', benchX: 6 * TILE, benchY: 15 * TILE, hp: 5, hpMax: 5, soul: 0, soulMax: 99, tallow: 0, needle: 1, spellMul: 1,
-      abil: { dash: false, djump: true, wall: false, spell: false, glide: false, shadow: false }, bosses: {}, picked: {}, visited: {}, talked: {}, shop: {}, cinder: null,
+      abil: { dash: true, djump: true, wall: false, spell: false, glide: false, shadow: false }, bosses: {}, picked: {}, visited: {}, talked: {}, shop: {}, cinder: null,
       deaths: 0, time: 0, lastArea: null, muted: false, started: false };
   }
   G.state = freshState();
   function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
   function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(G.state)); } catch (e) { } }
-  function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) { G.state = Object.assign(freshState(), s); G.state.abil.djump = true; return true; } } catch (e) { } return false; }
+  function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) { G.state = Object.assign(freshState(), s); G.state.abil.djump = true; G.state.abil.dash = true; return true; } } catch (e) { } return false; }
 
   // ---------- asset loading ----------
   function roomImg(id) { const a = window.ROOMART[id]; if (a && a.img) G.Assets.load('room_' + id, a.img); }
@@ -152,7 +152,7 @@ G.Main = (function () {
       G.Objects.lockArena(room, false);
       enemies = enemies.filter(e => e !== boss);
       if (boss.kind === 'firstflame') { setMode('ending'); G.Sound.music('victory'); save(); return; }
-      const reward = { waxmother: 'heart', whale: 'vessel', lanternqueen: 'heart', puppeteer: 'spellup', director: 'moon', knight: 'dash', moth: 'heart', angler: 'wall', vesper: 'moon', choir: 'heart', colossus: 'spellup', extinguisher: 'hearthlit', leviathan: 'glide', captain: 'shadow', keeper: 'heart', paperking: 'vessel', clockmaker: 'heart' }[boss.kind];
+      const reward = { waxmother: 'heart', whale: 'vessel', lanternqueen: 'heart', puppeteer: 'spellup', director: 'moon', knight: 'heart', moth: 'heart', angler: 'wall', vesper: 'moon', choir: 'heart', colossus: 'spellup', extinguisher: 'hearthlit', leviathan: 'glide', captain: 'shadow', keeper: 'heart', paperking: 'vessel', clockmaker: 'heart' }[boss.kind];
       for (const k in room.over) delete room.over[k]; G.Objects.build(room);
       if (boss.kind === 'vesper') G.Objects.openSeals(room);
       G.UI.toast(G.T('boss_defeated'), 3);
@@ -190,24 +190,26 @@ G.Main = (function () {
     else if (mode === 'play') updatePlay(dt);
     else if (mode === 'ending') updateEnding(dt);
     G.UI.handleTap(); G.UI.clearTaps();
+    // the mouse pointer hides while you play (it is the attack button) and comes back in menus
+    const hideCur = mode === 'play' && !G.UI.modal && !G.Input.isTouch; if (hideCur !== curHidden) { curHidden = hideCur; document.body.style.cursor = hideCur ? 'none' : ''; }
     G.Input.endFrame();
   }
   function updateTitle(dt) {
     G.FX.update(dt);
     if (Math.random() < dt * 20) G.FX.spawn({ x: rand(0, Rn.VW), y: Rn.VH + 10, vx: rand(-20, 20), vy: rand(-60, -20), life: rand(5, 10), size: rand(1, 2.5), kind: 'mote', ph: rand(6), a: rand(0.4, 0.9), c: [255, 170, 90], add: true });
+    if (G.UI.modal) { G.UI.update(dt); return; }   // settings opened from the title
     const opts = titleOpts(); const I = G.Input;
     if (I.p('down')) { titleSel = (titleSel + 1) % opts.length; G.Sound.sfx('ui_move'); }
     if (I.p('up')) { titleSel = (titleSel + opts.length - 1) % opts.length; G.Sound.sfx('ui_move'); }
     if (modeT > 0.4 && (I.p('jump') || I.p('attack') || I.p('confirm'))) { G.Sound.init(); G.Sound.sfx('ui_select'); opts[titleSel].go(); }
     if (modeT > 0.3 && !titleMusic) { titleMusic = true; G.Sound.music('title'); }
   }
-  let titleMusic = false, controlsOpen = false;
+  let titleMusic = false, controlsOpen = false, curHidden = false;
   function titleOpts() {
     const o = [];
     if (hasSave()) o.push({ s: G.T('continue'), go: continueGame });
     o.push({ s: G.T('new_game'), go: newGame });
-    o.push({ s: G.T('controls'), go: () => { controlsOpen = !controlsOpen; } });
-    o.push({ s: G.T('sound') + ': ' + (G.Sound.muted ? G.T('off') : G.T('on')), go: () => { G.Sound.toggleMute(); } });
+    o.push({ s: G.T('settings'), go: () => G.UI.settings('title') });
     return o;
   }
   // the opening is a storybook: each line over its own slowly drifting painted scene, revealed letter by letter
@@ -302,15 +304,9 @@ G.Main = (function () {
     opts.forEach((o, i) => { const y = VH * 0.58 + i * 62; const sel = i === titleSel;
       G.UI.text(ctx, o.s, VW / 2, y, { size: 36, a: a * (sel ? 1 : 0.6), c: sel ? '#ffe3bd' : '#e6dccd' });
       if (sel) { G.FX.flame(ctx, VW / 2 + 150, y + 14, 3.2, t + i, {}); G.FX.flame(ctx, VW / 2 - 150, y + 14, 3.2, t + i + 2, {}); }
-      G.UI.tapRegion(VW / 2 - 200, y - 28, 400, 56, () => { G.Sound.init(); titleSel = i; G.Sound.sfx('ui_select'); o.go(); });
+      if (!G.UI.modal) G.UI.tapRegion(VW / 2 - 200, y - 28, 400, 56, () => { G.Sound.init(); titleSel = i; G.Sound.sfx('ui_select'); o.go(); });
     });
-    if (controlsOpen) {
-      G.UI.panel(ctx, VW / 2 - 360, VH * 0.2, 720, VH * 0.62, 0.95);
-      const keys = G.Input.isTouch ? G.TEXT.keys_touch : G.TEXT.keys;
-      G.UI.text(ctx, G.T('controls'), VW / 2, VH * 0.2 + 50, { size: 40, w: 600, title: true });
-      keys.forEach((k, i) => { const y = VH * 0.2 + 120 + i * 46; G.UI.text(ctx, k[0], VW / 2 - 40, y, { size: 26, align: 'right', c: '#f0d9b5', en: /^[A-Za-z]/.test(k[0]) }); G.UI.text(ctx, k[1], VW / 2 + 300, y, { size: 26, align: 'right', a: 0.8 }); });
-      G.UI.tapRegion(0, 0, VW, VH, () => { controlsOpen = false; });
-    }
+    if (G.UI.modal) G.UI.drawModal(ctx);
     G.UI.text(ctx, 'v1.0', VW - 40, VH - 26, { size: 16, en: true, a: 0.3, align: 'right' });
   }
   function drawIntro() {

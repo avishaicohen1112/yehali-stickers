@@ -3,22 +3,47 @@ G.Sound = window.Sound || new Proxy({}, { get: (t, k) => k === 'muted' ? false :
 // Unified input: keyboard, gamepad, touch. Actions: left right up down jump attack dash focus map pause interact
 G.Input = (function () {
   const held = {}, pressed = {}, released = {};
-  const KEYMAP = {
-    ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down',
-    Space: 'jump', KeyZ: 'jump', KeyX: 'attack', KeyJ: 'attack', KeyC: 'dash', KeyK: 'dash', ShiftLeft: 'dash', ShiftRight: 'dash',
-    KeyF: 'focus', KeyL: 'focus', KeyV: 'focus', Tab: 'map', KeyM: 'map', Escape: 'pause', KeyP: 'pause', Enter: 'confirm', KeyE: 'interact', KeyG: 'dance'
-  };
+  // keyboard + mouse, the usual PC platformer layout: A/D move, W/S aim up/down, Space jump, left mouse (or J) attack,
+  // right mouse (or Shift) dash, Q heal / magic, E interact, Tab map, G dance, Esc pause. Every action can be rebound
+  // in Settings (saved locally); arrow keys + Z/X/C always work as a second layout.
+  const ACTIONS = ['left', 'right', 'up', 'down', 'jump', 'attack', 'dash', 'focus', 'interact', 'map', 'dance', 'pause'];
+  const DEFAULT = { left: ['KeyA', 'ArrowLeft'], right: ['KeyD', 'ArrowRight'], up: ['KeyW', 'ArrowUp'], down: ['KeyS', 'ArrowDown'],
+    jump: ['Space', 'KeyZ'], attack: ['KeyJ', 'KeyX'], dash: ['ShiftLeft', 'KeyC'], focus: ['KeyQ', 'KeyF'], interact: ['KeyE'],
+    map: ['Tab', 'KeyM'], dance: ['KeyG'], pause: ['Escape', 'KeyP'] };
+  let binds = JSON.parse(JSON.stringify(DEFAULT));
+  try { const b = JSON.parse(localStorage.getItem('lastwick_binds')); if (b) for (const a of ACTIONS) if (Array.isArray(b[a]) && b[a].length) binds[a] = b[a]; } catch (e) { }
+  let KEYMAP = {};
+  function rebuild() { KEYMAP = { Enter: 'confirm', ShiftRight: 'dash', NumpadEnter: 'confirm' }; for (const a of ACTIONS) for (const k of binds[a]) KEYMAP[k] = a; }
+  rebuild();
+  function saveBinds() { try { localStorage.setItem('lastwick_binds', JSON.stringify(binds)); } catch (e) { } }
+  let listening = null;   // settings: the next key pressed becomes this action's main key
+  function keyName(code) {
+    if (!code) return '—';
+    const N = { Space: 'רווח', ShiftLeft: 'Shift', ShiftRight: 'Shift', ControlLeft: 'Ctrl', ControlRight: 'Ctrl', AltLeft: 'Alt', Escape: 'Esc', Tab: 'Tab', Enter: 'Enter',
+      ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓', Backspace: '⌫', CapsLock: 'Caps' };
+    if (N[code]) return N[code]; if (code.startsWith('Key')) return code.slice(3); if (code.startsWith('Digit')) return code.slice(5); return code;
+  }
+  let mouseOn = true;
   let lastDevice = 'kb';
   function down(a) { if (!held[a]) { pressed[a] = true; } held[a] = true; }
   function up(a) { if (held[a]) released[a] = true; held[a] = false; }
   addEventListener('keydown', e => {
+    if (listening) {   // rebinding: this key becomes the action's first key (removed from any other action)
+      e.preventDefault(); if (e.code === 'Escape') { listening = null; return; }
+      const a = listening; for (const b of ACTIONS) binds[b] = binds[b].filter(k => k !== e.code);
+      binds[a] = [e.code].concat(binds[a].filter(k => k !== e.code)).slice(0, 2); rebuild(); saveBinds(); listening = null; return;
+    }
     const a = KEYMAP[e.code]; if (!a) return; e.preventDefault(); lastDevice = 'kb';
     if (e.repeat) return; down(a); if (a === 'jump' || a === 'confirm') down('confirm_any');
     if (G.Sound) G.Sound.init();
   });
   addEventListener('keyup', e => { const a = KEYMAP[e.code]; if (!a) return; up(a); if (a === 'jump' || a === 'confirm') up('confirm_any'); });
   addEventListener('blur', () => { for (const k in held) up(k); });
-
+  // mouse: left button attacks, right button dashes - only while actually playing (in menus a click is a click)
+  const inPlay = () => mouseOn && G.Main && G.Main.mode === 'play' && !(G.UI && G.UI.modal);
+  addEventListener('mousedown', e => { if (!inPlay()) return; if (e.button === 0) { down('attack'); lastDevice = 'kb'; } else if (e.button === 2) down('dash'); });
+  addEventListener('mouseup', e => { if (e.button === 0) up('attack'); else if (e.button === 2) up('dash'); });
+  addEventListener('contextmenu', e => e.preventDefault());
   // gamepad
   const PADMAP = { 4: 'dance', 0: 'jump', 2: 'attack', 1: 'focus', 5: 'dash', 7: 'dash', 3: 'interact', 9: 'pause', 8: 'map', 12: 'up', 13: 'down', 14: 'left', 15: 'right' };
   const padPrev = {};
@@ -68,7 +93,10 @@ G.Input = (function () {
     if (isTouch && !document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); });
 
   return {
-    held, setupTouch, isTouch,
+    held, setupTouch, isTouch, ACTIONS, keyName,
+    binds: () => binds, listen(a) { listening = a; }, get listening() { return listening; },
+    resetBinds() { binds = JSON.parse(JSON.stringify(DEFAULT)); rebuild(); saveBinds(); },
+    get mouse() { return mouseOn; }, set mouse(v) { mouseOn = !!v; },
     get device() { return lastDevice; },
     p: a => !!pressed[a], h: a => !!held[a], r: a => !!released[a],
     tap() { const t = tapped; return t; }, tapPos: () => tapPos,
