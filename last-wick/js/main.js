@@ -237,7 +237,7 @@ G.Main = (function () {
     G.FX.clearLights();
     Rn.roomLights(room, t);
     // a room that needs an ability you don't have yet says so (once per visit), instead of leaving you jumping at a wall
-    if (room.hint && !G.state.abil[room.hint.need] && !room.hintShown && (room.hintT = (room.hintT || 0) + dt) > 3.5) { room.hintShown = true; G.UI.toast(G.T(room.hint.text), 7); }
+    if (room.hint && !G.UI.modal && !G.state.abil[room.hint.need] && !room.hintShown && (room.hintT = (room.hintT || 0) + dt) > 3.5) { room.hintShown = true; G.UI.toast(G.T(room.hint.text), 7); }
     player.update(dt, room);
     // player light
     if (player.tip) { const S = G.state; const k = player.dead ? Math.max(0, 1 - player.deadT) : 0.6 + 0.4 * S.hp / S.hpMax; G.FX.light(player.tip.x, player.tip.y - 10, (360 + Math.sin(t * 13) * 8) * k * (player.focusing ? 1.3 : 1), [255, 170, 90], 1); }

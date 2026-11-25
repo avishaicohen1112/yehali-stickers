@@ -76,7 +76,7 @@ G.Player = (function () {
         if (this.dashT <= 0) this.vx = this.facing * C.RUN * 0.8;
       } else {
         // ---- horizontal
-        const Wv = (G.Wind ? G.Wind.force(this) : 0) + this.pullV; this.pullV = 0;  // wind + boss pulls (e.g. the Wax Mother inhaling) this.windV = Wv; this.mx = mx;
+        const Wv = (G.Wind ? G.Wind.force(this) : 0) + this.pullV; this.pullV = 0; this.windV = Wv; this.mx = mx;   // wind + boss pulls (e.g. the Wax Mother inhaling)
         if (Wv && this.wallJumpT <= 0 && this.recoilT <= 0 && this.lock <= 0) {
           // gale: into the wind = slow grind, with it = fast, hands off = blown back
           const against = mx && mx * Wv < 0;

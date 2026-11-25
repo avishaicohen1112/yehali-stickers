@@ -125,7 +125,8 @@ G.UI = (function () {
   function worldCard(w) { const W = window.WORLD.worlds[w]; card = { kind: 'world', l1: W.name, l2: W.en, t: 0, dur: 5.5 }; }
   function bossCard(kind) { const b = G.TEXT.bosses[kind]; card = { kind: 'boss', l1: b[0], l2: b[1], t: 0, dur: 3.6 }; }
   function drawCard(c, dt) {
-    if (!card) return; card.t += dt; const k = card.t / card.dur; if (k >= 1) { card = null; return; }
+    if (!card || modal) return; card.t += dt; const k = card.t / card.dur;   // the area title waits behind dialogue / menus instead of overlapping them
+    if (k >= 1) { card = null; return; }
     const a = k < 0.2 ? k / 0.2 : k > 0.75 ? (1 - k) / 0.25 : 1; const VW = R().VW, VH = R().VH;
     if (card.kind === 'world') {
       const vg = c.createRadialGradient(VW / 2, VH * 0.27, 10, VW / 2, VH * 0.27, VW * 0.32); vg.addColorStop(0, `rgba(0,0,0,${0.32 * a})`); vg.addColorStop(1, 'rgba(0,0,0,0)');
@@ -180,7 +181,7 @@ G.UI = (function () {
   function closeSettings() { const m = modal; modal = m && m.back === 'pause' ? { kind: 'pause', sel: 2, t: 0.3 } : null; G.Sound.sfx('ui_move'); }
   function confirmP() { return I.p('jump') || I.p('attack') || I.p('confirm') || I.p('interact'); }
   function update(dt) {
-    for (const t of toasts) t.t += dt; toasts = toasts.filter(t => t.t < t.dur);
+    if (!modal) { for (const t of toasts) t.t += dt; toasts = toasts.filter(t => t.t < t.dur); }   // messages wait while a window is open
     if (!modal) return false;
     modal.t += dt; const m = modal;
     if (m.kind === 'talk') {
@@ -370,6 +371,7 @@ G.UI = (function () {
     tapRegion(0, 0, VW, VH, () => { modal = null; });
   }
   function drawToasts(c) {
+    if (modal) return;
     const VW = R().VW, VH = R().VH; let y = VH * 0.8;
     for (const t of toasts) { const a = Math.min(1, t.t * 4, (t.dur - t.t) * 2);
       const ls = wrap(c, t.s, Math.min(900, VW - 240), 25); c.save(); c.font = `400 25px ${HE}`; const w = Math.max(...ls.map(l => c.measureText(l).width)); c.restore();
