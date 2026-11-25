@@ -42,9 +42,10 @@ G.Enemies = (function () {
     hitbox() { return this.dead || this.alpha < 0.5 ? null : { x: this.x + 6, y: this.y + 6, w: this.w - 12, h: this.h - 10 }; }
     hurt(dmg, dx, dy) {
       if (this.dead) return false;
-      this.hp -= dmg; this.flash = 1; this.hitT = 0.2; this.hitDir = dx || 0; G.Sound.sfx('hit', { pitch: rand(0.9, 1.15) });
-      const kb = this.d.type === 'shooter' || this.d.type === 'gunner' ? 0 : 1;
-      this.kbx = dx * 240 * kb;  // a short shove, eased out (no teleport-like jump) if (dy && this.d.type !== 'walker') this.vy = dy * 250 * kb;
+      this.hp -= dmg; this.flash = 1; this.hitT = 0.24; this.hitDir = dx || (dy ? 0 : 1); G.Sound.sfx('hit', { pitch: rand(0.9, 1.15) });
+      const kb = this.d.type === 'shooter' || this.d.type === 'gunner' ? 0.25 : 1;
+      this.kbx = (dx || 0) * 330 * kb;   // a firm shove that eases out smoothly
+      if (dy && /flyer|diver|floater|blinker/.test(this.d.type)) this.vy = dy * 260 * kb;
       if (this.state === 'windup' && this.d.type !== 'charger') { this.state = 'recover'; this.st = 0; }
       if (this.hp <= 0) this.die(dx, dy);
       return true;
@@ -52,19 +53,19 @@ G.Enemies = (function () {
     die(dx, dy) {
       this.dead = true; this.deadT = 0; G.Sound.sfx('enemy_die');
       const L = this.d.light;
-      G.FX.burst(this.cx, this.cy, 18, { speed: 380, life: 0.5, size: 3, c: [L[0], L[1], L[2]], kind: 'ember' });
-      G.FX.burst(this.cx, this.cy, 10, { speed: 300, life: 0.8, size: 5, c: [28, 24, 34], kind: 'chunk', g: 1300, add: false });
-      G.FX.ring(this.cx, this.cy, 10, 90, [L[0], L[1], L[2]], 0.35, 6);
-      G.FX.stop(0.06); G.FX.shake(6, 0.15);
+      // it keels over in its hurt pose and melts away: a puff of its own light and a few drops of wax (no dark confetti)
+      G.FX.burst(this.cx, this.cy, 12, { speed: 260, life: 0.7, size: 3, c: [L[0], L[1], L[2]], kind: 'ember', angle: -Math.PI / 2, spread: 1.4 });
+      G.FX.burst(this.cx, this.cy, 8, { speed: 220, life: 0.6, size: 2.4, c: [240, 220, 185], kind: 'ember', g: 600 });
+      G.FX.ring(this.cx, this.cy, 14, 80, [L[0], L[1], L[2]], 0.3, 4);
       G.Objects.dropTallow(this.cx, this.cy, this.d.tallow);
-      this.vy = -300; this.kbx = (dx || 0) * 300;
+      this.vy = -260; this.kbx = (dx || 0) * 260;
     }
     update(dt, room, p) {
-      this.t += dt; this.animT += dt; this.st += dt; this.flash = Math.max(0, this.flash - dt * 9);
+      this.t += dt; this.animT += dt; this.st += dt; this.flash = Math.max(0, this.flash - dt * 7);
       if (this.dead) { this.deadT += dt; return; }
       const d = this.d, dxp = p.cx - this.cx, dyp = p.cy - this.cy, dp = Math.hypot(dxp, dyp);
       const see = dp < 560 && !p.dead && room.los(this.cx, this.cy, p.cx, p.cy);
-      this.kbx = approach(this.kbx, 0, 1300 * dt); this.hitT = Math.max(0, (this.hitT || 0) - dt);
+      this.kbx *= Math.exp(-dt * 9); if (Math.abs(this.kbx) < 4) this.kbx = 0; this.hitT = Math.max(0, (this.hitT || 0) - dt);
       switch (d.type) {
         case 'walker': case 'charger': case 'lunger': this.walkAI(dt, room, p, dxp, dyp, see); break;
         case 'flyer': this.flyAI(dt, room, p, dxp, dyp, dp, see); break;
@@ -74,6 +75,7 @@ G.Enemies = (function () {
         case 'gunner': this.gunAI(dt, room, p, dxp, dyp, dp, see); break;
         case 'blinker': this.blinkAI(dt, room, p, dxp, dyp, dp); break;
       }
+      if (this.anim !== this.prevAnim) { this.prevAnim = this.anim; this.animT = 0; }
       // contact damage
       const hb = this.hitbox(); if (hb && overlap(hb, p.hitbox())) p.damage(1, this.cx);
       if (d.light) G.FX.light(this.cx, this.cy, d.light[3], [d.light[0], d.light[1], d.light[2]], 0.9);
@@ -211,7 +213,7 @@ G.Enemies = (function () {
       const fx = this.cx, fy = this.y + this.h;
       let a = this.dead ? Math.max(0, 1 - Math.max(0, this.deadT - 0.35) * 2.2) : this.alpha;
       if (a <= 0) return;
-      const shake = this.state === 'windup' ? Math.sin(this.t * 60) * 2 : 0;
+      const shake = this.state === 'windup' ? Math.sin(this.t * 60) * 2 : this.hitT > 0.16 ? Math.sin(this.t * 90) * 3 : 0;
       const atlas = 'e_' + this.kind;
       if (window.RIGS && window.RIGS[atlas]) {
         if (!this.pup) this.pup = new G.Puppet.Puppet(atlas);
@@ -233,9 +235,9 @@ G.Enemies = (function () {
           else if (an === 'idle' && A.n <= 2) sy *= 1 + Math.sin(this.t * 2.2 + this.x * 0.01) * 0.02; }
         // hit reaction: a quick squash and a lean away from the blow, warm glint instead of a white silhouette
         const hk = this.hitT > 0 ? Math.sin((1 - this.hitT / 0.2) * Math.PI) : 0;
-        let rot = hk * 0.12 * (this.hitDir || 0), sq = 1 - hk * 0.08;
+        let rot = hk * 0.2 * (this.hitDir || 0), sq = 1 - hk * 0.12;
         if (this.dead) { rot = -(this.facing || 1) * Math.min(1, this.deadT * 2.2) * 1.3; sy = 1; }   // keels over
-        G.Sprite.draw(ctx, atlas, an, fi, fx + shake, fy + yo + (this.dead ? this.deadT * 14 : 0), { flip: this.facing < 0, alpha: a, flash: this.flash * 0.45, tint: this.flash > 0.05 ? [255, 190, 120, this.flash * 0.35] : null, ppu: this.d.ppu, sy: sy * sq, rot });
+        G.Sprite.draw(ctx, atlas, an, fi, fx + shake, fy + yo + (this.dead ? this.deadT * 14 : 0), { flip: this.facing < 0, alpha: a, flash: this.flash * 0.18, tint: this.flash > 0.05 ? [255, 190, 130, this.flash * 0.38] : null, ppu: this.d.ppu, sy: sy * sq, rot });
       } else {
         ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = this.flash > 0 ? '#fff' : '#15121c';
         ctx.beginPath(); ctx.ellipse(fx + shake, this.cy, this.w / 2, this.h / 2, 0, 0, 7); ctx.fill();

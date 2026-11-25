@@ -215,7 +215,7 @@ G.Player = (function () {
       else if (d === 'up') hb = { x: this.cx - 55, y: this.y - 92, w: 110, h: 112 };
       else hb = { x: this.cx - 50, y: this.cy, w: 100, h: 120 };
       const dmg = G.state.needle;
-      let any = false;
+      let any = false, killed = false;
       for (const e of G.Main.enemies()) {
         if (e.dead || this.atkHit.has(e) || !e.hurtbox) continue;
         const ehb = e.hurtbox(); if (!ehb || !overlap(hb, ehb)) continue;
@@ -223,14 +223,16 @@ G.Player = (function () {
         const dx = d === 'side' ? this.facing : 0, dy = d === 'up' ? -1 : d === 'down' ? 1 : 0;
         const res = e.hurt(dmg, dx, dy, 'needle');
         if (res !== false && !e.noSoul) G.state.soul = Math.min(G.state.soulMax, G.state.soul + 11);
-        const hx = clamp(this.cx + dx * 60, ehb.x, ehb.x + ehb.w), hy = clamp(this.cy + dy * 60, ehb.y, ehb.y + ehb.h);
-        G.FX.burst(hx, hy, 12, { speed: 520, life: 0.25, size: 2.5, c: [255, 240, 220], kind: 'spark', angle: Math.atan2(dy, dx || (dy ? 0 : this.facing)), spread: 0.9 });
-        G.FX.ring(hx, hy, 6, 50, [255, 235, 200], 0.18, 5);
+        const hx = clamp(this.cx + dx * 60, ehb.x + 6, ehb.x + ehb.w - 6), hy = clamp(this.cy + dy * 60 - 6, ehb.y + 6, ehb.y + ehb.h - 6);
+        const ang = Math.atan2(dy, dx || (dy ? 0 : this.facing)), L = (e.d && e.d.light) || [255, 210, 160];
+        G.FX.impact(hx, hy, ang + (d === 'side' ? -0.35 * this.facing : 0.3), [Math.min(255, L[0] + 40), Math.min(255, L[1] + 40), Math.min(255, L[2] + 40)], e.dead ? 1.35 : 1);
+        G.FX.burst(hx, hy, 5, { speed: 380, life: 0.22, size: 2.2, c: [255, 240, 215], kind: 'spark', angle: ang, spread: 0.55 });
+        if (e.dead) killed = true;
       }
       // objects (breakables, levers)
       if (G.Objects.hit(hb, this)) any = true;
       if (any) {
-        G.FX.stop(0.045); G.FX.shake(4, 0.1);
+        G.FX.stop(killed ? 0.095 : 0.065); G.FX.shake(killed ? 5 : 3, 0.09);   // a firm freeze on contact, a heavier one on the killing blow
         if (d === 'down') { this.vy = -C.POGO; this.djumped = false; this.airDashed = false; this.cut = true; this.atkT = Math.min(this.atkT, 0.1); }
         else if (d === 'side') { this.vx = -this.facing * 260; this.recoilT = 0.08; }
       } else {
@@ -245,14 +247,16 @@ G.Player = (function () {
     damage(n, fromX, hazard) {
       if (this.dead || (!hazard && this.inv > 0)) return false;
       const S = G.state; S.hp -= n; this.focusing = false; this.focusT = 0; this.dashT = 0; this.sitting = false;
-      G.Sound.sfx('hurt'); G.FX.stop(0.12); G.FX.shake(10, 0.28); G.FX.flash('#5a1408', 0.22, 0.3);
-      G.FX.burst(this.cx, this.cy, 26, { speed: 520, life: 0.6, size: 3, c: [20, 18, 30], kind: 'chunk', g: 1200, add: false });
-      G.FX.burst(this.cx, this.cy, 14, { speed: 420, life: 0.35, size: 3, c: [255, 250, 240], kind: 'spark' });
+      // one clear beat: freeze, a red pulse at the screen edges, a little spray of wax from the hero, then a clean knock-back arc
+      G.Sound.sfx('hurt'); G.FX.stop(0.11); G.FX.shake(7, 0.18); G.FX.S.hurtV = 1;
+      const fromAng = fromX === undefined || fromX === null ? -Math.PI / 2 : Math.atan2(-0.4, sign(this.cx - fromX) || -this.facing);
+      G.FX.impact(this.cx, this.cy - 8, fromAng, [255, 150, 110], 1.15);
+      G.FX.burst(this.cx, this.cy - 10, 8, { speed: 340, life: 0.45, size: 2.6, c: [255, 210, 160], kind: 'ember', angle: fromAng, spread: 1.0 });
       this.inv = C.HURT_INV;
       if (S.hp <= 0) { S.hp = 0; this.die(); return true; }
       if (!hazard) {
         const dir = fromX === undefined || fromX === null ? -this.facing : sign(this.cx - fromX) || -this.facing;
-        this.vx = dir * 320; this.vy = -430; this.lock = 0.2; this.recoilT = 0; this.hurtT = 0.3; this.atkT = 0;
+        this.vx = dir * 300; this.vy = -380; this.lock = 0.22; this.recoilT = 0; this.hurtT = 0.32; this.atkT = 0;
       }
       return true;
     }
@@ -293,7 +297,7 @@ G.Player = (function () {
     draw(ctx) {
       if (this.pup) {
         const flip = (this.anim === 'wall' ? -this.wall : this.facing) < 0, fx = this.cx, fy = this.feet + 1;
-        const blink = this.inv > 0 && !this.dead && Math.floor(this.inv * 14) % 2 === 0;
+        const blink = false, invA = this.inv > 0 && !this.dead && this.hurtT <= 0 ? 0.6 + 0.4 * Math.cos(this.inv * 26) : 1;   // invulnerable: a soft pulse, not a strobe
         this.pup.play(this.anim);
         const T = window.RIGS.wick.points && window.RIGS.wick.points.tip;
         this.tip = T ? this.pup.point(T[0], T[1], T[2], fx, fy, flip) : { x: fx, y: this.y };
@@ -313,7 +317,7 @@ G.Player = (function () {
       if (this.dancing && !G.Sprite.has('wick', 'dance')) { const k = this.danceT * 7; yo = -Math.abs(Math.sin(k)) * 9; rot = Math.sin(k * 0.5) * 0.14; sy = 1 + Math.sin(k) * 0.04; }
       if (this.dancing && Math.random() < 0.05) G.FX.spawn({ x: this.cx + rand(-30, 30), y: this.y + 10, vx: rand(-20, 20), vy: -60, life: 1.2, size: 3, kind: 'mote', ph: rand(6), c: [255, 230, 170], a: 0.9, add: true });
       if (this.anim === 'sleep' && Math.random() < 0.012) G.FX.spawn({ x: this.cx + 16, y: this.y + 4, vx: 18, vy: -30, life: 2, size: 2.5, kind: 'mote', ph: rand(6), c: [220, 230, 255], a: 0.8, add: true });
-      const blink = this.inv > 0 && !this.dead && Math.floor(this.inv * 14) % 2 === 0;
+      const blink = false, invA = this.inv > 0 && !this.dead && this.hurtT <= 0 ? 0.6 + 0.4 * Math.cos(this.inv * 26) : 1;   // invulnerable: a soft pulse, not a strobe
       const fx = this.cx, fy = this.feet + 1;
       const flip = (this.anim === 'wall' ? -this.wall : this.facing) < 0;
       // flame tip
@@ -321,7 +325,8 @@ G.Player = (function () {
       this.tip = tip;
       if (this.hazardT > 0) return;
       if (this.ground && G.Render.groundShadow) G.Render.groundShadow(ctx, fx, fy - 1, 26);
-      G.Sprite.draw(ctx, 'wick', this.anim, fi, fx, fy + yo, { flip, sy, rot, alpha: blink ? 0.45 : 1, flash: this.hurtT > 0.22 ? 0.35 : 0, tint: this.hurtT > 0.12 ? [255, 70, 40, 0.35] : null });
+      const hk = this.hurtT > 0 ? this.hurtT / 0.32 : 0;   // hit: a warm-red glint that fades, a short recoil lean
+      G.Sprite.draw(ctx, 'wick', this.anim, fi, fx, fy + yo, { flip, sy: sy * (1 - hk * 0.06), rot: rot - hk * 0.16 * (flip ? -1 : 1), alpha: invA, tint: hk > 0 ? [255, 80, 40, 0.28 * hk] : null });
     }
     drawCrane(ctx) {  // stand-in paper crane until ART_BRIEF_2 sends the painted one (4 wing frames)
       const x = this.cx, y = this.feet + 6, f = Math.sin(this.flameT * 9) * 26;

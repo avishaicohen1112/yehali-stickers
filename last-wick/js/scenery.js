@@ -31,13 +31,15 @@ G.Scenery = (function () {
   function elementDraw(ctx, it, X, Y, s, t, L) {
     const im = G.Assets.get(it.img); if (!im && !it.frames) return;
     let img = L ? depthImg({ img: it.img, id: L.id, dim: L.dim }) || im : im;
-    if (it.frames) { const f = Math.floor(t * it.frames.fps + (it.ph || 0)) % it.frames.imgs.length; img = G.Assets.get(it.frames.imgs[f]); if (!img) return; }
+    if (it.frames) { const f = Math.floor(t * it.frames.fps + (it.ph || 0)) % it.frames.imgs.length, fk = it.frames.imgs[f];
+      img = L ? depthImg({ img: fk, id: L.id, dim: L.dim }) : G.Assets.get(fk); if (!img) return; }
     const w = img.width * s * (it.s || 1), h = img.height * s * (it.s || 1);
     const pv = it.pivot || [0.5, 1];
     let x = X, y = Y, rot = 0, sc = 1, a = it.a ?? 1;
     const ph = it.ph || (it.x * 0.013);
     if (it.travel) {   // crosses the layer slowly and wraps around (bats, moths, ghost fish)
-      const span = it.travel[1] * s, ix = it.x * s; x = X - ix + (((ix + t * it.travel[0] * s) % span) + span) % span;
+      const span = it.travel[1] * s, ix = it.x * s, u = ((((ix + t * it.travel[0] * s) % span) + span) % span) / span; x = X - ix + u * span;
+      a *= Math.min(1, u / 0.08, (1 - u) / 0.08);   // fades in and out at the ends of its path (never pops into place)
     }
     if (it.bob) y += Math.sin(t * it.bob[1] + ph) * it.bob[0] * s;
     const wk = G.Wind ? G.Wind.sway() : 1;  // gusts make hanging/standing elements swing harder

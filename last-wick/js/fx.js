@@ -1,9 +1,9 @@
 'use strict';
 // Particles, lights, slashes, screen effects
 G.FX = (function () {
-  const parts = [], slashes = [], rings = [];
+  const parts = [], slashes = [], rings = [], impacts = [];
   let lights = [];
-  const S = { shake: 0, shakeT: 0, stop: 0, flashC: '#fff', flashA: 0, flashD: 0.2, slowmo: 0 };
+  const S = { shake: 0, shakeT: 0, stop: 0, flashC: '#fff', flashA: 0, flashD: 0.2, slowmo: 0, hurtV: 0 };
   // glow sprite cache
   const glowCache = {};
   function glowSprite(c) {
@@ -44,6 +44,8 @@ G.FX = (function () {
     }
     for (let i = slashes.length - 1; i >= 0; i--) { const s = slashes[i]; s.t += dt; if (s.t > s.dur) slashes.splice(i, 1); }
     for (let i = rings.length - 1; i >= 0; i--) { const r = rings[i]; r.t += dt; if (r.t > r.dur) rings.splice(i, 1); }
+    for (let i = impacts.length - 1; i >= 0; i--) { const m = impacts[i]; m.t += dt; if (m.t > m.dur) impacts.splice(i, 1); }
+    S.hurtV = Math.max(0, S.hurtV - dt * 1.8);
     if (S.shakeT > 0) S.shakeT -= dt; else S.shake = 0;
     if (S.flashA > 0) S.flashA = Math.max(0, S.flashA - dt / S.flashD);
   }
@@ -121,6 +123,23 @@ G.FX = (function () {
     }
     ctx.globalCompositeOperation = 'source-over';
   }
+  // one clean, readable hit mark: a sharp streak along the blow, a short cross-cut and a quick bloom (replaces spark clouds)
+  function impact(x, y, ang, c, big = 1) { impacts.push({ x, y, ang, c: c || [255, 225, 180], big, t: 0, dur: 0.16 }); }
+  function drawImpacts(ctx) {
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (const m of impacts) {
+      const k = m.t / m.dur, e = ease.out(Math.min(1, k * 1.6)), a = 1 - k * k;
+      glow(ctx, m.x, m.y, 26 * m.big * (1 - k * 0.5), m.c, 0.5 * a);
+      ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.ang);
+      for (const [len, wid, rot, al] of [[110, 7, 0, 1], [54, 4, 1.25, 0.75]]) {
+        ctx.save(); ctx.rotate(rot); const L = len * m.big * (0.55 + 0.45 * e), W = wid * m.big * (1 - k);
+        const g = ctx.createLinearGradient(-L / 2, 0, L / 2, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, `rgba(255,252,240,${al * a})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(-L / 2, 0); ctx.quadraticCurveTo(0, -W, L / 2, 0); ctx.quadraticCurveTo(0, W, -L / 2, 0); ctx.fill(); ctx.restore();
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+  }
   function ring(x, y, r0, r1, c, dur, w) { rings.push({ x, y, r0, r1, c, dur, w: w || 6, t: 0 }); }
   function drawRings(ctx) {
     ctx.globalCompositeOperation = 'lighter';
@@ -147,12 +166,12 @@ G.FX = (function () {
   }
   return {
     parts, lights: () => lights, S,
-    spawn, burst, update, drawParts, slash, thrust, drawSlashes, ring, drawRings, glow, flame,
+    spawn, burst, update, drawParts, slash, thrust, drawSlashes, ring, drawRings, glow, flame, impact, drawImpacts,
     light(x, y, r, c, i = 1) { for (const l of lights) if (l.x === x && l.y === y && l.r === r) return; lights.push({ x, y, r, c, i }); },   // objects add lights while drawing: while the game is paused (dialogue, hit-stop) they must not pile up
     clearLights() { lights = []; },
     shake(a, t) { if (a >= S.shake) { S.shake = a; S.shakeT = t; } },
     stop(t) { S.stop = Math.max(S.stop, t); },
     flash(c, a, d) { S.flashC = c; S.flashA = a; S.flashD = d || 0.25; },
-    reset() { parts.length = 0; slashes.length = 0; rings.length = 0; lights = []; }
+    reset() { parts.length = 0; slashes.length = 0; rings.length = 0; impacts.length = 0; S.hurtV = 0; lights = []; }
   };
 })();

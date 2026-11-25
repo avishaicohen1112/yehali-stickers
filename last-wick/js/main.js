@@ -364,13 +364,16 @@ G.Main = (function () {
     Rn.drawFlames(room, t);
     ctx.save(); ctx.translate(-cam.x, -cam.y);
     for (const e of enemies) if (e.drawGlow) e.drawGlow(ctx);
-    G.FX.drawParts(ctx, true); G.FX.drawRings(ctx); G.FX.drawSlashes(ctx);
+    G.FX.drawParts(ctx, true); G.FX.drawRings(ctx); G.FX.drawSlashes(ctx); G.FX.drawImpacts(ctx);
     player.drawFlame(ctx, t);
     ctx.restore();
     Rn.drawProps(room, 'front', t);
     G.Scenery.drawFront(ctx, room, Rn.cam, VW, VH, t);
     Rn.drawFog(room, t);
     ctx.restore();
+    if (G.FX.S.hurtV > 0) {   // taking a hit: the screen edges pulse ember-red (the middle stays clear so you see what happened)
+      const v = G.FX.S.hurtV, g = ctx.createRadialGradient(VW / 2, VH / 2, VH * 0.35, VW / 2, VH / 2, VW * 0.7);
+      g.addColorStop(0, 'rgba(120,20,8,0)'); g.addColorStop(1, `rgba(150,24,8,${0.55 * v})`); ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH); }
     if (G.FX.S.flashA > 0) { ctx.globalAlpha = G.FX.S.flashA; ctx.fillStyle = G.FX.S.flashC; ctx.fillRect(0, 0, VW, VH); ctx.globalAlpha = 1; }
     if (player.dead) { const a = Math.min(1, player.deadT * 0.8); G.UI.text(ctx, G.T('died'), VW / 2, VH * 0.42, { size: 56, w: 600, title: true, a: a * 0.9 }); G.UI.text(ctx, G.T('died2'), VW / 2, VH * 0.42 + 60, { size: 26, a: a * 0.6 }); }
     if (!G.UI.modal || G.UI.modal.kind === 'talk') G.UI.hud(ctx, t);
