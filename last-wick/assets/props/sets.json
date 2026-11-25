@@ -88,5 +88,13 @@
   "clock_organ",
   "clock_prop4",
   "clock_prop5"
+ ],
+ "theatre": [
+  "theatre_chair",
+  "theatre_crate",
+  "theatre_mirror",
+  "theatre_rack",
+  "theatre_piano",
+  "theatre_lamp"
  ]
 }

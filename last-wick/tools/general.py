@@ -91,10 +91,11 @@ def pieces(sid, names, heights, center=True):
     p = src(sid)
     if not p: return
     man = json.load(open(os.path.join(PROPS, 'manifest.json')))
-    a = keyed(p); boxes = split(a, 16)
+    a = keyed(p).astype(np.float32); a[a[..., 3] < 60] = 0   # drop the sheets' glow halos / keying noise
+    boxes = [b for b in split(a, 16, min_area=2500)]
     if len(boxes) != len(names): print(f'  ! {sid}: {len(boxes)} pieces, expected {len(names)}')
     for nm, hh, b in zip(names, heights, boxes):
-        pc, _ = trim(a[b[1]:b[1] + b[3], b[0]:b[0] + b[2]].copy()); e, _ = save(pc, nm, hh)
+        pc, _ = trim(biggest(a[b[1]:b[1] + b[3], b[0]:b[0] + b[2]].copy())); e, _ = save(pc, nm, hh)
         if center: e['ay'] = round(e['h'] / 2, 1)
         man[nm] = e
     json.dump(man, open(os.path.join(PROPS, 'manifest.json'), 'w'), indent=1); print(sid, '->', names)
@@ -154,3 +155,21 @@ def chests():
 
 if __name__ == '__main__' and len(sys.argv) > 1 and sys.argv[1] == 'chests':
     chests()
+
+
+def giants():
+    """part-2 giant bosses (T01-T05): parts sheets -> gb_<boss>_<part>, projectile sheets -> gb_<boss>_p_<name>"""
+    pieces('T01-2', ['gb_waxmother_face', 'gb_waxmother_face2', 'gb_waxmother_eye3', 'gb_waxmother_body', 'gb_waxmother_handL', 'gb_waxmother_handR', 'gb_waxmother_valve'], [380, 380, 380, 520, 190, 190, 110])
+    pieces('T01-3', ['gb_waxmother_p_drop', 'gb_waxmother_p_wave', 'gb_waxmother_p_bubble'], [70, 60, 60])
+    pieces('T02-2', ['gb_whale_body', 'gb_whale_body_open', 'gb_whale_head', 'gb_whale_crane0', 'gb_whale_crane1', 'gb_whale_crane2', 'gb_whale_crane3'], [420, 420, 300, 110, 110, 110, 110])
+    pieces('T02-3', ['gb_whale_p_gear', 'gb_whale_p_fish0', 'gb_whale_p_fish1', 'gb_whale_p_mine', 'gb_whale_p_steam'], [46, 34, 34, 46, 90])
+    pieces('T03-2', ['gb_lanternqueen_body', 'gb_lanternqueen_wing', 'gb_lanternqueen_wing_torn', 'gb_lanternqueen_lantern', 'gb_lanternqueen_lantern_lit'], [300, 240, 240, 80, 80])
+    pieces('T03-3', ['gb_lanternqueen_p_moth0', 'gb_lanternqueen_p_moth1', 'gb_lanternqueen_p_dust', 'gb_lanternqueen_p_flame'], [40, 40, 70, 50])
+    pieces('T04-2', ['gb_puppeteer_hand', 'gb_puppeteer_marionette', 'gb_puppeteer_marionette_fallen'], [230, 440, 220])
+    pieces('T04-3', ['gb_puppeteer_p_scissors', 'gb_puppeteer_p_string', 'gb_puppeteer_p_doll'], [70, 300, 70])
+    pieces('T05-2', ['gb_director_director', 'gb_director_shadow', 'gb_director_shadow_hand', 'gb_director_console'], [320, 620, 140, 100])
+    pieces('T05-3', ['gb_director_p_page', 'gb_director_p_sandbag', 'gb_director_p_wave'], [50, 120, 90])
+
+
+if __name__ == '__main__' and len(sys.argv) > 1 and sys.argv[1] == 'giants':
+    giants()

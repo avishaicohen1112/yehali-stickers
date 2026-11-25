@@ -15,6 +15,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 RECIPES = {
     'E': ['bat0', 'bat1', 'bat2', 'bat3', 'lantern', 'chain', 'banner', 'spider', 'drop', 'moth0', 'moth1', 'moth2', 'moth3'],
     'F': ['moth0', 'moth1', 'moth2', 'moth3', 'fly0', 'fly1', 'flower', 'stem', 'vine', 'cap', 'leaf'],
+    'U': ['chandelier', 'chain', 'curtain', 'puppet', 'arm0', 'arm1', 'leg0', 'leg1', 'moth0', 'moth1', 'moth2', 'moth3'],
     'G': ['face', 'hand1', 'hand2', 'chandelier', 'chain', 'fish0', 'fish1', 'fish2', 'fish3', 'banner', 'candle', 'bell', 'stand'],
 }
 MAXPX = 300   # stored size (layer px) of the largest dimension
@@ -56,6 +57,13 @@ def items_for(L, area, W, H):
         dict(P(area, 'banner'), x=W * .8, y=0, s=.65, pivot=[.5, 0], chain={'segs': 8, 'amp': .05, 'speed': .9}),
         dict(P(area, 'candle'), x=W * .43, y=H * .4, s=.25, pivot=[.5, .5], bob=[10, .8], glow=[255, 190, 110, 50, .45]),
         dict(P(area, 'stand'), x=W * .92, y=H * .985, s=.6, pivot=[.5, 1], parts=[dict(P(area, 'bell'), dx=.28, dy=-.83, s=.36, pv=[.5, 0], swing=[.18, 1.1])]),
+    ]
+    if L == 'U': return [
+        dict(P(area, 'chandelier'), x=W * .3, y=0, s=.55, pivot=[.5, 0], sway=[.04, .6], parts=[dict(P(area, 'chain'), dx=0, dy=0, len=H * .14)], light=[255, 200, 130]),
+        dict(P(area, 'curtain'), x=W * .62, y=0, s=.7, pivot=[.5, 0], chain={'segs': 8, 'amp': .04, 'speed': .7}),
+        dict(P(area, 'puppet'), x=W * .82, y=H * .1, s=.45, pivot=[.5, 0], sway=[.12, 1.1], parts=[dict(P(area, 'chain'), dx=0, dy=0, len=H * .1)]),
+        dict(P(area, 'moth0'), frames=f(['moth0', 'moth1', 'moth2', 'moth3', 'moth2', 'moth1'], 9), x=W * .12, y=H * .4, s=.26, pivot=[.5, .5], travel=[24, W], bob=[22, .9]),
+        dict(P(area, 'moth0'), frames=f(['moth2', 'moth3', 'moth2', 'moth1', 'moth0', 'moth1'], 8), x=W * .55, y=H * .55, s=.2, pivot=[.5, .5], travel=[-18, W], bob=[16, 1.2], flip=True),
     ]
     return []
 

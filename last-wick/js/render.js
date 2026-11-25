@@ -68,8 +68,27 @@ G.Render = (function () {
     }
   }
   // ---- background
+  // boss stages of the theatre (T0x-4, U13): one painted stage per fight, its floor line laid on the arena floor
+  const ARENA = { tA: ['waxmother'], tB: ['whale'], tC: ['lanternqueen'], tD: ['puppeteer'], tE: ['director1', 'director2', 'director3'] };
+  let arenaFade = { k: '', a: 1, prev: null };
+  function drawArena(room, t) {
+    const L = ARENA[room.id]; if (!L) return false;
+    const b = G.Main.boss, ph = b && b.phase ? Math.min(L.length, b.phase) : 1, key = 'arena_' + L[ph - 1], im = G.Assets.get(key);
+    if (!im) return false;
+    if (arenaFade.k !== key) { arenaFade.prev = arenaFade.k ? G.Assets.get(arenaFade.k) : null; arenaFade.k = key; arenaFade.a = 0; }
+    arenaFade.a = Math.min(1, arenaFade.a + 1 / 90);   // scene change between acts cross-fades
+    ctx.fillStyle = '#070305'; ctx.fillRect(0, 0, VW, VH);
+    const s = Math.max(VW / im.width, VH / im.height) * 1.04, w = im.width * s, h = im.height * s;
+    const floorY = room.id === 'tB' ? null : (room.ph - 2 * TILE) - cam.y;            // painted stage floor (~76% down) on the arena floor
+    const y = floorY === null ? (VH - h) / 2 - cam.y * 0.05 : floorY - h * 0.76, x = (VW - w) / 2 - (cam.x - Math.max(0, room.pw - VW) / 2) * 0.12;
+    if (arenaFade.prev && arenaFade.a < 1) ctx.drawImage(arenaFade.prev, x, y, w, h);
+    ctx.save(); ctx.globalAlpha = arenaFade.a; ctx.drawImage(im, x, y, w, h); ctx.restore();
+    if (y > 0) { ctx.fillStyle = '#070305'; ctx.fillRect(0, 0, VW, y + 1); }
+    return true;
+  }
   function drawBG(room, t) {
     const A = AREA[room.area];
+    if (drawArena(room, t)) { haze(room); return; }
     if (G.Scenery.draw(ctx, room, cam, VW, VH, t)) { haze(room); return; }
     const bg = window.BGS[room.area];
     const g = ctx.createLinearGradient(0, 0, 0, VH); g.addColorStop(0, A.sky[0]); g.addColorStop(0.55, A.sky[1]); g.addColorStop(1, A.sky[2]);

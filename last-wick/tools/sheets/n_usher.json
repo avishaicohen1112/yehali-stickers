@@ -1,0 +1,51 @@
+{
+ "atlas": "n_usher",
+ "sources": {
+  "B08": "art_src/B08"
+ },
+ "grids": {
+  "B08": [
+   3,
+   1
+  ]
+ },
+ "cells": {
+  "B08": [
+   "full",
+   "head",
+   "body"
+  ]
+ },
+ "scale": {
+  "B08": [
+   "full",
+   105
+  ]
+ },
+ "unitPx": 100,
+ "anims": {
+  "idle": {
+   "f": [
+    "full"
+   ],
+   "loop": true
+  },
+  "head": {
+   "f": [
+    "head"
+   ]
+  },
+  "body": {
+   "f": [
+    "body"
+   ]
+  }
+ },
+ "rig": {
+  "base": "full",
+  "parts": [
+   "body",
+   "head"
+  ]
+ }
+}

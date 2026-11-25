@@ -1094,5 +1094,355 @@
   "h": 108.5,
   "ax": 53.2,
   "ay": 108.5
+ },
+ "gb_waxmother_face": {
+  "img": "assets/props/gb_waxmother_face.webp",
+  "w": 333.0,
+  "h": 380.0,
+  "ax": 166.5,
+  "ay": 190.0
+ },
+ "gb_waxmother_face2": {
+  "img": "assets/props/gb_waxmother_face2.webp",
+  "w": 372.0,
+  "h": 380.0,
+  "ax": 186.0,
+  "ay": 190.0
+ },
+ "gb_waxmother_eye3": {
+  "img": "assets/props/gb_waxmother_eye3.webp",
+  "w": 334.0,
+  "h": 380.0,
+  "ax": 167.0,
+  "ay": 190.0
+ },
+ "gb_waxmother_body": {
+  "img": "assets/props/gb_waxmother_body.webp",
+  "w": 946.0,
+  "h": 520.0,
+  "ax": 473.0,
+  "ay": 260.0
+ },
+ "gb_waxmother_handL": {
+  "img": "assets/props/gb_waxmother_handL.webp",
+  "w": 196.0,
+  "h": 190.0,
+  "ax": 98.0,
+  "ay": 95.0
+ },
+ "gb_waxmother_handR": {
+  "img": "assets/props/gb_waxmother_handR.webp",
+  "w": 197.5,
+  "h": 190.0,
+  "ax": 98.8,
+  "ay": 95.0
+ },
+ "gb_waxmother_valve": {
+  "img": "assets/props/gb_waxmother_valve.webp",
+  "w": 109.5,
+  "h": 110.0,
+  "ax": 54.8,
+  "ay": 55.0
+ },
+ "gb_waxmother_p_drop": {
+  "img": "assets/props/gb_waxmother_p_drop.webp",
+  "w": 22.0,
+  "h": 70.0,
+  "ax": 11.0,
+  "ay": 35.0
+ },
+ "gb_waxmother_p_wave": {
+  "img": "assets/props/gb_waxmother_p_wave.webp",
+  "w": 249.0,
+  "h": 60.0,
+  "ax": 124.5,
+  "ay": 30.0
+ },
+ "gb_waxmother_p_bubble": {
+  "img": "assets/props/gb_waxmother_p_bubble.webp",
+  "w": 61.0,
+  "h": 60.0,
+  "ax": 30.5,
+  "ay": 30.0
+ },
+ "gb_whale_body": {
+  "img": "assets/props/gb_whale_body.webp",
+  "w": 922.5,
+  "h": 420.0,
+  "ax": 461.2,
+  "ay": 210.0
+ },
+ "gb_whale_body_open": {
+  "img": "assets/props/gb_whale_body_open.webp",
+  "w": 945.5,
+  "h": 420.0,
+  "ax": 472.8,
+  "ay": 210.0
+ },
+ "gb_whale_head": {
+  "img": "assets/props/gb_whale_head.webp",
+  "w": 764.5,
+  "h": 300.0,
+  "ax": 382.2,
+  "ay": 150.0
+ },
+ "gb_whale_crane0": {
+  "img": "assets/props/gb_whale_crane0.webp",
+  "w": 145.5,
+  "h": 110.0,
+  "ax": 72.8,
+  "ay": 55.0
+ },
+ "gb_whale_crane1": {
+  "img": "assets/props/gb_whale_crane1.webp",
+  "w": 245.0,
+  "h": 110.0,
+  "ax": 122.5,
+  "ay": 55.0
+ },
+ "gb_whale_crane2": {
+  "img": "assets/props/gb_whale_crane2.webp",
+  "w": 169.5,
+  "h": 110.0,
+  "ax": 84.8,
+  "ay": 55.0
+ },
+ "gb_whale_crane3": {
+  "img": "assets/props/gb_whale_crane3.webp",
+  "w": 244.5,
+  "h": 110.0,
+  "ax": 122.2,
+  "ay": 55.0
+ },
+ "gb_whale_p_gear": {
+  "img": "assets/props/gb_whale_p_gear.webp",
+  "w": 45.5,
+  "h": 46.0,
+  "ax": 22.8,
+  "ay": 23.0
+ },
+ "gb_whale_p_fish0": {
+  "img": "assets/props/gb_whale_p_fish0.webp",
+  "w": 55.0,
+  "h": 34.0,
+  "ax": 27.5,
+  "ay": 17.0
+ },
+ "gb_whale_p_fish1": {
+  "img": "assets/props/gb_whale_p_fish1.webp",
+  "w": 62.5,
+  "h": 34.0,
+  "ax": 31.2,
+  "ay": 17.0
+ },
+ "gb_whale_p_mine": {
+  "img": "assets/props/gb_whale_p_mine.webp",
+  "w": 47.0,
+  "h": 46.0,
+  "ax": 23.5,
+  "ay": 23.0
+ },
+ "gb_whale_p_steam": {
+  "img": "assets/props/gb_whale_p_steam.webp",
+  "w": 157.5,
+  "h": 90.0,
+  "ax": 78.8,
+  "ay": 45.0
+ },
+ "gb_lanternqueen_body": {
+  "img": "assets/props/gb_lanternqueen_body.webp",
+  "w": 136.5,
+  "h": 300.0,
+  "ax": 68.2,
+  "ay": 150.0
+ },
+ "gb_lanternqueen_wing": {
+  "img": "assets/props/gb_lanternqueen_wing.webp",
+  "w": 215.0,
+  "h": 240.0,
+  "ax": 107.5,
+  "ay": 120.0
+ },
+ "gb_lanternqueen_wing_torn": {
+  "img": "assets/props/gb_lanternqueen_wing_torn.webp",
+  "w": 218.5,
+  "h": 240.0,
+  "ax": 109.2,
+  "ay": 120.0
+ },
+ "gb_lanternqueen_lantern": {
+  "img": "assets/props/gb_lanternqueen_lantern.webp",
+  "w": 43.5,
+  "h": 80.0,
+  "ax": 21.8,
+  "ay": 40.0
+ },
+ "gb_lanternqueen_lantern_lit": {
+  "img": "assets/props/gb_lanternqueen_lantern_lit.webp",
+  "w": 43.5,
+  "h": 80.0,
+  "ax": 21.8,
+  "ay": 40.0
+ },
+ "gb_lanternqueen_p_moth0": {
+  "img": "assets/props/gb_lanternqueen_p_moth0.webp",
+  "w": 44.0,
+  "h": 40.0,
+  "ax": 22.0,
+  "ay": 20.0
+ },
+ "gb_lanternqueen_p_moth1": {
+  "img": "assets/props/gb_lanternqueen_p_moth1.webp",
+  "w": 49.5,
+  "h": 40.0,
+  "ax": 24.8,
+  "ay": 20.0
+ },
+ "gb_lanternqueen_p_dust": {
+  "img": "assets/props/gb_lanternqueen_p_dust.webp",
+  "w": 91.5,
+  "h": 70.0,
+  "ax": 45.8,
+  "ay": 35.0
+ },
+ "gb_lanternqueen_p_flame": {
+  "img": "assets/props/gb_lanternqueen_p_flame.webp",
+  "w": 43.5,
+  "h": 50.0,
+  "ax": 21.8,
+  "ay": 25.0
+ },
+ "gb_puppeteer_hand": {
+  "img": "assets/props/gb_puppeteer_hand.webp",
+  "w": 309.0,
+  "h": 230.0,
+  "ax": 154.5,
+  "ay": 115.0
+ },
+ "gb_puppeteer_marionette": {
+  "img": "assets/props/gb_puppeteer_marionette.webp",
+  "w": 279.5,
+  "h": 440.0,
+  "ax": 139.8,
+  "ay": 220.0
+ },
+ "gb_puppeteer_marionette_fallen": {
+  "img": "assets/props/gb_puppeteer_marionette_fallen.webp",
+  "w": 459.0,
+  "h": 220.0,
+  "ax": 229.5,
+  "ay": 110.0
+ },
+ "gb_puppeteer_p_scissors": {
+  "img": "assets/props/gb_puppeteer_p_scissors.webp",
+  "w": 107.0,
+  "h": 70.0,
+  "ax": 53.5,
+  "ay": 35.0
+ },
+ "gb_puppeteer_p_string": {
+  "img": "assets/props/gb_puppeteer_p_string.webp",
+  "w": 10.5,
+  "h": 300.0,
+  "ax": 5.2,
+  "ay": 150.0
+ },
+ "gb_puppeteer_p_doll": {
+  "img": "assets/props/gb_puppeteer_p_doll.webp",
+  "w": 39.5,
+  "h": 70.0,
+  "ax": 19.8,
+  "ay": 35.0
+ },
+ "gb_director_director": {
+  "img": "assets/props/gb_director_director.webp",
+  "w": 201.0,
+  "h": 320.0,
+  "ax": 100.5,
+  "ay": 160.0
+ },
+ "gb_director_shadow": {
+  "img": "assets/props/gb_director_shadow.webp",
+  "w": 631.5,
+  "h": 620.0,
+  "ax": 315.8,
+  "ay": 310.0
+ },
+ "gb_director_shadow_hand": {
+  "img": "assets/props/gb_director_shadow_hand.webp",
+  "w": 256.0,
+  "h": 140.0,
+  "ax": 128.0,
+  "ay": 70.0
+ },
+ "gb_director_console": {
+  "img": "assets/props/gb_director_console.webp",
+  "w": 66.0,
+  "h": 100.0,
+  "ax": 33.0,
+  "ay": 50.0
+ },
+ "gb_director_p_page": {
+  "img": "assets/props/gb_director_p_page.webp",
+  "w": 52.0,
+  "h": 50.0,
+  "ax": 26.0,
+  "ay": 25.0
+ },
+ "gb_director_p_sandbag": {
+  "img": "assets/props/gb_director_p_sandbag.webp",
+  "w": 37.0,
+  "h": 120.0,
+  "ax": 18.5,
+  "ay": 60.0
+ },
+ "gb_director_p_wave": {
+  "img": "assets/props/gb_director_p_wave.webp",
+  "w": 52.0,
+  "h": 90.0,
+  "ax": 26.0,
+  "ay": 45.0
+ },
+ "theatre_chair": {
+  "img": "assets/props/theatre_chair.webp",
+  "w": 136.5,
+  "h": 182.0,
+  "ax": 68.2,
+  "ay": 182.0
+ },
+ "theatre_crate": {
+  "img": "assets/props/theatre_crate.webp",
+  "w": 161.5,
+  "h": 145.0,
+  "ax": 80.8,
+  "ay": 145.0
+ },
+ "theatre_mirror": {
+  "img": "assets/props/theatre_mirror.webp",
+  "w": 128.0,
+  "h": 187.5,
+  "ax": 64.0,
+  "ay": 187.5
+ },
+ "theatre_rack": {
+  "img": "assets/props/theatre_rack.webp",
+  "w": 161.5,
+  "h": 190.0,
+  "ax": 80.8,
+  "ay": 190.0
+ },
+ "theatre_piano": {
+  "img": "assets/props/theatre_piano.webp",
+  "w": 172.0,
+  "h": 171.5,
+  "ax": 86.0,
+  "ay": 171.5
+ },
+ "theatre_lamp": {
+  "img": "assets/props/theatre_lamp.webp",
+  "w": 121.5,
+  "h": 187.5,
+  "ax": 60.8,
+  "ay": 187.5
  }
 }

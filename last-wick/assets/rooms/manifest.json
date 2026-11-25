@@ -764,38 +764,19 @@
   "props": [
    {
     "p": "nave_font",
-    "x": 225,
-    "y": 956,
-    "l": "back",
-    "s": 1.0,
-    "d": 1.0,
-    "f": false
-   },
-   {
-    "p": "nave_pillar",
     "x": 775,
     "y": 456,
     "l": "back",
     "s": 1.0,
     "d": 1.0,
-    "f": true
+    "f": false
    }
   ]
  },
  "s1": {
   "img": "assets/rooms/s1.webp",
   "pad": 150,
-  "props": [
-   {
-    "p": "spire_lens",
-    "x": 625,
-    "y": 406,
-    "l": "back",
-    "s": 1.0,
-    "d": 1.0,
-    "f": true
-   }
-  ]
+  "props": []
  },
  "s2": {
   "img": "assets/rooms/s2.webp",
@@ -1655,6 +1636,258 @@
     "s": 0.8,
     "d": 0.92,
     "f": false
+   }
+  ]
+ },
+ "t1": {
+  "img": "assets/rooms/t1.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "theatre_piano",
+    "x": 1025,
+    "y": 856,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": true
+   },
+   {
+    "p": "theatre_crate",
+    "x": 2775,
+    "y": 856,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   },
+   {
+    "p": "theatre_lamp",
+    "x": 125,
+    "y": 856,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": true
+   },
+   {
+    "p": "theatre_crate",
+    "x": 2175,
+    "y": 856,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "theatre_crate",
+    "x": 1775,
+    "y": 856,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   },
+   {
+    "p": "theatre_rack",
+    "x": 1425,
+    "y": 856,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   }
+  ]
+ },
+ "tA": {
+  "img": "assets/rooms/tA.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "theatre_lamp",
+    "x": 1675,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "theatre_mirror",
+    "x": 675,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "theatre_rack",
+    "x": 1175,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "theatre_crate",
+    "x": 125,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   }
+  ]
+ },
+ "tB": {
+  "img": "assets/rooms/tB.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "theatre_chair",
+    "x": 1675,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "theatre_crate",
+    "x": 1225,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "theatre_lamp",
+    "x": 825,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "theatre_lamp",
+    "x": 425,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   }
+  ]
+ },
+ "tC": {
+  "img": "assets/rooms/tC.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "theatre_lamp",
+    "x": 1275,
+    "y": 1006,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "theatre_mirror",
+    "x": 375,
+    "y": 1006,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "theatre_crate",
+    "x": 1675,
+    "y": 1006,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "theatre_chair",
+    "x": 725,
+    "y": 1006,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   }
+  ]
+ },
+ "tD": {
+  "img": "assets/rooms/tD.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "theatre_mirror",
+    "x": 1275,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": true
+   },
+   {
+    "p": "theatre_piano",
+    "x": 125,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": false
+   },
+   {
+    "p": "theatre_crate",
+    "x": 625,
+    "y": 806,
+    "l": "back",
+    "s": 1.0,
+    "d": 1.0,
+    "f": true
+   },
+   {
+    "p": "theatre_mirror",
+    "x": 1625,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": true
+   }
+  ]
+ },
+ "tE": {
+  "img": "assets/rooms/tE.webp",
+  "pad": 150,
+  "props": [
+   {
+    "p": "theatre_lamp",
+    "x": 1625,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": false
+   },
+   {
+    "p": "theatre_lamp",
+    "x": 325,
+    "y": 806,
+    "l": "back",
+    "s": 0.8,
+    "d": 0.92,
+    "f": true
    }
   ]
  }

@@ -37,6 +37,13 @@ G.Objects = (function () {
   function drawProjs(ctx, t) {
     for (const p of projs) {
       if (p.draw) { p.draw(ctx, p, t); continue; }
+      if (p.img) {   // painted projectile (part-2 boss sheets): spins or faces its flight
+        const P = window.PROPS[p.img], im = P && G.Assets.get('prop_' + p.img);
+        if (im) { const k = (p.r * 2.6) / Math.max(P.w, P.h) * (p.imgScale || 1), w = P.w * k, h = P.h * k;
+          G.FX.glow(ctx, p.x, p.y, p.r * 2.6, p.c || [255, 200, 150], 0.45);
+          ctx.save(); ctx.translate(p.x, p.y); if (p.spin) ctx.rotate(p.t * p.spin); else if (p.face) { if (p.vx > 0) ctx.scale(-1, 1); }
+          ctx.drawImage(im, -w / 2, -h / 2, w, h); ctx.restore(); continue; }
+      }
       if (p.kind === 'bolt') {
         const d = sign(p.vx);
         G.FX.glow(ctx, p.x, p.y, 90, [255, 140, 50], 0.9);

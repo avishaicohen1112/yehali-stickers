@@ -2809,5 +2809,370 @@
    183,
    102
   ]
+ },
+ "theatre": {
+  "sky": [
+   "#302d33",
+   "#524a52",
+   "#1a212d"
+  ],
+  "layers": [
+   {
+    "id": "far",
+    "img": "scn_theatre_far",
+    "src": "assets/scn/theatre/far.webp",
+    "p": 0.1,
+    "h": 1.3,
+    "tile": true
+   },
+   {
+    "kind": "rays",
+    "color": [
+     121,
+     115,
+     130
+    ],
+    "a": 0.05,
+    "count": 4,
+    "p": 0.15
+   },
+   {
+    "kind": "fog",
+    "color": [
+     121,
+     115,
+     130
+    ],
+    "a": 0.14,
+    "p": 0.15,
+    "speed": 9,
+    "y": 0.45,
+    "h": 0.6
+   },
+   {
+    "id": "sil",
+    "img": "scn_theatre_sil",
+    "src": "assets/scn/theatre/sil.webp",
+    "p": 0.24,
+    "h": 1.22,
+    "tile": true
+   },
+   {
+    "id": "mid",
+    "img": "scn_theatre_mid",
+    "src": "assets/scn/theatre/mid.webp",
+    "p": 0.42,
+    "h": 1.15,
+    "tile": true,
+    "items": [
+     {
+      "img": "scn_theatre_el_rope",
+      "src": "assets/scn/theatre/el_rope.webp",
+      "x": 133,
+      "s": 0.98,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_theatre_el_weight",
+      "src": "assets/scn/theatre/el_weight.webp",
+      "x": 206,
+      "s": 0.9,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_theatre_el_curtain",
+      "src": "assets/scn/theatre/el_curtain.webp",
+      "x": 262,
+      "s": 0.85,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_theatre_el_mask",
+      "src": "assets/scn/theatre/el_mask.webp",
+      "x": 368,
+      "s": 0.98,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_theatre_el_rope",
+      "src": "assets/scn/theatre/el_rope.webp",
+      "x": 487,
+      "s": 1.05,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_theatre_el_weight",
+      "src": "assets/scn/theatre/el_weight.webp",
+      "x": 590,
+      "s": 1.01,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_theatre_el_curtain",
+      "src": "assets/scn/theatre/el_curtain.webp",
+      "x": 682,
+      "s": 0.96,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_theatre_el_mask",
+      "src": "assets/scn/theatre/el_mask.webp",
+      "x": 750,
+      "s": 0.82,
+      "y": 0,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.05,
+       "speed": 0.9
+      }
+     },
+     {
+      "img": "scn_theatre_lf_chandelier",
+      "src": "assets/scn/theatre/lf_chandelier.webp",
+      "x": 373,
+      "y": 0,
+      "s": 0.55,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "sway": [
+       0.04,
+       0.6
+      ],
+      "parts": [
+       {
+        "img": "scn_theatre_lf_chain",
+        "src": "assets/scn/theatre/lf_chain.webp",
+        "dx": 0,
+        "dy": 0,
+        "len": 126.00000000000001
+       }
+      ],
+      "light": [
+       255,
+       200,
+       130
+      ],
+      "life": 1
+     },
+     {
+      "img": "scn_theatre_lf_curtain",
+      "src": "assets/scn/theatre/lf_curtain.webp",
+      "x": 771,
+      "y": 0,
+      "s": 0.7,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "chain": {
+       "segs": 8,
+       "amp": 0.04,
+       "speed": 0.7
+      },
+      "life": 1
+     },
+     {
+      "img": "scn_theatre_lf_puppet",
+      "src": "assets/scn/theatre/lf_puppet.webp",
+      "x": 1019,
+      "y": 90,
+      "s": 0.45,
+      "pivot": [
+       0.5,
+       0
+      ],
+      "sway": [
+       0.12,
+       1.1
+      ],
+      "parts": [
+       {
+        "img": "scn_theatre_lf_chain",
+        "src": "assets/scn/theatre/lf_chain.webp",
+        "dx": 0,
+        "dy": 0,
+        "len": 90.0
+       }
+      ],
+      "life": 1
+     },
+     {
+      "img": "scn_theatre_lf_moth0",
+      "src": "assets/scn/theatre/lf_moth0.webp",
+      "frames": {
+       "fps": 9,
+       "imgs": [
+        "scn_theatre_lf_moth0",
+        "scn_theatre_lf_moth1",
+        "scn_theatre_lf_moth2",
+        "scn_theatre_lf_moth3",
+        "scn_theatre_lf_moth2",
+        "scn_theatre_lf_moth1"
+       ],
+       "srcs": [
+        "assets/scn/theatre/lf_moth0.webp",
+        "assets/scn/theatre/lf_moth1.webp",
+        "assets/scn/theatre/lf_moth2.webp",
+        "assets/scn/theatre/lf_moth3.webp",
+        "assets/scn/theatre/lf_moth2.webp",
+        "assets/scn/theatre/lf_moth1.webp"
+       ]
+      },
+      "x": 149,
+      "y": 360,
+      "s": 0.26,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "travel": [
+       24,
+       1243
+      ],
+      "bob": [
+       22,
+       0.9
+      ],
+      "life": 1
+     },
+     {
+      "img": "scn_theatre_lf_moth0",
+      "src": "assets/scn/theatre/lf_moth0.webp",
+      "frames": {
+       "fps": 8,
+       "imgs": [
+        "scn_theatre_lf_moth2",
+        "scn_theatre_lf_moth3",
+        "scn_theatre_lf_moth2",
+        "scn_theatre_lf_moth1",
+        "scn_theatre_lf_moth0",
+        "scn_theatre_lf_moth1"
+       ],
+       "srcs": [
+        "assets/scn/theatre/lf_moth2.webp",
+        "assets/scn/theatre/lf_moth3.webp",
+        "assets/scn/theatre/lf_moth2.webp",
+        "assets/scn/theatre/lf_moth1.webp",
+        "assets/scn/theatre/lf_moth0.webp",
+        "assets/scn/theatre/lf_moth1.webp"
+       ]
+      },
+      "x": 684,
+      "y": 495,
+      "s": 0.2,
+      "pivot": [
+       0.5,
+       0.5
+      ],
+      "travel": [
+       -18,
+       1243
+      ],
+      "bob": [
+       16,
+       1.2
+      ],
+      "flip": true,
+      "life": 1
+     }
+    ]
+   },
+   {
+    "kind": "fog",
+    "color": [
+     121,
+     115,
+     130
+    ],
+    "a": 0.1,
+    "p": 0.5,
+    "speed": 18,
+    "y": 0.62,
+    "h": 0.45,
+    "seed": "b"
+   },
+   {
+    "id": "front",
+    "img": "scn_theatre_front",
+    "src": "assets/scn/theatre/front.webp",
+    "p": 1.25,
+    "h": 1.0,
+    "front": true
+   }
+  ],
+  "fog": [
+   121,
+   115,
+   130
+  ]
  }
 }

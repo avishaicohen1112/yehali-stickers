@@ -40,6 +40,8 @@ AREAS = {
        ['papertree', 'paperlamp', 'bridge', 'books']),
  'O': ('clock', [('gear', 'gearbase'), ('pendulum', 'pendulum'), ('hand', 'skip')],
        ['grandclock', 'toolbox', 'bells', 'organ']),
+ 'U': ('theatre', [('rope', 'hang'), ('weight', 'hang'), ('curtain', 'hang'), ('spot', 'skip'), ('beam', 'skip'), ('mask', 'hang')],
+       ['chair', 'crate', 'mirror', 'rack', 'piano', 'lamp']),
  'P': ('core', [('drop', 'float'), ('sparkle', 'float'), ('flame', 'float')],
        ['plinth', 'altar', 'bigcandle', 'candle1', 'candle2', 'candle3']),
 }

@@ -20,7 +20,8 @@ G.Main = (function () {
   // ---------- asset loading ----------
   function roomImg(id) { const a = window.ROOMART[id]; if (a && a.img) G.Assets.load('room_' + id, a.img); }
   function areaImgs(area) { const b = window.BGS[area]; if (b) for (const L of b.layers) G.Assets.load('bg_' + area + '_' + L.id, L.img);
-    if (window.SCENES && window.SCENES[area]) G.Assets.load('rockfill_' + area, 'assets/scn/' + area + '/rockfill.webp'); }
+    if (window.SCENES && window.SCENES[area]) G.Assets.load('rockfill_' + area, 'assets/scn/' + area + '/rockfill.webp');
+    if (area === 'theatre') for (const k of ['waxmother', 'whale', 'lanternqueen', 'puppeteer', 'director1', 'director2', 'director3']) G.Assets.load('arena_' + k, 'assets/scn/theatre/arena_' + k + '.webp'); }
   function neighbors(id) {
     const r = window.WORLD.rooms[id], out = [];
     for (const k in window.WORLD.rooms) { if (k === id) continue; const o = window.WORLD.rooms[k];

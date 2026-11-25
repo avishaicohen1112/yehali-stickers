@@ -48,7 +48,9 @@ G.Giants = (function () {
       const I = IMG('gb_' + this.kind + '_' + name);
       ctx_save(o.ctx); const c = o.ctx; c.translate(x, y); if (rot) c.rotate(rot); if (o.flip) c.scale(-1, 1);
       if (o.alpha !== undefined) c.globalAlpha *= o.alpha;
-      if (I) { const pv = o.pivot || [0.5, 0.5]; c.drawImage(I[0], -pv[0] * w, -pv[1] * h, w, h); }
+      if (I) {   // painted part keeps its own proportions, fitted to the part's box
+        const pv = o.pivot || [0.5, 0.5], M = I[1], k = Math.min(w / M.w, h / M.h) * (o.fill || 1.12), dw = M.w * k, dh = M.h * k;
+        c.drawImage(I[0], -pv[0] * dw, -pv[1] * dh, dw, dh); }
       else fb(c);
       if (this.flash > 0 && !o.noflash) { c.globalCompositeOperation = 'source-atop'; }
       c.restore();
@@ -112,7 +114,7 @@ G.Giants = (function () {
         case 'drops':
           if (this.st > this.k * 0.28 / sp && this.k < 5 + this.phase * 2) { this.k++; const x = clamp((this.k % 2 ? p.cx : rand(3, 33) * TILE) + rand(-90, 90), 2 * TILE, 34 * TILE);
             this.warn('col', { x, w: 90, c: [255, 140, 60] }, 0.75);
-            fireball(x, room.ph * 0 + this.FY - 900, 0, 0, { g: 0, vy: 0, r: 18, life: 3, c: [255, 190, 110], ghost: true, hold: true, wait: 0.75,
+            fireball(x, room.ph * 0 + this.FY - 900, 0, 0, { img: 'gb_waxmother_p_drop', imgScale: 1.6, g: 0, vy: 0, r: 18, life: 3, c: [255, 190, 110], ghost: true, hold: true, wait: 0.75,
               update: (pr, d) => { if (pr.t > pr.wait) { pr.vy = 1500; pr.hold = false; } if (pr.y > this.FY - 18) { pr.t = 99; G.FX.burst(pr.x, this.FY - 10, 14, { speed: 300, life: 0.5, size: 4, c: [255, 200, 130], kind: 'ember', angle: -Math.PI / 2, spread: 1.2 }); } } }); }
           if (this.st > 3.2) this.set('idle'); break;
         case 'inhale':  // face sinks low and sucks the hero toward the boiling centre (punish window: 1.25x damage)
@@ -143,7 +145,7 @@ G.Giants = (function () {
       else if (h.st === 'aim') { h.x = approach(h.x, h.tx, 2200 * dt); h.y = approach(h.y, this.FY - 560, 1400 * dt); if (h.t > h.tw) { h.st = 'fall'; h.t = 0; } }
       else if (h.st === 'fall') { h.y += 2600 * dt; if (h.y >= this.FY - 70) { h.y = this.FY - 70; h.st = 'stuck'; h.t = 0; G.Sound.sfx('boss_slam'); G.FX.shake(18, 0.4);
           G.FX.burst(h.x, this.FY - 5, 30, { speed: 500, life: 0.6, size: 6, c: [255, 210, 150], kind: 'chunk', g: 1400, add: false });
-          for (const d of [-1, 1]) fireball(h.x + d * 90, this.FY - 22, d * (520 + this.phase * 60), 0, { r: 22, life: 2.4, ghost: true, c: [255, 200, 130], light: [255, 170, 80, 140] }); }
+          for (const d of [-1, 1]) fireball(h.x + d * 90, this.FY - 22, d * (520 + this.phase * 60), 0, { img: 'gb_waxmother_p_wave', imgScale: 2.2, face: 1, r: 22, life: 2.4, ghost: true, c: [255, 200, 130], light: [255, 170, 80, 140] }); }
         this.hazard({ x: h.x - 100, y: h.y - 80, w: 200, h: 140 }, dt * 1.5); }
       else if (h.st === 'stuck') { if (h.t > 1.25) { h.st = 'rest'; h.t = 0; } }
       part.box = { x: h.x - 100, y: h.y - 75, w: 200, h: 150 }; part.off = h.st !== 'stuck';
@@ -225,7 +227,7 @@ G.Giants = (function () {
         case 'charge': this.qx -= this.side * 1500 * sp * dt; this.hazard({ x: this.qx - 130, y: this.qy - 80, w: 260, h: 160 }, dt * 1.5); if (this.phase > 2) this.fire(this.qx);
           if ((this.side > 0 && this.qx < -2 * TILE) || (this.side < 0 && this.qx > 38 * TILE)) { this.qx = 18 * TILE; this.qy = this.FY - 900; this.set('idle'); } break;
         case 'swarm_w': if (this.st > 0.5) { this.set('swarm'); G.Sound.sfx('spore', { pitch: 1.4 });
-            for (let i = 0; i < 5 + this.phase; i++) G.Objects.spawnProj({ x: this.qx, y: this.qy, vx: rand(-300, 300), vy: rand(-300, 100), r: 12, life: 5, dmg: 1, c: [230, 225, 200],
+            for (let i = 0; i < 5 + this.phase; i++) G.Objects.spawnProj({ img: i % 2 ? 'gb_lanternqueen_p_moth0' : 'gb_lanternqueen_p_moth1', imgScale: 1.8, face: 1, x: this.qx, y: this.qy, vx: rand(-300, 300), vy: rand(-300, 100), r: 12, life: 5, dmg: 1, c: [230, 225, 200],
               update: (pr, d) => { if (pr.t > 0.7) { const a = Math.atan2(P().cy - pr.y, P().cx - pr.x); pr.vx = approach(pr.vx, Math.cos(a) * 260, 500 * d); pr.vy = approach(pr.vy, Math.sin(a) * 260, 500 * d); } },
               draw: (c, pr) => { c.fillStyle = '#e9e2cf'; const f = Math.sin(pr.t * 30) * 8; c.beginPath(); c.ellipse(pr.x - 7, pr.y, 9, 4 + f * 0.5, 0.5, 0, 7); c.ellipse(pr.x + 7, pr.y, 9, 4 - f * 0.5, -0.5, 0, 7); c.fill(); } }); } break;
         case 'swarm': if (this.st > 1) this.set('idle'); break;
@@ -374,7 +376,7 @@ G.Giants = (function () {
         case 'idle': if (this.st > 1.3 / sp) { const o = ['pages', 'shout']; if (this.phase > 1) o.push('trap', 'bags'); if (this.phase > 2) o.push('hands', 'hands'); if (Math.abs(p.cx - this.dx) < 200 && this.phase < 3) o.push('baton');
             let n = pick(o); if (n === this.lastAtk) n = pick(o); this.lastAtk = n; this.set(n); } break;
         case 'pages': if (this.st > 0.4 && !this.k) { this.k = 1; G.Sound.sfx('swoop', { pitch: 1.5 });
-            for (let i = 0; i < 4 + this.phase; i++) G.Objects.spawnProj({ x: this.dx, y: this.FY - 250, vx: rand(-350, 350), vy: rand(-450, -150), r: 13, life: 4.5, dmg: 1, c: [245, 240, 225],
+            for (let i = 0; i < 4 + this.phase; i++) G.Objects.spawnProj({ img: 'gb_director_p_page', imgScale: 1.8, spin: 3, x: this.dx, y: this.FY - 250, vx: rand(-350, 350), vy: rand(-450, -150), r: 13, life: 4.5, dmg: 1, c: [245, 240, 225],
               update: (pr, d) => { if (pr.t > 0.8) { const a = Math.atan2(P().cy - pr.y, P().cx - pr.x); pr.vx = approach(pr.vx, Math.cos(a) * 330, 600 * d); pr.vy = approach(pr.vy, Math.sin(a) * 330, 600 * d); } else pr.vy += 600 * d; },
               draw: (c, pr) => { c.save(); c.translate(pr.x, pr.y); c.rotate(pr.t * 7); c.fillStyle = '#f4efe2'; c.fillRect(-11, -14, 22, 28); c.fillStyle = '#8a8070'; c.fillRect(-7, -8, 14, 2); c.fillRect(-7, -2, 14, 2); c.restore(); } }); }
           if (this.st > 1.4) { this.k = 0; this.set('idle'); } break;
@@ -386,7 +388,7 @@ G.Giants = (function () {
           if (this.st > 1.0 / sp && this.st < 3.2) this.traps.forEach(x => this.hazard({ x: x * TILE, y: this.FY - 12, w: 5 * TILE, h: 12 }, dt * 1.5, { draw: (c, h) => { c.fillStyle = '#05030a'; c.fillRect(h.box.x, this.FY - 4, h.box.w, 8); } }));
           if (this.st > 3.4) this.set('idle'); break;
         case 'bags': if (this.st > this.k * 0.35 && this.k < 4 + this.phase) { this.k = (this.k || 0) + 1; const x = clamp(p.cx + rand(-200, 200), 2 * TILE, 34 * TILE); this.warn('col', { x, w: 100, c: [255, 160, 90] }, 0.7);
-            fireball(x, this.FY - 900, 0, 0, { r: 26, life: 3, ghost: true, hold: true, c: [190, 160, 120], light: null, wait: 0.7, update: (pr) => { if (pr.t > pr.wait) { pr.hold = false; pr.vy = 1300; } if (pr.y > this.FY - 26) { pr.t = 99; G.FX.shake(6, 0.15); } },
+            fireball(x, this.FY - 900, 0, 0, { img: 'gb_director_p_sandbag', imgScale: 1.5, r: 26, life: 3, ghost: true, hold: true, c: [190, 160, 120], light: null, wait: 0.7, update: (pr) => { if (pr.t > pr.wait) { pr.hold = false; pr.vy = 1300; } if (pr.y > this.FY - 26) { pr.t = 99; G.FX.shake(6, 0.15); } },
               draw: (c, pr) => { c.strokeStyle = '#b9ab90'; c.beginPath(); c.moveTo(pr.x, pr.y - 900); c.lineTo(pr.x, pr.y - 26); c.stroke(); c.fillStyle = '#8a7656'; c.beginPath(); c.ellipse(pr.x, pr.y, 24, 30, 0, 0, 7); c.fill(); } }); }
           if (this.st > 3) { this.k = 0; this.set('idle'); } break;
         case 'hands': if (this.st < 0.02) { this.hy_ = Math.random() < 0.5 ? this.FY - 60 : this.FY - 200; this.side = Math.random() < 0.5 ? 1 : -1; this.warn('lane', { y: this.hy_, h: 120, c: [120, 90, 160] }, 1.0 / sp); }
@@ -439,17 +441,17 @@ G.Giants = (function () {
         case 'idle': if (this.st > 1.1 / sp) { const o = ['gears', 'steam', 'fish']; if (this.phase > 1) o.push('mines', 'mines'); if (this.phase > 2) o.push('charge_w', 'charge_w');
             let n = pick(o); if (n === this.lastAtk) n = pick(o); this.lastAtk = n; this.set(n); this.k = 0; } break;
         case 'gears': if (this.st > this.k * 0.32 && this.k < 3) { this.k++; G.Sound.sfx('clank', { pitch: 1.3 }); const a0 = Math.atan2(p.cy - this.wy, p.cx - (this.wx - 300));
-            for (let i = -2; i <= 2; i++) fireball(this.wx - 300, this.wy, Math.cos(a0 + i * 0.2) * 420, Math.sin(a0 + i * 0.2) * 420, { r: 16, life: 4, ghost: true, c: [220, 180, 100], light: null,
+            for (let i = -2; i <= 2; i++) fireball(this.wx - 300, this.wy, Math.cos(a0 + i * 0.2) * 420, Math.sin(a0 + i * 0.2) * 420, { img: 'gb_whale_p_gear', imgScale: 1.4, spin: 5, r: 16, life: 4, ghost: true, c: [220, 180, 100], light: null,
               draw: (c, pr) => { c.save(); c.translate(pr.x, pr.y); c.rotate(pr.t * 8); c.fillStyle = '#b8924e'; for (let j = 0; j < 8; j++) { c.rotate(Math.PI / 4); c.fillRect(-3, -19, 6, 8); } c.beginPath(); c.arc(0, 0, 13, 0, 7); c.fill(); c.restore(); } }); }
           if (this.st > 1.5) this.set('idle'); break;
         case 'steam': if (this.st < 0.02) { this.sy = clamp(p.cy, 2 * TILE, 15 * TILE); this.warn('lane', { y: this.sy, h: 110, c: [235, 240, 255] }, 0.9 / sp); }
           if (this.st > 0.9 / sp && this.st < 1.6 / sp) { this.hazard({ x: 0, y: this.sy - 55, w: this.wx - 300, h: 110 }, dt * 1.5); if (Math.random() < 0.9) G.FX.spawn({ x: rand(0, this.wx - 300), y: this.sy + rand(-40, 40), vx: -400, vy: rand(-40, 40), life: 0.4, size: rand(10, 18), kind: 'smoke', c: [235, 240, 255], a: 0.5, drag: 1 }); }
           if (this.st > 2) this.set('idle'); break;
-        case 'fish': if (this.st > 0.3 && !this.k) { this.k = 1; for (let i = 0; i < 3 + this.phase; i++) G.Objects.spawnProj({ x: this.wx - 100, y: this.wy + 80, vx: rand(-300, -100), vy: rand(-200, 200), r: 14, life: 5, dmg: 1, c: [220, 180, 100],
+        case 'fish': if (this.st > 0.3 && !this.k) { this.k = 1; for (let i = 0; i < 3 + this.phase; i++) G.Objects.spawnProj({ img: 'gb_whale_p_fish' + (i % 2), imgScale: 1.8, face: 1, x: this.wx - 100, y: this.wy + 80, vx: rand(-300, -100), vy: rand(-200, 200), r: 14, life: 5, dmg: 1, c: [220, 180, 100],
               update: (pr, d) => { const a = Math.atan2(P().cy - pr.y, P().cx - pr.x); pr.vx = approach(pr.vx, Math.cos(a) * 300, 420 * d); pr.vy = approach(pr.vy, Math.sin(a) * 300, 420 * d); },
               draw: (c, pr) => { c.save(); c.translate(pr.x, pr.y); c.rotate(Math.atan2(pr.vy, pr.vx)); c.fillStyle = '#c79a52'; c.beginPath(); c.ellipse(0, 0, 18, 9, 0, 0, 7); c.fill(); c.beginPath(); c.moveTo(-14, 0); c.lineTo(-26, -9 + Math.sin(pr.t * 20) * 3); c.lineTo(-26, 9); c.fill(); c.restore(); } }); }
           if (this.st > 1.6) this.set('idle'); break;
-        case 'mines': if (this.st > this.k * 0.4 && this.k < 3) { this.k++; const m = fireball(this.wx, this.wy + 120, rand(-260, -120), rand(-60, 60), { r: 20, life: 3.2, ghost: true, c: [255, 200, 120], light: [255, 190, 90, 120],
+        case 'mines': if (this.st > this.k * 0.4 && this.k < 3) { this.k++; const m = fireball(this.wx, this.wy + 120, rand(-260, -120), rand(-60, 60), { img: 'gb_whale_p_mine', imgScale: 1.5, spin: 0.8, r: 20, life: 3.2, ghost: true, c: [255, 200, 120], light: [255, 190, 90, 120],
               update: (pr) => { pr.vx *= 0.985; pr.vy *= 0.985; if (pr.t > 3.1 && !pr.boom) { pr.boom = 1; for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; fireball(pr.x, pr.y, Math.cos(a) * 380, Math.sin(a) * 380, { r: 10, life: 2, ghost: true }); } } } }); }
           if (this.st > 1.8) this.set('idle'); break;
         case 'charge_w': if (this.st < 0.02) { this.cy_ = clamp(p.cy, 3 * TILE, 14 * TILE); this.warn('lane', { y: this.cy_, h: 300, c: [255, 110, 70] }, 1.1); }
