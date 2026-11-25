@@ -13,9 +13,36 @@ G.Main = (function () {
       deaths: 0, time: 0, lastArea: null, muted: false, started: false };
   }
   G.state = freshState();
-  function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
-  function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(G.state)); } catch (e) { } }
-  function load() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) { G.state = Object.assign(freshState(), s); G.state.abil.djump = true; G.state.abil.dash = true; return true; } } catch (e) { } return false; }
+  // ---------- users: each has its own normal game and its own spectator game ----------
+  const PROF_KEY = 'lastwick_profiles';
+  const slotKey = (pid, sl) => 'lastwick_' + pid + '_' + sl;
+  function loadProfiles() {
+    try { const p = JSON.parse(localStorage.getItem(PROF_KEY)); if (p && Array.isArray(p.list)) return p; } catch (e) { }
+    const p = { list: [], cur: null };
+    try { const old = localStorage.getItem(SAVE_KEY); if (old) { p.list.push({ id: 'p1', name: 'שחקן 1' }); p.cur = 'p1'; localStorage.setItem(slotKey('p1', 'normal'), old); } } catch (e) { }   // keep an existing save
+    return p;
+  }
+  let profiles = loadProfiles(), slot = 'normal';
+  function saveProfiles() { try { localStorage.setItem(PROF_KEY, JSON.stringify(profiles)); } catch (e) { } }
+  const curKey = (sl) => profiles.cur ? slotKey(profiles.cur, sl || slot) : SAVE_KEY;
+  function hasSave(sl) { try { return !!profiles.cur && !!localStorage.getItem(curKey(sl)); } catch (e) { return false; } }
+  function save() { try { localStorage.setItem(curKey(), JSON.stringify(G.state)); } catch (e) { } }
+  function load() { try { const s = JSON.parse(localStorage.getItem(curKey())); if (s) { G.state = Object.assign(freshState(), s); G.state.abil.djump = true; G.state.abil.dash = true; return true; } } catch (e) { } return false; }
+  const PROF = {
+    get list() { return profiles.list; }, get cur() { return profiles.list.find(p => p.id === profiles.cur) || null; },
+    select(id) { profiles.cur = id; saveProfiles(); titleSel = 0; },
+    create(name) { const id = 'p' + Date.now().toString(36); profiles.list.push({ id, name: String(name).slice(0, 18) || 'שחקן' }); profiles.cur = id; saveProfiles(); titleSel = 0; },
+    remove(id) { for (const sl of ['normal', 'spect']) try { localStorage.removeItem(slotKey(id, sl)); } catch (e) { }
+      profiles.list = profiles.list.filter(p => p.id !== id); if (profiles.cur === id) profiles.cur = profiles.list.length ? profiles.list[0].id : null; saveProfiles(); titleSel = 0; },
+  };
+  // spectator: everything unlocked, every room on the map, cannot die - for exploring the whole game freely
+  function spectState() {
+    const S = freshState(); const all = {};
+    for (const id in window.WORLD.rooms) all[id] = true;
+    Object.assign(S, { spect: true, hp: 9, hpMax: 9, soul: 198, soulMax: 198, tallow: 9999, needle: 2, spellMul: 1.8, visited: all, benches: Object.assign({}, all),
+      abil: { dash: true, djump: true, wall: true, spell: true, glide: true, shadow: true } });
+    return S;
+  }
 
   // ---------- asset loading ----------
   function roomImg(id) { const a = window.ROOMART[id]; if (a && a.img) G.Assets.load('room_' + id, a.img); }
@@ -36,7 +63,7 @@ G.Main = (function () {
     for (const [k, src] of G.Scenery.images()) if (src) G.Assets.load(k, src);
     for (const r in (window.RIGS || {})) G.Assets.load(window.RIGS[r].atlas, window.RIGS[r].src);
     areaImgs('crypts');
-    const s = hasSave() ? JSON.parse(localStorage.getItem(SAVE_KEY)).room : 'c1'; roomImg(s || 'c1');
+    let s = 'c1'; try { if (hasSave('normal')) s = JSON.parse(localStorage.getItem(curKey('normal'))).room; } catch (e) { } roomImg(s || 'c1');
   }
 
   // ---------- rooms ----------
@@ -124,7 +151,7 @@ G.Main = (function () {
   }
   function sitBench(o) {
     const S = G.state; player.sitting = true; player.x = o.x - player.w / 2; player.vx = 0;
-    S.hp = S.hpMax; S.benchRoom = room.id; S.benchX = o.x; S.benchY = o.y; save();
+    S.hp = S.hpMax; S.benchRoom = room.id; S.benchX = o.x; S.benchY = o.y; (S.benches = S.benches || {})[room.id] = true; save();
     G.Sound.sfx('bench'); G.UI.toast(G.T('rest')); G.FX.burst(o.x, o.y - 100, 30, { speed: 200, life: 1.2, size: 2.5, c: [255, 200, 130], kind: 'ember' });
     // respawn enemies like a real rest
     enemies = enemies.filter(e => e.isBoss); for (const e of room.ents) if (e.t === 'enemy') enemies.push(new G.Enemies.Enemy(e.kind, e.x, e.y));
@@ -162,8 +189,21 @@ G.Main = (function () {
 
   // ---------- modes ----------
   function setMode(m) { mode = m; modeT = 0; G.Input.clear(); }
-  function newGame() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { } G.state = freshState(); G.state.muted = G.Sound.muted; setMode('intro'); introI = 0; G.Sound.music('title'); }
-  function continueGame() { load(); if (G.state.muted !== G.Sound.muted) G.Sound.toggleMute(); startPlay(G.state.benchRoom, G.state.benchX, G.state.benchY, true); }
+  function newGame() { slot = 'normal'; try { localStorage.removeItem(curKey()); } catch (e) { } G.state = freshState(); G.state.muted = G.Sound.muted; setMode('intro'); introI = 0; G.Sound.music('title'); }
+  function continueGame() { slot = 'normal'; load(); if (G.state.muted !== G.Sound.muted) G.Sound.toggleMute(); startPlay(G.state.benchRoom, G.state.benchX, G.state.benchY, true); }
+  function spectatorGame() { slot = 'spect'; if (!load()) G.state = spectState(); G.state.spect = true; startPlay(G.state.benchRoom, G.state.benchX, G.state.benchY, true); G.UI.toast(G.T('spect_hint'), 5); }
+  // fast travel (map): to a resting place - or, in the spectator game, also straight to any boss
+  function floorSpot(id, xt) {
+    const r = window.WORLD.rooms[id], tmp = new G.World.Room(id), c0 = Math.max(1, Math.min(r.w - 2, Math.round(xt)));
+    for (let d = 0; d < r.w; d++) for (const tx of [c0 + d, c0 - d]) { if (tx < 1 || tx >= r.w - 1) continue;
+      for (let ty = r.h - 1; ty > 2; ty--) if (tmp.solid(tx, ty) && !tmp.solid(tx, ty - 1) && !tmp.solid(tx, ty - 2)) return [tx * TILE + TILE / 2, ty * TILE]; }
+    return [r.w * TILE / 2, (r.h - 2) * TILE];
+  }
+  function travelTo(id, xt, yt) {
+    if (trans) return; const [x, y] = yt === undefined ? floorSpot(id, xt) : [xt * TILE, yt * TILE];
+    G.UI.modal = null; G.Sound.sfx('ability', { vol: 0.5 }); G.FX.flash('#fff0d0', 0.5, 0.6);
+    trans = { id, x, y, dir: 'P', t: 0 }; fade.target = 1; fade.speed = 2.5;
+  }
   function startPlay(id, x, y, sit) {
     G.state.lastArea = null; G.state.lastWorld = null; enterRoom(id, x, y); player.sitting = !!sit; setMode('play'); fade.a = 1; fade.target = 0; fade.speed = 0.8; G.state.started = true; save();
   }
@@ -200,18 +240,22 @@ G.Main = (function () {
   function updateTitle(dt) {
     G.FX.update(dt);
     if (Math.random() < dt * 20) G.FX.spawn({ x: rand(0, Rn.VW), y: Rn.VH + 10, vx: rand(-20, 20), vy: rand(-60, -20), life: rand(5, 10), size: rand(1, 2.5), kind: 'mote', ph: rand(6), a: rand(0.4, 0.9), c: [255, 170, 90], add: true });
-    if (G.UI.modal) { G.UI.update(dt); return; }   // settings opened from the title
+    confirmNew = Math.max(0, confirmNew - dt);
+    if (G.UI.modal) { G.UI.update(dt); return; }   // settings / users opened from the title
     const opts = titleOpts(); const I = G.Input;
     if (I.p('down')) { titleSel = (titleSel + 1) % opts.length; G.Sound.sfx('ui_move'); }
     if (I.p('up')) { titleSel = (titleSel + opts.length - 1) % opts.length; G.Sound.sfx('ui_move'); }
     if (modeT > 0.4 && (I.p('jump') || I.p('attack') || I.p('confirm'))) { G.Sound.init(); G.Sound.sfx('ui_select'); opts[titleSel].go(); }
     if (modeT > 0.3 && !titleMusic) { titleMusic = true; G.Sound.music('title'); }
   }
-  let titleMusic = false, controlsOpen = false, curHidden = false;
+  let titleMusic = false, controlsOpen = false, curHidden = false, confirmNew = 0;
   function titleOpts() {
     const o = [];
-    if (hasSave()) o.push({ s: G.T('continue'), go: continueGame });
-    o.push({ s: G.T('new_game'), go: newGame });
+    if (!PROF.cur) { o.push({ s: G.T('new_user'), go: () => G.UI.askName(n => PROF.create(n)) }); if (PROF.list.length) o.push({ s: G.T('switch_user'), go: () => G.UI.profiles() }); o.push({ s: G.T('settings'), go: () => G.UI.settings('title') }); return o; }
+    if (hasSave('normal')) o.push({ s: G.T('continue'), go: continueGame });
+    o.push({ s: confirmNew > 0 ? G.T('new_game_sure') : G.T('new_game'), go: () => { if (hasSave('normal') && confirmNew <= 0) { confirmNew = 3; return; } confirmNew = 0; newGame(); } });
+    o.push({ s: G.T('spectator'), go: spectatorGame });
+    o.push({ s: G.T('switch_user'), go: () => G.UI.profiles() });
     o.push({ s: G.T('settings'), go: () => G.UI.settings('title') });
     return o;
   }
@@ -311,6 +355,7 @@ G.Main = (function () {
     });
     if (G.UI.modal) G.UI.drawModal(ctx);
     G.UI.text(ctx, 'v1.0', VW - 40, VH - 26, { size: 16, en: true, a: 0.3, align: 'right' });
+    if (PROF.cur && !G.UI.modal) G.UI.text(ctx, '👤 ' + PROF.cur.name, VW - 40, 44, { size: 24, align: 'right', a: 0.8, c: '#f0d9b5' });
   }
   function drawIntro() {
     const VW = Rn.VW, VH = Rn.VH, i = Math.min(introI, G.TEXT.intro.length - 1), s = G.TEXT.intro[i], sc = INTRO_SCENES[Math.min(i, INTRO_SCENES.length - 1)];
@@ -407,14 +452,14 @@ G.Main = (function () {
   }
   function boot() {
     G.Input.setupTouch(); preloadAll(); G.Assets.load('title_bg', 'assets/title.webp');
-    try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s && s.muted && !G.Sound.muted) G.Sound.toggleMute(); } catch (e) { }
+    try { const s = JSON.parse(localStorage.getItem(curKey('normal')) || 'null'); if (s && s.muted && !G.Sound.muted) G.Sound.toggleMute(); } catch (e) { }
     requestAnimationFrame(frame);
   }
   const api = {
     enemies: () => enemies, addEnemy, hitPlayer, grant, sitBench, onPlayerDeath, onBossDeath, save, flames, toTitle,
     fadeOut(s) { fade.target = 1; fade.speed = 1 / s; }, fadeIn(s) { fade.target = 0; fade.speed = 1 / s; },
     get player() { return player; }, get room() { return room; }, get boss() { return boss; }, get mode() { return mode; },
-    bossCam: null, portalTo, musicFor, boot, enterRoom, setMode, frozen: false, step(n) { for (let i = 0; i < n; i++) update(1 / 60); }, get enemiesList() { return enemies; }
+    bossCam: null, portalTo, travelTo, floorSpot, PROF, get slot() { return slot; }, musicFor, boot, enterRoom, setMode, frozen: false, step(n) { for (let i = 0; i < n; i++) update(1 / 60); }, get enemiesList() { return enemies; }
   };
   return api;
 })();

@@ -43,7 +43,7 @@ G.Scenery = (function () {
     }
     if (it.bob) y += Math.sin(t * it.bob[1] + ph) * it.bob[0] * s;
     const wk = G.Wind ? G.Wind.sway() : 1;  // gusts make hanging/standing elements swing harder
-    if (it.sway) rot += Math.sin(t * it.sway[1] * (0.8 + wk * 0.2) + ph) * it.sway[0] * wk;
+    if (it.sway) rot += Math.sin(t * it.sway[1] + ph) * it.sway[0] * Math.min(wk, 1.8);   // gusts swing it wider, never faster (speed x a large t jumped the phase)
     if (it.spin) rot += t * it.spin;
     if (it.pulse) sc *= it.pulse[0] + (it.pulse[1] - it.pulse[0]) * (0.5 + 0.5 * Math.sin(t * it.pulse[2] + ph));
     if (it.flicker) a *= it.flicker[0] + (it.flicker[1] - it.flicker[0]) * (0.5 + 0.5 * Math.sin(t * it.flicker[2] + ph) * Math.sin(t * it.flicker[2] * 2.3 + ph * 2));

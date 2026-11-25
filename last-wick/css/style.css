@@ -18,3 +18,12 @@ html,body{margin:0;height:100%;background:#05060a;overflow:hidden;touch-action:n
 @keyframes spin{0%,20%{transform:rotate(0)}60%,100%{transform:rotate(90deg)}}
 @media (orientation:portrait) and (pointer:coarse){#rotate{display:flex}}
 
+
+/* user name field (over the canvas) */
+#nameBox{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:rgba(4,3,6,.55)}
+#nameBox .nb{background:linear-gradient(#1a1418,#0b080c);border:1px solid rgba(232,206,165,.35);border-radius:18px;padding:28px 34px;min-width:min(420px,86vw);text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+#nameBox .nbT{font:600 28px "Noto Serif Hebrew","Frank Ruhl Libre",serif;color:#f3dfbf;margin-bottom:18px}
+#nameBox input{width:100%;box-sizing:border-box;font:400 26px "Noto Serif Hebrew",serif;padding:10px 14px;border-radius:10px;border:1px solid rgba(232,206,165,.4);background:#120e12;color:#f6ead6;outline:none;text-align:center}
+#nameBox input:focus{border-color:#e8b878}
+#nameBox .nbB{margin-top:18px;display:flex;gap:12px;justify-content:center}
+#nameBox button{font:400 22px "Noto Serif Hebrew",serif;padding:8px 26px;border-radius:22px;border:1px solid rgba(232,206,165,.4);background:rgba(255,200,140,.14);color:#ffe2b8;cursor:pointer}

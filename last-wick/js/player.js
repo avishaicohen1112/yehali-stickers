@@ -262,6 +262,7 @@ G.Player = (function () {
     }
     damage(n, fromX, hazard) {
       if (this.dead || (!hazard && this.inv > 0)) return false;
+      if (G.state.spect) { if (!hazard) { this.inv = 0.4; } return false; }   // spectator game: nothing can hurt you
       const S = G.state; S.hp -= n; this.focusing = false; this.focusT = 0; this.dashT = 0; this.sitting = false;
       // one clear beat: freeze, a red pulse at the screen edges, a little spray of wax from the hero, then a clean knock-back arc
       G.Sound.sfx('hurt'); G.FX.stop(0.11); G.FX.shake(7, 0.18); G.FX.S.hurtV = 1;

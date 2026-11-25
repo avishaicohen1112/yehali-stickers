@@ -27,7 +27,9 @@ G.Input = (function () {
   let lastDevice = 'kb';
   function down(a) { if (!held[a]) { pressed[a] = true; } held[a] = true; }
   function up(a) { if (held[a]) released[a] = true; held[a] = false; }
+  const typing = e => e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA');   // a name field is open: let keys type
   addEventListener('keydown', e => {
+    if (typing(e)) return;
     if (listening) {   // rebinding: this key becomes the action's first key (removed from any other action)
       e.preventDefault(); if (e.code === 'Escape') { listening = null; return; }
       const a = listening; for (const b of ACTIONS) binds[b] = binds[b].filter(k => k !== e.code);
@@ -37,7 +39,7 @@ G.Input = (function () {
     if (e.repeat) return; down(a); if (a === 'jump' || a === 'confirm') down('confirm_any');
     if (G.Sound) G.Sound.init();
   });
-  addEventListener('keyup', e => { const a = KEYMAP[e.code]; if (!a) return; up(a); if (a === 'jump' || a === 'confirm') up('confirm_any'); });
+  addEventListener('keyup', e => { if (typing(e)) return; const a = KEYMAP[e.code]; if (!a) return; up(a); if (a === 'jump' || a === 'confirm') up('confirm_any'); });
   addEventListener('blur', () => { for (const k in held) up(k); });
   // mouse: left button attacks, right button dashes - only while actually playing (in menus a click is a click)
   const inPlay = () => mouseOn && G.Main && G.Main.mode === 'play' && !(G.UI && G.UI.modal);
